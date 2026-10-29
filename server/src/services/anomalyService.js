@@ -52,7 +52,7 @@ export function createAnomaly(input) {
 
   const statut = input.statut || 'non_traite';
   const epicId = input.epicId ?? null;
-  const dateTraitement = input.dateTraitement || null;
+  let dateTraitement = input.dateTraitement || null;
   if (statut === 'traite') {
     if (!epicId) throw badRequest('Une anomalie traitee doit etre rattachee a un EPIC');
     if (!dateTraitement) dateTraitement = new Date().toISOString().slice(0, 10);

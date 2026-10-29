@@ -5,12 +5,14 @@ import Login from './pages/Login';
 import Layout from './components/Layout';
 import AnomaliesList from './pages/AnomaliesList';
 import AnomalyQuickCreate from './pages/AnomalyQuickCreate';
+import Dashboard from './pages/Dashboard';
 
 function Shell() {
   const { t } = useI18n();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('dashboard');
+  const [anomaliesFilters, setAnomaliesFilters] = useState({ page: 1, pageSize: 25 });
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +40,11 @@ function Shell() {
     return <Login onSuccess={setUser} />;
   }
 
+  const handleDrillDown = (filters) => {
+    setAnomaliesFilters({ ...filters, page: 1 });
+    setView('anomalies');
+  };
+
   return (
     <Layout
       user={user}
@@ -47,11 +54,12 @@ function Shell() {
       }}
       onNavigate={setView}
     >
-      {view === 'anomalies' ? <AnomaliesList onOpen={() => {}} /> : view === 'quick' ? <AnomalyQuickCreate onCreated={() => {}} /> : (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold">{t('appName')}</h2>
-          <p className="text-gray-500 mt-2">Phase 1 - Socle en place. Les modules fonctionnels arrivent Phase 2.</p>
-        </div>
+      {view === 'anomalies' ? (
+        <AnomaliesList onOpen={() => {}} filters={anomaliesFilters} setFilters={setAnomaliesFilters} />
+      ) : view === 'quick' ? (
+        <AnomalyQuickCreate onCreated={() => {}} />
+      ) : (
+        <Dashboard onDrillDown={handleDrillDown} />
       )}
     </Layout>
   );

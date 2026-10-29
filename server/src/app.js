@@ -10,6 +10,7 @@ import { config } from './config/index.js';
 import authRoutes from './routes/authRoutes.js';
 import anomaliesRoutes from './routes/anomaliesRoutes.js';
 import referenceRoutes from './routes/referenceRoutes.js';
+import statsRoutes from './routes/statsRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -49,6 +50,7 @@ export function createApp() {
   app.use('/api/auth', authRoutes);
   app.use('/api/anomalies', anomaliesRoutes);
   app.use('/api/references', referenceRoutes);
+  app.use('/api/stats', statsRoutes);
   app.get('/api/health', (req, res) => res.json({ ok: true, service: 'wilaya-anomalies-api', at: new Date().toISOString() }));
 
   const distDir = path.resolve(process.cwd(), 'client/dist');
