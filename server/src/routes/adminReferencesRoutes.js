@@ -128,6 +128,22 @@ router.patch('/:entite/:id/actif', requireAuth, requireAdmin, (req, res) => {
   return res.json({ data: row });
 });
 
+router.get('/epics/:id/domaines', requireAuth, requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const rows = getDb().prepare('SELECT domaine_id FROM epic_domaines WHERE epic_id = ?').all(id);
+  return res.json({ data: rows.map((r) => r.domaine_id) });
+});
+
+router.put('/epics/:id/domaines', requireAuth, requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const domaineIds = Array.isArray(req.body?.domaineIds) ? req.body.domaineIds.map(Number) : [];
+  getDb().prepare('DELETE FROM epic_domaines WHERE epic_id = ?').run(id);
+  const insert = getDb().prepare('INSERT OR IGNORE INTO epic_domaines (epic_id, domaine_id) VALUES (?, ?)');
+  for (const did of domaineIds) insert.run(id, did);
+  const rows = getDb().prepare('SELECT domaine_id FROM epic_domaines WHERE epic_id = ?').all(id);
+  logAudit({ userId: req.user.id, action: 'EPIC_DOMAINES_UPDATE', entite: 'epic', entiteId: id, details: { domaineIds }, ip: req.ip });
+  return res.json({ data: rows.map((r) => r.domaine_id) });
+});
 router.post('/import/taxonomie', requireAuth, requireAdmin, (req, res) => {
   const body = req.body || {};
   const insertedDomaines = [];

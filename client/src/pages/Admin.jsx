@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../api';
+import AdminDairas from './AdminDairas';
+import AdminEpics from './AdminEpics';
 
-const TABS = ['sauvegardes', 'audit', 'utilisateurs', 'referentiels', 'importexport'];
+const TABS = ['sauvegardes', 'audit', 'utilisateurs', 'referentiels', 'dairas', 'epics', 'importexport'];
 
 export default function Admin() {
   const [tab, setTab] = useState('sauvegardes');
@@ -19,6 +21,8 @@ export default function Admin() {
       {tab === 'audit' && <AuditTab />}
       {tab === 'utilisateurs' && <UsersTab />}
       {tab === 'referentiels' && <RefsTab />}
+      {tab === 'dairas' && <AdminDairas />}
+      {tab === 'epics' && <AdminEpics />}
       {tab === 'importexport' && <ImportExportTab />}
     </div>
   );
