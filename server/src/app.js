@@ -8,6 +8,8 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { config } from './config/index.js';
 import authRoutes from './routes/authRoutes.js';
+import anomaliesRoutes from './routes/anomaliesRoutes.js';
+import referenceRoutes from './routes/referenceRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +47,8 @@ export function createApp() {
   app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, limit: 200, standardHeaders: true, legacyHeaders: false }));
   app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false }));
   app.use('/api/auth', authRoutes);
+  app.use('/api/anomalies', anomaliesRoutes);
+  app.use('/api/references', referenceRoutes);
   app.get('/api/health', (req, res) => res.json({ ok: true, service: 'wilaya-anomalies-api', at: new Date().toISOString() }));
 
   const distDir = path.resolve(process.cwd(), 'client/dist');

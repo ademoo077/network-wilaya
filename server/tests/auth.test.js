@@ -10,8 +10,11 @@ const app = createApp();
 
 beforeAll(() => {
   runMigrations();
-  const counts = seedTaxonomy();
-  console.log('[tests] seed:', JSON.stringify(counts));
+  seedTaxonomy();
+  db.prepare('DELETE FROM anomalie_historique').run();
+  db.prepare('DELETE FROM pieces_jointes').run();
+  db.prepare('DELETE FROM anomalies').run();
+  db.prepare('DELETE FROM users').run();
 });
 
 describe('GET /api/health', () => {
