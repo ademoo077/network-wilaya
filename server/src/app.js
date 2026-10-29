@@ -31,7 +31,7 @@ export function createApp() {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'"],
           styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org', 'https://*.basemaps.cartocdn.com'],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org', 'https://*.basemaps.cartocdn.com', 'https://server.arcgisonline.com', 'https://*.arcgisonline.com'],
           connectSrc: ["'self'"],
           fontSrc: ["'self'"],
           objectSrc: ["'none'"],
@@ -64,6 +64,7 @@ export function createApp() {
   app.use('/api/admin/references', adminReferencesRoutes);
   app.use('/api/admin/anomalies', adminAnomalyExportRoutes);
   app.get('/api/health', (req, res) => res.json({ ok: true, service: 'wilaya-anomalies-api', at: new Date().toISOString() }));
+  app.get('/api/config', (req, res) => res.json({ tileUrl: config.tileUrl }));
 
   const distDir = path.resolve(process.cwd(), 'client/dist');
   if (fs.existsSync(distDir)) {

@@ -11,5 +11,5 @@ export const config = {
   get backupDir() { return get('BACKUP_DIR', './backups'); },
   get weekStartDay() { return Number(get('WEEK_START_DAY', '0')); },
   get adminUsername() { return get('ADMIN_USERNAME', 'admin'); },
-  get adminPassword() { return get('ADMIN_PASSWORD', ''); },
+  get tileUrl() { return get('TILE_URL', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'); },
 };

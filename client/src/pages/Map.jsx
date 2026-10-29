@@ -21,26 +21,27 @@ export default function Map() {
 
   const visible = anomalies.filter((a) => (!filterStatut || a.statut === filterStatut) && typeof a.gps_lat === 'number' && typeof a.gps_lng === 'number');
 
+  const [tileUrl, setTileUrl] = useState('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}');
+
+  useEffect(() => {
+    apiFetch('/config').then((d) => { if (d?.tileUrl) setTileUrl(d.tileUrl); }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
     const map = L.map(container).setView([36.7538, 3.0588], 11);
     mapRef.current = map;
-    const isDark = document.documentElement.classList.contains('dark');
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
     const tiles = L.tileLayer(tileUrl, {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '© OpenStreetMap © CARTO',
+      attribution: '© OpenStreetMap © CARTO © Esri',
     });
     tiles.on('tileerror', () => setTilesFailed(true));
     L.control.attribution({ prefix: false }).addTo(map);
     tiles.addTo(map);
 
     return () => { map.remove(); mapRef.current = null; };
-  }, []);
+  }, [tileUrl]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -62,7 +63,7 @@ export default function Map() {
     if (visible.length > 0) {
       try { map.fitBounds(group.getBounds().pad(0.2)); } catch { /* ignore */ }
     }
-  }, [visible]);
+  }, [visible, tileUrl]);
 
   function centerOn(a) {
     const map = mapRef.current;
@@ -82,7 +83,7 @@ export default function Map() {
       <div className="relative rounded-[var(--r-lg)] overflow-hidden border border-[var(--border)] bg-[var(--surface-2)]">
         {tilesFailed && (
           <div className="absolute top-3 left-3 right-3 z-[1000] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] p-3 text-sm text-[var(--ink-2)] shadow-[var(--shadow-2)]">
-            Fond de carte indisponible hors-ligne — les marqueurs restent actifs.
+            Fond de carte indisponible — vérifiez le paramètre <code>tile_url</code> (Administration). Les marqueurs restent actifs.
           </div>
         )}
         <div ref={containerRef} className="w-full h-full" />
