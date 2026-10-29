@@ -26,13 +26,18 @@ export default function Map() {
     const container = containerRef.current;
     const map = L.map(container).setView([36.7538, 3.0588], 11);
     mapRef.current = map;
-    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const isDark = document.documentElement.classList.contains('dark');
+    const tileUrl = isDark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const tiles = L.tileLayer(tileUrl, {
       maxZoom: 19,
-      attribution: '© OpenStreetMap contributors',
+      subdomains: 'abcd',
+      attribution: '© OpenStreetMap contributors © CARTO',
     });
-    tiles.on('tileerror', () => setTilesFailed(true));
     L.control.attribution({ prefix: false }).addTo(map);
     tiles.addTo(map);
+    tiles.on('tileerror', () => setTilesFailed(true));
 
     return () => { map.remove(); mapRef.current = null; };
   }, []);

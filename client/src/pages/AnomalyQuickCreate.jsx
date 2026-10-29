@@ -81,83 +81,88 @@ export default function AnomalyQuickCreate({ onCreated }) {
     }
   }
 
+  const inputCls = 'h-11 w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--ink)]';
+
   return (
     <form onSubmit={handleSubmit} className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6 space-y-4 max-w-3xl">
-      <h2 className="text-xl font-bold">{t('nouvelleAnomalie')}</h2>
+      <h2 className="text-xl font-bold text-[var(--ink)]">{t('nouvelleAnomalie')}</h2>
       {error && <div className="p-3 bg-[var(--st-non-bg)] text-[var(--st-non)] rounded-[var(--r-md)] text-sm">{error}</div>}
       <div>
-        <label className="block text-sm font-medium mb-1">{t('lien')}</label>
-        <input value={lien} onChange={(e) => { setLien(e.target.value); setPlateforme(detectPlatform(e.target.value)); }} placeholder="https://facebook.com/watch?v=..." required />
+        <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('lien')}</label>
+        <input value={lien} onChange={(e) => { setLien(e.target.value); setPlateforme(detectPlatform(e.target.value)); }} placeholder="https://www.facebook.com/watch?v=..." required className={inputCls} />
+        <div className="text-xs text-[var(--muted)] mt-1">Plateforme détectée : {plateforme}</div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium mb-1">{t('domaine')}</label>
-          <select value={domaineId} onChange={(e) => setDomaineId(e.target.value)} required>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('domaine')}</label>
+          <select value={domaineId} onChange={(e) => setDomaineId(e.target.value)} required className={inputCls}>
             <option value="">{t('domaine')}</option>
             {domaines.map((d) => <option key={d.id} value={d.id}>{d.name_ar}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('type')}</label>
-          <select value={typeId} onChange={(e) => setTypeId(e.target.value)} disabled={!domaineId} required>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('type')}</label>
+          <select value={typeId} onChange={(e) => setTypeId(e.target.value)} disabled={!domaineId} required className={inputCls}>
             <option value="">{t('type')}</option>
             {types.map((ty) => <option key={ty.id} value={ty.id}>{ty.name_ar}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('daire')}</label>
-          <select value={dairaId} onChange={(e) => setDairaId(e.target.value)} required>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('daire')}</label>
+          <select value={dairaId} onChange={(e) => setDairaId(e.target.value)} required className={inputCls}>
             <option value="">{t('daire')}</option>
             {dairas.map((d) => <option key={d.id} value={d.id}>{d.name_fr}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('commune')}</label>
-          <select value={communeId} onChange={(e) => setCommuneId(e.target.value)} disabled={!dairaId} required>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('commune')}</label>
+          <select value={communeId} onChange={(e) => setCommuneId(e.target.value)} disabled={!dairaId} required className={inputCls}>
             <option value="">{t('commune')}</option>
             {communes.map((c) => <option key={c.id} value={c.id}>{c.name_fr}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('epic')}</label>
-          <select value={epicId} onChange={(e) => setEpicId(e.target.value)}>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('epic')}</label>
+          <select value={epicId} onChange={(e) => setEpicId(e.target.value)} className={inputCls}>
             <option value="">{t('nonAffecte')}</option>
             {epics.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('gps')}</label>
-          <input value={gps} onChange={(e) => setGps(e.target.value)} placeholder="36.7538, 3.0588" />
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('gps')}</label>
+          <input value={gps} onChange={(e) => setGps(e.target.value)} placeholder="36.7538, 3.0588" className={inputCls} />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="block text-sm font-medium mb-1">{t('statut') || 'Statut'}</label>
-          <select value={statut} onChange={(e) => setStatut(e.target.value)}>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('statut') || 'Statut'}</label>
+          <select value={statut} onChange={(e) => setStatut(e.target.value)} className={inputCls}>
             <option value="non_traite">{t('statut_non_traite')}</option>
             <option value="en_cours">{t('statut_en_cours')}</option>
             <option value="traite">{t('statut_traite')}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('priorite')}</label>
-          <select value={priorite} onChange={(e) => setPriorite(e.target.value)}>
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('priorite')}</label>
+          <select value={priorite} onChange={(e) => setPriorite(e.target.value)} className={inputCls}>
             <option value="normale">{t('normale')}</option>
             <option value="haute">{t('haute')}</option>
             <option value="urgente">{t('urgente')}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('observations')}</label>
-          <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={4} className="w-full" />
+          <label className="block text-sm font-medium mb-1 text-[var(--ink-2)]">{t('observations')}</label>
+          <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={4} className="w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)]" />
         </div>
       </div>
-      <button type="submit" disabled={busy} className="bg-[var(--brand-600)] text-white px-4 py-2 rounded-[var(--r-md)] disabled:opacity-50">
-        {busy ? '...' : t('enregistrer')}
-      </button>
-      <button type="button" disabled={busy} onClick={async (e) => { e.preventDefault(); await handleSubmit(e); }} className="bg-[var(--surface-2)] px-4 py-2 rounded-[var(--r-md)] disabled:opacity-50">
-        {t('enregistrerEtNouveau')}
-      </button>
+      <div className="flex gap-2">
+        <button type="submit" disabled={busy} className="bg-[var(--brand-600)] text-white px-4 py-2 rounded-[var(--r-md)] disabled:opacity-50">
+          {busy ? '...' : t('enregistrer')}
+        </button>
+        <button type="button" disabled={busy} onClick={async (e) => { e.preventDefault(); await handleSubmit(e); }} className="bg-[var(--surface-2)] px-4 py-2 rounded-[var(--r-md)] disabled:opacity-50 border border-[var(--border)]">
+          {t('enregistrerEtNouveau')}
+        </button>
+      </div>
     </form>
   );
 }
