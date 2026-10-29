@@ -57,7 +57,7 @@ export default function Map() {
   return (
     <div className="space-y-2">
       {tilesFailed && (
-        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded text-sm text-gray-600 dark:text-gray-300">
+        <div className="p-3 bg-[var(--surface-2)] rounded-[var(--r-md)] text-sm text-[var(--ink-2)]">
           Fond de carte indisponible hors-ligne — les marqueurs restent actifs.
         </div>
       )}

@@ -40,7 +40,7 @@ function Shell() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">{t('loading')}</div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">{t('loading')}</div>
     );
   }
   if (!user) {

@@ -82,9 +82,9 @@ export default function AnomalyQuickCreate({ onCreated }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4 max-w-3xl">
+    <form onSubmit={handleSubmit} className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6 space-y-4 max-w-3xl">
       <h2 className="text-xl font-bold">{t('nouvelleAnomalie')}</h2>
-      {error && <div className="p-3 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
+      {error && <div className="p-3 bg-[var(--st-non-bg)] text-[var(--st-non)] rounded-[var(--r-md)] text-sm">{error}</div>}
       <div>
         <label className="block text-sm font-medium mb-1">{t('lien')}</label>
         <input value={lien} onChange={(e) => { setLien(e.target.value); setPlateforme(detectPlatform(e.target.value)); }} placeholder="https://facebook.com/watch?v=..." required />
@@ -152,10 +152,10 @@ export default function AnomalyQuickCreate({ onCreated }) {
           <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={4} className="w-full" />
         </div>
       </div>
-      <button type="submit" disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">
+      <button type="submit" disabled={busy} className="bg-[var(--brand-600)] text-white px-4 py-2 rounded-[var(--r-md)] disabled:opacity-50">
         {busy ? '...' : t('enregistrer')}
       </button>
-      <button type="button" disabled={busy} onClick={async (e) => { e.preventDefault(); await handleSubmit(e); }} className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded disabled:opacity-50">
+      <button type="button" disabled={busy} onClick={async (e) => { e.preventDefault(); await handleSubmit(e); }} className="bg-[var(--surface-2)] px-4 py-2 rounded-[var(--r-md)] disabled:opacity-50">
         {t('enregistrerEtNouveau')}
       </button>
     </form>

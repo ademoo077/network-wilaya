@@ -51,33 +51,33 @@ export default function Admin() {
   return (
     <div className="space-y-4">
       <div className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6">
-        <h2 className="text-xl font-bold mb-4">Administration</h2>
-        {msg && <div className="mb-3 p-3 bg-gray-100 dark:bg-gray-700 rounded text-sm">{msg}</div>}
+        <h2 className="text-xl font-bold mb-4 text-[var(--ink)]">Administration</h2>
+        {msg && <div className="mb-3 p-3 bg-[var(--surface-2)] rounded-[var(--r-md)] text-sm text-[var(--ink-2)]">{msg}</div>}
         <div className="flex flex-wrap gap-2 mb-4">
-          <button onClick={createBackup} disabled={busy} className="bg-blue-600 text-white px-3 py-2 rounded text-sm">Nouvelle sauvegarde</button>
-          <button onClick={() => exportFmt('xlsx')} className="bg-green-600 text-white px-3 py-2 rounded text-sm">Export Excel</button>
-          <button onClick={() => exportFmt('csv')} className="bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded text-sm">Export CSV</button>
+          <button onClick={createBackup} disabled={busy} className="bg-[var(--brand-600)] text-white px-3 py-2 rounded-[var(--r-md)] text-sm disabled:opacity-50">Nouvelle sauvegarde</button>
+          <button onClick={() => exportFmt('xlsx')} className="bg-[var(--st-traite)] text-white px-3 py-2 rounded-[var(--r-md)] text-sm">Export Excel</button>
+          <button onClick={() => exportFmt('csv')} className="bg-[var(--surface-2)] text-[var(--ink)] px-3 py-2 rounded-[var(--r-md)] text-sm border border-[var(--border)]">Export CSV</button>
         </div>
-        <h3 className="text-lg font-bold mb-2">Sauvegardes</h3>
+        <h3 className="text-lg font-bold mb-2 text-[var(--ink)]">Sauvegardes</h3>
         <ul className="space-y-1 text-sm">
           {backups.map((b) => (
-            <li key={b.filename} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 py-1">
-              <span>{b.filename}</span>
-              <button onClick={() => restore(b.filename)} className="text-blue-600 underline text-xs">Restaurer</button>
+            <li key={b.filename} className="flex items-center justify-between border-b border-[var(--border)] py-1">
+              <span className="text-[var(--ink-2)]">{b.filename}</span>
+              <button onClick={() => restore(b.filename)} className="text-[var(--brand-600)] underline text-xs">Restaurer</button>
             </li>
           ))}
-          {backups.length === 0 && <li className="text-gray-500">Aucune sauvegarde</li>}
+          {backups.length === 0 && <li className="text-[var(--muted)]">Aucune sauvegarde</li>}
         </ul>
       </div>
       <div className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6">
-        <h3 className="text-lg font-bold mb-2">Journal d'audit</h3>
+        <h3 className="text-lg font-bold mb-2 text-[var(--ink)]">Journal d'audit</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 dark:bg-gray-700"><tr><th className="p-2">Date</th><th className="p-2">Action</th><th className="p-2">Entité</th><th className="p-2">ID</th></tr></thead>
+            <thead className="bg-[var(--surface-2)]"><tr><th className="p-2 text-start">Date</th><th className="p-2 text-start">Action</th><th className="p-2 text-start">Entité</th><th className="p-2 text-start">ID</th></tr></thead>
             <tbody>
               {audit.map((a) => (
-                <tr key={a.id} className="border-t border-gray-200 dark:border-gray-700">
-                  <td className="p-2">{a.at}</td>
+                <tr key={a.id} className="border-t border-[var(--border)]">
+                  <td className="p-2 text-[var(--ink-2)]">{a.at}</td>
                   <td className="p-2">{a.action}</td>
                   <td className="p-2">{a.entite}</td>
                   <td className="p-2">{a.entite_id}</td>
