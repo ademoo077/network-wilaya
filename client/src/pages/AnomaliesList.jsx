@@ -1,12 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '../api';
 import { useI18n } from '../i18n';
-
-const STATUS_KEYS = {
-  non_traite: 'statut_non_traite',
-  en_cours: 'statut_en_cours',
-  traite: 'statut_traite',
-};
 
 const STATUS_DOT = {
   non_traite: 'bg-red-500',
@@ -20,7 +14,7 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
   const [pagination, setPagination] = useState({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
   const [selected, setSelected] = useState([]);
 
-  const filtersState = filters || { page: 1, pageSize: 25 };
+  const filtersState = useMemo(() => filters || { page: 1, pageSize: 25 }, [filters]);
 
   const load = useCallback(async () => {
     const f = filtersState;

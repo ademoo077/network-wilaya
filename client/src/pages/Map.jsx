@@ -1,10 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import markerIcon from 'leaflet/dist/images/marker-icon.png?url';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png?url';
 import { apiFetch } from '../api';
-import { useI18n } from '../i18n';
 
 const STATUS_COLORS = {
   non_traite: '#ef4444',
@@ -13,7 +10,6 @@ const STATUS_COLORS = {
 };
 
 export default function Map() {
-  const { t } = useI18n();
   const containerRef = useRef(null);
 
   useEffect(() => {

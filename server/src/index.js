@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config/index.js';
-import db from './db/database.js';
 import { runMigrations } from './db/migrations/index.js';
 import { seedTaxonomy, ensureSeedUsers } from './db/seed.js';
 import { createApp } from './app.js';

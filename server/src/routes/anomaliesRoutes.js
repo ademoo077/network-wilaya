@@ -150,7 +150,6 @@ router.delete('/:id', requireAuth, (req, res) => {
 });
 
 router.post('/:id/pieces', requireAuth, upload.single('fichier'), (req, res) => {
-  const body = req.body || {};
   const anomalyId = Number(req.params.id);
   const anomaly = anomalyService.getAnomalyById(anomalyId);
   if (!anomaly) {

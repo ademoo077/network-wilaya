@@ -5,7 +5,6 @@ import { createApp } from '../src/app.js';
 import db from '../src/db/database.js';
 import { runMigrations } from '../src/db/migrations/index.js';
 import { seedTaxonomy } from '../src/db/seed.js';
-import * as anomalyService from '../src/services/anomalyService.js';
 
 const app = createApp();
 

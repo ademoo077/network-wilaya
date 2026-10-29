@@ -32,7 +32,12 @@ export function normalizeUrl(url) {
       }
     });
     const clean = new URL('https://' + parsed.host + parsed.pathname + parsed.search);
-    for (const [k, v] of params) clean.searchParams.delete(k);
+    for (const pair of params) {
+      const key = pair[0];
+      if (key === 'utm_source' || key === 'utm_medium' || key === 'utm_campaign' || key === 'utm_term' || key === 'utm_content' || key === 'fbclid' || key === 'igshid' || key === 'gclid' || key === 'mc_cid' || key === 'mc_eid') {
+        clean.searchParams.delete(key);
+      }
+    }
     const result = clean.toString();
     return result.replace(/\/$/, '') || 'https://';
   } catch {
@@ -206,4 +211,40 @@ export function findDuplicate(url) {
 export function getHistorique(anomalieId) {
   const rows = db.prepare('SELECT id, anomalie_id, champ, ancienne_valeur, nouvelle_valeur, user_id, at FROM anomalie_historique WHERE anomalie_id = ? ORDER BY id DESC').all(anomalieId);
   return rows;
+}
+
+export function listExportRows() {
+  const rows = db.prepare(`SELECT a.*, d.name_fr AS domaine_name, t.name_fr AS type_name, dc.name_fr AS daire_name, co.name_fr AS commune_name, e.name AS epic_name FROM anomalies a JOIN domaines d ON d.id = a.domaine_id JOIN types_anomalie t ON t.id = a.type_id JOIN dairas dc ON dc.id = a.daira_id JOIN communes co ON co.id = a.commune_id LEFT JOIN epics e ON e.id = a.epic_id WHERE a.deleted_at IS NULL ORDER BY a.date_signalement DESC, a.id DESC`).all();
+  return rows;
+}
+
+const EXPORT_COLUMNS = ['id', 'reference', 'plateforme', 'lien_url', 'date_publication', 'date_signalement', 'domaine_name', 'type_name', 'daira_name', 'commune_name', 'epic_name', 'statut', 'priorite', 'gps_lat', 'gps_lng', 'verification'];
+
+export function anomaliesToCsv() {
+  const rows = listExportRows();
+  const escapeCell = (value) => {
+    if (value === null || value === undefined) return '';
+    const str = String(value);
+    if (/[",\r\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+  const lines = [EXPORT_COLUMNS.map(escapeCell).join(',')];
+  for (const row of rows) {
+    lines.push(EXPORT_COLUMNS.map((col) => escapeCell(row[col])).join(','));
+  }
+  return lines.join('\n');
+}
+
+import ExcelJS from 'exceljs';
+
+export async function buildAnomaliesXlsx() {
+  const rows = listExportRows();
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Anomalies');
+  sheet.columns = EXPORT_COLUMNS.map((col) => ({ header: col, key: col, width: 20 }));
+  for (const row of rows) {
+    sheet.addRow(Object.fromEntries(EXPORT_COLUMNS.map((col) => [col, row[col] ?? ''])));
+  }
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer;
 }

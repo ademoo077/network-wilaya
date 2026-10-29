@@ -102,7 +102,7 @@ export default function Dashboard({ onDrillDown }) {
             <XAxis type="number" />
             <YAxis type="category" dataKey="name" width={140} />
             <Tooltip />
-            <Bar dataKey="total" name={t('total')} fill="#3b82f6" />
+            <Bar dataKey="total" name={t('total')} fill="#3b82f6" onClick={(payload) => { const entry = payload?.original; if (entry?.domaine_id) onDrillDown?.({ domaineId: entry.domaine_id }); }} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -12,6 +12,11 @@ import anomaliesRoutes from './routes/anomaliesRoutes.js';
 import referenceRoutes from './routes/referenceRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import reportsRoutes from './routes/reportsRoutes.js';
+import adminUsersRoutes from './routes/adminUsersRoutes.js';
+import adminAuditRoutes from './routes/adminAuditRoutes.js';
+import adminBackupRoutes from './routes/adminBackupRoutes.js';
+import adminReferencesRoutes from './routes/adminReferencesRoutes.js';
+import adminAnomalyExportRoutes from './routes/adminAnomalyExportRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -53,6 +58,11 @@ export function createApp() {
   app.use('/api/references', referenceRoutes);
   app.use('/api/stats', statsRoutes);
   app.use('/api/reports', reportsRoutes);
+  app.use('/api/admin/users', adminUsersRoutes);
+  app.use('/api/admin/audit', adminAuditRoutes);
+  app.use('/api/admin/backup', adminBackupRoutes);
+  app.use('/api/admin/references', adminReferencesRoutes);
+  app.use('/api/admin/anomalies', adminAnomalyExportRoutes);
   app.get('/api/health', (req, res) => res.json({ ok: true, service: 'wilaya-anomalies-api', at: new Date().toISOString() }));
 
   const distDir = path.resolve(process.cwd(), 'client/dist');
