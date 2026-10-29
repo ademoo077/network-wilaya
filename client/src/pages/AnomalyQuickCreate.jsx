@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { apiFetch } from '../api';
 import { useI18n } from '../i18n';
 
@@ -47,6 +49,7 @@ export default function AnomalyQuickCreate({ onCreated }) {
   const [gps, setGps] = useState('');
   const [gpsLat, setGpsLat] = useState(null);
   const [gpsLng, setGpsLng] = useState(null);
+  const [gpsValidated, setGpsValidated] = useState(false);
   const [statut, setStatut] = useState('non_traite');
   const [priorite, setPriorite] = useState('normale');
   const [dateSignalement, setDateSignalement] = useState(new Date().toISOString().slice(0, 10));
@@ -68,6 +71,29 @@ export default function AnomalyQuickCreate({ onCreated }) {
     apiFetch('/references/communes?dairaId=' + (dairaId || '')).then((d) => { setCommunes(d.data); setCommuneId(''); }).catch(() => {});
   }, [dairaId]);
 
+  const mapRef = useRef(null);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const map = L.map(containerRef.current).setView([36.7538, 3.0588], 13);
+    mapRef.current = map;
+    const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
+    tiles.on('tileerror', () => { /* ignore */ });
+    tiles.addTo(map);
+    return () => { map.remove(); mapRef.current = null; };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && gpsLat !== null && gpsLng !== null) {
+      map.setView([gpsLat, gpsLng], 15);
+      if (map._marker) map.removeLayer(map._marker);
+      const m = L.marker([gpsLat, gpsLng]).addTo(map);
+      map._marker = m;
+    }
+  }, [gpsLat, gpsLng]);
+
   async function checkDuplicate() {
     if (!lien) return;
     try {
@@ -78,6 +104,7 @@ export default function AnomalyQuickCreate({ onCreated }) {
 
   function handleGpsInput(value) {
     setGps(value);
+    setGpsValidated(false);
     const parsed = parseGps(value);
     if (parsed) { setGpsLat(parsed.lat); setGpsLng(parsed.lng); }
     else { setGpsLat(null); setGpsLng(null); }
@@ -197,8 +224,10 @@ export default function AnomalyQuickCreate({ onCreated }) {
         <div className="flex gap-2">
           <input value={gps} onChange={(e) => handleGpsInput(e.target.value)} placeholder="36.7538, 3.0588 ou https://maps.google.com/?q=36.75,3.05" className={inputCls} />
           <button type="button" onClick={useMyPosition} className="h-11 px-3 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface-2)] text-sm whitespace-nowrap">Ma position</button>
+          <button type="button" onClick={() => setGpsValidated(true)} disabled={gpsLat === null} className="h-11 px-3 rounded-[var(--r-md)] bg-[var(--st-traite)] text-white text-sm whitespace-nowrap disabled:opacity-50">Valider la position</button>
         </div>
-        {gpsLat !== null && <div className="text-xs text-[var(--muted)] mt-1">Lat {gpsLat.toFixed(6)}, Lng {gpsLng.toFixed(6)}</div>}
+        {gpsLat !== null && <div className="text-xs text-[var(--muted)] mt-1">Lat {gpsLat.toFixed(6)}, Lng {gpsLng.toFixed(6)} {gpsValidated && '✓ validée'}</div>}
+        <div ref={containerRef} className="mt-2 w-full h-40 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface-2)]" />
       </div>
 
       <div>

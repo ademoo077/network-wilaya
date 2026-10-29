@@ -11,6 +11,7 @@ export default function Map() {
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const [tilesFailed, setTilesFailed] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [anomalies, setAnomalies] = useState([]);
   const [filterStatut, setFilterStatut] = useState('');
   const [panelOpen, setPanelOpen] = useState(true);
@@ -40,7 +41,9 @@ export default function Map() {
     L.control.attribution({ prefix: false }).addTo(map);
     tiles.addTo(map);
 
-    return () => { map.remove(); mapRef.current = null; };
+    setMapReady(true);
+
+    return () => { map.remove(); mapRef.current = null; setMapReady(false); };
   }, [tileUrl]);
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export default function Map() {
     if (visible.length > 0) {
       try { map.fitBounds(group.getBounds().pad(0.2)); } catch { /* ignore */ }
     }
-  }, [visible, tileUrl]);
+  }, [visible, tileUrl, mapReady]);
 
   function centerOn(a) {
     const map = mapRef.current;
