@@ -39,6 +39,7 @@ export default function Map() {
     tiles.on('tileerror', () => setTilesFailed(true));
     L.control.attribution({ prefix: false }).addTo(map);
     tiles.addTo(map);
+    setTimeout(() => map.invalidateSize(), 100);
     setMapReady(true);
 
     return () => { map.remove(); mapRef.current = null; setMapReady(false); };
@@ -53,8 +54,8 @@ export default function Map() {
     visible.forEach((row) => {
       const icon = L.divIcon({
         className: '',
-        html: `<div style="background:${STATUS_COLORS[row.statut] || STATUS_COLORS.non_traite};width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.6)"></div>`,
-        iconSize: [14, 14], iconAnchor: [7, 7], popupAnchor: [0, -7],
+        html: `<div style="background:${STATUS_COLORS[row.statut] || STATUS_COLORS.non_traite};width:28px;height:28px;border-radius:50%;border:2px solid white;box-shadow:0 0 4px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:bold;">${row.id}</div>`,
+        iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14],
       });
       const m = L.marker([row.gps_lat, row.gps_lng], { icon }).addTo(map);
       m.bindPopup(`<strong>${row.reference}</strong><br/>${row.lien_url}<br/><a href="${row.lien_url}" target="_blank" rel="noopener noreferrer">Ouvrir la fiche</a>`);
