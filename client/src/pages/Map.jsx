@@ -33,11 +33,11 @@ export default function Map() {
     const tiles = L.tileLayer(tileUrl, {
       maxZoom: 19,
       subdomains: 'abcd',
-      attribution: '© OpenStreetMap contributors © CARTO',
+      attribution: '© OpenStreetMap © CARTO',
     });
+    tiles.on('tileerror', () => setTilesFailed(true));
     L.control.attribution({ prefix: false }).addTo(map);
     tiles.addTo(map);
-    tiles.on('tileerror', () => setTilesFailed(true));
 
     return () => { map.remove(); mapRef.current = null; };
   }, []);
@@ -69,12 +69,20 @@ export default function Map() {
     if (map && typeof a.gps_lat === 'number') map.setView([a.gps_lat, a.gps_lng], 15);
   }
 
+  function useMyPosition() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const map = mapRef.current;
+      if (map) map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+    });
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 h-[calc(100dvh-140px)]">
       <div className="relative rounded-[var(--r-lg)] overflow-hidden border border-[var(--border)] bg-[var(--surface-2)]">
         {tilesFailed && (
           <div className="absolute top-3 left-3 right-3 z-[1000] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] p-3 text-sm text-[var(--ink-2)] shadow-[var(--shadow-2)]">
-            Fond de carte indisponible hors-ligne — les marqueurs restent actifs. (paramètre <code>tile_url</code>)
+            Fond de carte indisponible hors-ligne — les marqueurs restent actifs.
           </div>
         )}
         <div ref={containerRef} className="w-full h-full" />
@@ -85,6 +93,9 @@ export default function Map() {
           ))}
           <div className="mt-1 text-[var(--muted)]">{visible.length} anomalie(s) sur la carte</div>
         </div>
+        <button onClick={useMyPosition} className="absolute top-3 end-3 z-[1000] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] px-3 py-2 text-xs shadow-[var(--shadow-1)]">
+          Ma position
+        </button>
       </div>
       <div className={`bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] flex flex-col ${panelOpen ? '' : 'hidden lg:flex'}`}>
         <div className="p-3 border-b border-[var(--border)] flex items-center justify-between">
