@@ -15,18 +15,17 @@ export default function Map() {
   const [anomalies, setAnomalies] = useState([]);
   const [filterStatut, setFilterStatut] = useState('');
   const [panelOpen, setPanelOpen] = useState(true);
-
-  useEffect(() => {
-    apiFetch('/anomalies?page=1&pageSize=200').then((d) => setAnomalies(d.data || [])).catch(() => {});
-  }, []);
-
-  const visible = anomalies.filter((a) => (!filterStatut || a.statut === filterStatut) && typeof a.gps_lat === 'number' && typeof a.gps_lng === 'number');
-
+  const [error, setError] = useState(null);
   const [tileUrl, setTileUrl] = useState('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}');
 
   useEffect(() => {
     apiFetch('/config').then((d) => { if (d?.tileUrl) setTileUrl(d.tileUrl); }).catch(() => {});
+    apiFetch('/anomalies?page=1&pageSize=200')
+      .then((d) => setAnomalies(d.data || []))
+      .catch((e) => setError(e.message));
   }, []);
+
+  const visible = anomalies.filter((a) => (!filterStatut || a.statut === filterStatut) && typeof a.gps_lat === 'number' && typeof a.gps_lng === 'number');
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -35,12 +34,11 @@ export default function Map() {
     mapRef.current = map;
     const tiles = L.tileLayer(tileUrl, {
       maxZoom: 19,
-      attribution: '© OpenStreetMap © CARTO © Esri',
+      attribution: '© OpenStreetMap © Esri',
     });
     tiles.on('tileerror', () => setTilesFailed(true));
     L.control.attribution({ prefix: false }).addTo(map);
     tiles.addTo(map);
-
     setMapReady(true);
 
     return () => { map.remove(); mapRef.current = null; setMapReady(false); };
@@ -48,7 +46,7 @@ export default function Map() {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapReady) return;
     markersRef.current.forEach((m) => map.removeLayer(m));
     markersRef.current = [];
     const group = L.featureGroup();
@@ -66,7 +64,7 @@ export default function Map() {
     if (visible.length > 0) {
       try { map.fitBounds(group.getBounds().pad(0.2)); } catch { /* ignore */ }
     }
-  }, [visible, tileUrl, mapReady]);
+  }, [visible, mapReady]);
 
   function centerOn(a) {
     const map = mapRef.current;
@@ -89,12 +87,22 @@ export default function Map() {
             Fond de carte indisponible — vérifiez le paramètre <code>tile_url</code> (Administration). Les marqueurs restent actifs.
           </div>
         )}
+        {error && (
+          <div className="absolute top-3 left-3 right-3 z-[1000] bg-[var(--st-non-bg)] text-[var(--st-non)] rounded-[var(--r-md)] p-3 text-sm">
+            Erreur : {error}
+          </div>
+        )}
         <div ref={containerRef} className="w-full h-full" />
         {anomalies.length > 0 && visible.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center z-[1000] bg-[var(--surface-2)]/80">
             <div className="text-center text-[var(--muted)] text-sm p-4">
               {anomalies.length} anomalie(s) trouvée(s), mais aucune n'a de coordonnées GPS.
             </div>
+          </div>
+        )}
+        {anomalies.length === 0 && !error && (
+          <div className="absolute inset-0 flex items-center justify-center z-[1000]">
+            <div className="text-center text-[var(--muted)] text-sm p-4">Chargement des anomalies…</div>
           </div>
         )}
         <div className="absolute bottom-3 start-3 z-[1000] bg-[var(--surface)]/90 backdrop-blur rounded-[var(--r-md)] px-3 py-2 text-xs border border-[var(--border)]">
@@ -129,7 +137,8 @@ export default function Map() {
               <div className="text-xs" style={{ color: STATUS_COLORS[a.statut] }}>{STATUS_LABELS[a.statut]}</div>
             </button>
           ))}
-          {visible.length === 0 && <div className="text-sm text-[var(--muted)] p-2">Aucune anomalie géolocalisée</div>}
+          {visible.length === 0 && anomalies.length > 0 && <div className="text-sm text-[var(--muted)] p-2">Aucune anomalie géolocalisée</div>}
+          {anomalies.length === 0 && <div className="text-sm text-[var(--muted)] p-2">Chargement…</div>}
         </div>
       </div>
     </div>
