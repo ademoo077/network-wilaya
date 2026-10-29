@@ -17,7 +17,7 @@ function Shell() {
   const { t } = useI18n();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('dashboard');
+  const [view, setView] = useState(() => (window.location.hash.replace('#', '') || 'dashboard'));
   const [anomaliesFilters, setAnomaliesFilters] = useState({ page: 1, pageSize: 25 });
   const [detailId, setDetailId] = useState(null);
 
@@ -37,6 +37,21 @@ function Shell() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      const h = window.location.hash.replace('#', '') || 'dashboard';
+      setView(h);
+    };
+    window.addEventListener('hashchange', handler);
+    return () => window.removeEventListener('hashchange', handler);
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash.replace('#', '') !== view) {
+      window.location.hash = view;
+    }
+  }, [view]);
 
   if (loading) {
     return (
