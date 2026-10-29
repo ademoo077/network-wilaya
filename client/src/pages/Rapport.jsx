@@ -62,7 +62,7 @@ export default function Rapport() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold">Synthèse hebdomadaire</h2>
@@ -85,7 +85,7 @@ export default function Rapport() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h3 className="text-lg font-bold mb-3">Par categorie</h3>
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
@@ -109,7 +109,7 @@ export default function Rapport() {
         </table>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h3 className="text-lg font-bold mb-3">Urgentes</h3>
         <table className="w-full text-sm">
           <thead className="bg-gray-100">

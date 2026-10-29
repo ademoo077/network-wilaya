@@ -56,7 +56,7 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
         <select value={filtersState.statut || ''} onChange={(e) => updateFilters({ statut: e.target.value, page: 1 })}>
           <option value="">{t('all')}</option>
           <option value="non_traite">{t('statut_non_traite')}</option>
@@ -76,7 +76,8 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
         <button onClick={() => load()}>{t('actions')}</button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
@@ -125,6 +126,7 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
           </tbody>
         </table>
         {items.length === 0 && <div className="p-6 text-center text-gray-500">{t('vide')}</div>}
+        </div>
       </div>
 
       <div className="flex items-center justify-between">

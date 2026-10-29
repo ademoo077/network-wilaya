@@ -59,14 +59,14 @@ export default function Dashboard({ onDrillDown }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {kpis.map((k) => (
-          <div key={k.label} className="bg-white rounded-lg shadow p-4">
-            <div className="text-sm text-gray-500">{k.label}</div>
+          <div key={k.label} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400">{k.label}</div>
             <div className="text-2xl font-bold">{k.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h3 className="text-lg font-bold mb-4">{t('repartitionStatuts') || 'Répartition par statut'}</h3>
         <ResponsiveContainer width="100%" height={260}>
           <PieChart>
@@ -81,7 +81,7 @@ export default function Dashboard({ onDrillDown }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h3 className="text-lg font-bold mb-4">{t('evolutionHebdomadaire') || 'Évolution hebdomadaire (12 semaines)'}</h3>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={weeklyData}>
@@ -95,7 +95,7 @@ export default function Dashboard({ onDrillDown }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h3 className="text-lg font-bold mb-4">{t('parCategorie') || 'Par catégorie'}</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={categoryData} layout="vertical">

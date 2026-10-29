@@ -24,10 +24,10 @@ export default function Login({ onSuccess }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white rounded-lg shadow p-6 space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
         <h1 className="text-2xl font-bold text-center">{t('loginTitle')}</h1>
-        <p className="text-center text-gray-500">{t('loginSubtitle')}</p>
+        <p className="text-center text-gray-500 dark:text-gray-400">{t('loginSubtitle')}</p>
         {error && <div className="p-3 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
         <div>
           <label className="block text-sm font-medium mb-1">{t('username')}</label>
