@@ -82,14 +82,21 @@ export default function Map() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 h-[calc(100dvh-140px)]">
-      <div className="relative rounded-[var(--r-lg)] overflow-hidden border border-[var(--border)] bg-[var(--surface-2)]">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4" style={{ minHeight: '500px', height: 'calc(100dvh - 140px)' }}>
+      <div className="relative rounded-[var(--r-lg)] overflow-hidden border border-[var(--border)] bg-[var(--surface-2)]" style={{ minHeight: '400px' }}>
         {tilesFailed && (
           <div className="absolute top-3 left-3 right-3 z-[1000] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] p-3 text-sm text-[var(--ink-2)] shadow-[var(--shadow-2)]">
             Fond de carte indisponible — vérifiez le paramètre <code>tile_url</code> (Administration). Les marqueurs restent actifs.
           </div>
         )}
         <div ref={containerRef} className="w-full h-full" />
+        {anomalies.length > 0 && visible.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center z-[1000] bg-[var(--surface-2)]/80">
+            <div className="text-center text-[var(--muted)] text-sm p-4">
+              {anomalies.length} anomalie(s) trouvée(s), mais aucune n'a de coordonnées GPS.
+            </div>
+          </div>
+        )}
         <div className="absolute bottom-3 start-3 z-[1000] bg-[var(--surface)]/90 backdrop-blur rounded-[var(--r-md)] px-3 py-2 text-xs border border-[var(--border)]">
           <div className="font-semibold mb-1">Légende</div>
           {Object.entries(STATUS_COLORS).map(([k, v]) => (
@@ -103,7 +110,7 @@ export default function Map() {
       </div>
       <div className={`bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] flex flex-col ${panelOpen ? '' : 'hidden lg:flex'}`}>
         <div className="p-3 border-b border-[var(--border)] flex items-center justify-between">
-          <h3 className="font-semibold text-[var(--ink)]">Anomalies ({visible.length})</h3>
+          <h3 className="font-semibold text-[var(--ink)]">Anomalies ({visible.length} avec GPS / {anomalies.length} total)</h3>
           <button onClick={() => setPanelOpen((v) => !v)} className="text-xs text-[var(--muted)]">{panelOpen ? 'Masquer' : 'Afficher'}</button>
         </div>
         <div className="p-3 border-b border-[var(--border)]">
