@@ -13,6 +13,7 @@ export default function Layout({ user, onLogout, onNavigate, children }) {
           <nav className="flex gap-2">
             <button onClick={() => onNavigate('dashboard')} className="text-sm underline">Dashboard</button>
             <button onClick={() => onNavigate('anomalies')} className="text-sm underline">Anomalies</button>
+            <button onClick={() => onNavigate('map')} className="text-sm underline">Carte</button>
             <button onClick={() => onNavigate('quick')} className="text-sm underline">{t('nouvelleAnomalie')}</button>
           </nav>
         </div>

@@ -1,10 +1,27 @@
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'node:path';
 import { z } from 'zod';
 import db from '../db/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import * as anomalyService from '../services/anomalyService.js';
 
 const router = Router();
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, './data/uploads'),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname || '').replace(/[^a-zA-Z0-9.]/g, '_');
+      cb(null, `${Date.now()}_${Math.random().toString(36).slice(2, 10)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = ['image/png', 'image/jpeg', 'image/webp'].includes(file.mimetype);
+    cb(ok ? null : new Error('TYPE_NOT_ALLOWED'), ok);
+  },
+});
 
 const createBody = z.object({
   plateforme: z.enum(['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'whatsapp', 'telegram', 'autre']).optional(),
@@ -132,17 +149,17 @@ router.delete('/:id', requireAuth, (req, res) => {
   return res.json({ ok: true });
 });
 
-router.post('/:id/pieces', requireAuth, (req, res) => {
+router.post('/:id/pieces', requireAuth, upload.single('fichier'), (req, res) => {
   const body = req.body || {};
   const anomalyId = Number(req.params.id);
   const anomaly = anomalyService.getAnomalyById(anomalyId);
   if (!anomaly) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Anomalie introuvable' } });
   }
-  if (!body.chemin || !body.nomOriginal) {
-    return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'chemin et nomOriginal requis' } });
+  if (!req.file) {
+    return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Fichier requis' } });
   }
-  const info = db.prepare('INSERT INTO pieces_jointes (anomalie_id, chemin, nom_original, mime, taille, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(anomalyId, body.chemin, body.nomOriginal, body.mime || 'application/octet-stream', Number(body.taille) || 0, req.user.id, new Date().toISOString());
+  const info = db.prepare('INSERT INTO pieces_jointes (anomalie_id, chemin, nom_original, mime, taille, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(anomalyId, req.file.path, req.file.originalname, req.file.mimetype, req.file.size, req.user.id, new Date().toISOString());
   const piece = db.prepare('SELECT * FROM pieces_jointes WHERE id = ?').get(Number(info.lastInsertRowid));
   return res.status(201).json({ piece });
 });

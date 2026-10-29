@@ -7,6 +7,7 @@ import AnomaliesList from './pages/AnomaliesList';
 import AnomalyQuickCreate from './pages/AnomalyQuickCreate';
 import Dashboard from './pages/Dashboard';
 import Rapport from './pages/Rapport';
+import Map from './pages/Map';
 
 function Shell() {
   const { t } = useI18n();
@@ -61,6 +62,8 @@ function Shell() {
         <AnomalyQuickCreate onCreated={() => {}} />
       ) : view === 'rapport' ? (
         <Rapport />
+      ) : view === 'map' ? (
+        <Map />
       ) : (
         <Dashboard onDrillDown={handleDrillDown} />
       )}
