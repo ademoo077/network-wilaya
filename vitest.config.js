@@ -5,5 +5,6 @@ export default defineConfig({
     environment: 'node',
     include: ['server/**/*.test.js'],
     fileParallelism: false,
+    env: { DB_PATH: './data/test-anomalies.db' },
   },
 });
