@@ -60,6 +60,7 @@ function Shell() {
         setView('dashboard');
       }}
       onNavigate={setView}
+      currentView={view}
     >
       {view === 'anomalies' ? (
         <AnomaliesList onOpen={(id) => { setDetailId(id); setView('detail'); }} filters={anomaliesFilters} setFilters={setAnomaliesFilters} />
