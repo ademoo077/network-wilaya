@@ -1,12 +1,12 @@
 :root {
   --brand-950:#04261a; --brand-900:#063b27; --brand-800:#0a5a3a; --brand-700:#0b7048;
-  --brand-600:#0e8a5a; --brand-500:#12a66d; --brand-100:#d9f5e8; --brand-50:#effaf4;
+  --brand-600:#0a6b45; --brand-500:#12a66d; --brand-100:#d9f5e8; --brand-50:#effaf4;
   --gold-500:#c9a227; --gold-100:#faf1cf;
   --bg:#f3f6f5; --surface:#ffffff; --surface-2:#f8faf9; --border:#e3e9e6;
-  --ink:#0d1b16; --ink-2:#3d4f47; --muted:#6b7d75;
-  --st-non:#dc2626; --st-non-bg:#fee2e2;
-  --st-cours:#d97706; --st-cours-bg:#fef3c7;
-  --st-traite:#059669; --st-traite-bg:#d1fae5;
+  --ink:#0d1b16; --ink-2:#3d4f47; --muted:#4b5e56;
+  --st-non:#b91c1c; --st-non-bg:#fee2e2;
+  --st-cours:#b45309; --st-cours-bg:#fef3c7;
+  --st-traite:#047857; --st-traite-bg:#d1fae5;
   --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:24px;
   --shadow-1:0 1px 2px rgba(6,59,39,.06),0 1px 1px rgba(6,59,39,.04);
   --shadow-2:0 6px 20px -6px rgba(6,59,39,.14),0 2px 6px rgba(6,59,39,.06);
