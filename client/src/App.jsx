@@ -1,15 +1,17 @@
+import { lazy, Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { I18nProvider, useI18n } from './i18n';
 import { apiFetch } from './api';
-import Login from './pages/Login';
-import Layout from './components/Layout';
-import AnomaliesList from './pages/AnomaliesList';
-import AnomalyQuickCreate from './pages/AnomalyQuickCreate';
-import Dashboard from './pages/Dashboard';
-import Rapport from './pages/Rapport';
-import Map from './pages/Map';
-import Admin from './pages/Admin';
-import Detail from './pages/Detail';
+
+const Login = lazy(() => import('./pages/Login'));
+const Layout = lazy(() => import('./components/Layout'));
+const AnomaliesList = lazy(() => import('./pages/AnomaliesList'));
+const AnomalyQuickCreate = lazy(() => import('./pages/AnomalyQuickCreate'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Rapport = lazy(() => import('./pages/Rapport'));
+const Map = lazy(() => import('./pages/Map'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Detail = lazy(() => import('./pages/Detail'));
 
 function Shell() {
   const { t } = useI18n();
@@ -81,7 +83,9 @@ function Shell() {
 export default function App() {
   return (
     <I18nProvider>
-      <Shell />
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--bg)] text-[var(--ink)]">Chargement…</div>}>
+        <Shell />
+      </Suspense>
     </I18nProvider>
   );
 }
