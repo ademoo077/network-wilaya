@@ -8,6 +8,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+  body { background: #fff; color: #000; }
+  aside, header, .no-print { display: none !important; }
+  main { padding: 0 !important; max-width: none !important; }
+  .print-break { page-break-after: always; }
+  table { font-size: 10pt; }
+  thead { display: table-header-group; }
+}
+
 html,
 body,
 #root {

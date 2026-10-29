@@ -50,7 +50,7 @@ export default function Admin() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6">
         <h2 className="text-xl font-bold mb-4">Administration</h2>
         {msg && <div className="mb-3 p-3 bg-gray-100 dark:bg-gray-700 rounded text-sm">{msg}</div>}
         <div className="flex flex-wrap gap-2 mb-4">
@@ -69,7 +69,7 @@ export default function Admin() {
           {backups.length === 0 && <li className="text-gray-500">Aucune sauvegarde</li>}
         </ul>
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6">
         <h3 className="text-lg font-bold mb-2">Journal d'audit</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
