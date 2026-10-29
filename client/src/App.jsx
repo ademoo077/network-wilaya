@@ -8,6 +8,8 @@ import AnomalyQuickCreate from './pages/AnomalyQuickCreate';
 import Dashboard from './pages/Dashboard';
 import Rapport from './pages/Rapport';
 import Map from './pages/Map';
+import Admin from './pages/Admin';
+import Detail from './pages/Detail';
 
 function Shell() {
   const { t } = useI18n();
@@ -15,6 +17,7 @@ function Shell() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('dashboard');
   const [anomaliesFilters, setAnomaliesFilters] = useState({ page: 1, pageSize: 25 });
+  const [detailId, setDetailId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,13 +60,17 @@ function Shell() {
       onNavigate={setView}
     >
       {view === 'anomalies' ? (
-        <AnomaliesList onOpen={() => {}} filters={anomaliesFilters} setFilters={setAnomaliesFilters} />
+        <AnomaliesList onOpen={(id) => { setDetailId(id); setView('detail'); }} filters={anomaliesFilters} setFilters={setAnomaliesFilters} />
       ) : view === 'quick' ? (
         <AnomalyQuickCreate onCreated={() => {}} />
       ) : view === 'rapport' ? (
         <Rapport />
       ) : view === 'map' ? (
         <Map />
+      ) : view === 'admin' ? (
+        <Admin />
+      ) : view === 'detail' ? (
+        <Detail id={detailId} onBack={() => setView('anomalies')} />
       ) : (
         <Dashboard onDrillDown={handleDrillDown} />
       )}

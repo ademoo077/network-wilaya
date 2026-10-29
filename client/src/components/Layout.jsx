@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useI18n } from '../i18n';
 
 export default function Layout({ user, onLogout, onNavigate, children }) {
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const [dark, setDark] = useState(false);
   const toggleDark = () => {
     const next = !dark;
@@ -22,11 +22,16 @@ export default function Layout({ user, onLogout, onNavigate, children }) {
             <button onClick={() => onNavigate('anomalies')} className="text-sm underline text-gray-700 dark:text-gray-200">Anomalies</button>
             <button onClick={() => onNavigate('map')} className="text-sm underline text-gray-700 dark:text-gray-200">Carte</button>
             <button onClick={() => onNavigate('quick')} className="text-sm underline text-gray-700 dark:text-gray-200">{t('nouvelleAnomalie')}</button>
+            <button onClick={() => onNavigate('rapport')} className="text-sm underline text-gray-700 dark:text-gray-200">Rapport</button>
+            <button onClick={() => onNavigate('admin')} className="text-sm underline text-gray-700 dark:text-gray-200">Administration</button>
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setLang(lang === 'ar' ? 'fr' : 'ar')} className="text-sm px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">
+            {lang === 'ar' ? 'FR' : 'العربية'}
+          </button>
           <span className="text-sm text-gray-600 dark:text-gray-300">{user?.username}</span>
-          <button onClick={toggleDark} className="text-sm underline text-gray-600 dark:text-gray-300">{dark ? 'Mode clair' : 'Mode sombre'}</button>
+          <button onClick={toggleDark} className="text-sm underline text-gray-600 dark:text-gray-300">{dark ? 'Clair' : 'Sombre'}</button>
           <button onClick={onLogout} className="text-sm text-red-600 underline">
             {t('logout')}
           </button>

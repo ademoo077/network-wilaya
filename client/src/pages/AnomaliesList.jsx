@@ -134,9 +134,9 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
           {t('total')}: {pagination.total}
         </div>
         <div className="flex items-center gap-2">
-          <button disabled={pagination.page <= 1} onClick={() => updateFilters({ page: pagination.page - 1 })}>G</button>
+          <button disabled={pagination.page <= 1} onClick={() => updateFilters({ page: pagination.page - 1 })}>{t('precedent')}</button>
           <span>{pagination.page}</span>
-          <button disabled={pagination.page >= pagination.totalPages} onClick={() => updateFilters({ page: pagination.page + 1 })}>P</button>
+          <button disabled={pagination.page >= pagination.totalPages} onClick={() => updateFilters({ page: pagination.page + 1 })}>{t('suivant')}</button>
           <span>/ {pagination.totalPages}</span>
         </div>
         {selected.length > 0 && (

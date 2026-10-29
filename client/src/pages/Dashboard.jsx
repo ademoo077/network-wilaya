@@ -39,7 +39,11 @@ export default function Dashboard({ onDrillDown }) {
 
   const categoryData = topCategories.map((c) => ({
     name: c.domaine_name,
+    domaine_id: c.domaine_id,
     total: c.counts.non_traite + c.counts.en_cours + c.counts.traite,
+    non_traite: c.counts.non_traite,
+    en_cours: c.counts.en_cours,
+    traite: c.counts.traite,
   }));
 
   const weeklyData = weekly.map((w) => ({
@@ -79,6 +83,9 @@ export default function Dashboard({ onDrillDown }) {
             <Legend />
           </PieChart>
         </ResponsiveContainer>
+        {statutData.every((d) => d.value === 0) && (
+          <div className="text-center text-gray-500 dark:text-gray-400 text-sm mt-2">Aucune donnée sur la période</div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -93,6 +100,9 @@ export default function Dashboard({ onDrillDown }) {
             <Bar dataKey="treated" name={t('traitees') || 'Traitées'} fill="#22c55e" />
           </BarChart>
         </ResponsiveContainer>
+        {weeklyData.every((w) => w.received === 0 && w.treated === 0) && (
+          <div className="text-center text-gray-500 dark:text-gray-400 text-sm mt-2">Aucune donnée sur la période</div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">

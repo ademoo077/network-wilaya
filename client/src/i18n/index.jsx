@@ -9,7 +9,7 @@ const dictionaries = {
     username: 'Identifiant',
     password: 'Mot de passe',
     submit: 'Se connecter',
-    logout: 'Deconnexion',
+    logout: 'Déconnexion',
     welcome: 'Bienvenue',
     errorInvalid: 'Identifiants invalides',
     anomalies: 'Anomalies',
@@ -18,7 +18,7 @@ const dictionaries = {
     statut_en_cours: 'En cours',
     statut_traite: 'Traité',
     total: 'Total',
-    searchPlaceholder: 'Recherche...',
+    searchPlaceholder: 'Recherche…',
     all: 'Tous',
     epic: 'EPIC',
     agent: 'Agent',
@@ -29,7 +29,7 @@ const dictionaries = {
     enregistrerEtNouveau: 'Enregistrer et nouveau',
     annuler: 'Annuler',
     retour: 'Retour',
-    loading: 'Chargement...',
+    loading: 'Chargement…',
     vide: 'Aucune anomalie',
     date: 'Date',
     domaine: 'Domaine',
@@ -42,18 +42,23 @@ const dictionaries = {
     urgente: 'Urgente',
     normale: 'Normale',
     observations: 'Observations',
-    details: 'Details',
+    details: 'Détails',
     close: 'Fermer',
     nouveau: 'Nouveau',
     tauxTraitement: 'Taux de traitement',
-    delaiMoyen: 'Delai moyen',
-    repartitionStatuts: 'Repartition par statut',
-    evolutionHebdomadaire: 'Evolution hebdomadaire',
-    parCategorie: 'Par categorie',
-    recues: 'Recues',
-    traitees: 'Traitees',
+    delaiMoyen: 'Délai moyen',
+    repartitionStatuts: 'Répartition par statut',
+    evolutionHebdomadaire: 'Évolution hebdomadaire',
+    parCategorie: 'Par catégorie',
+    recues: 'Reçues',
+    traitees: 'Traitées',
     enRetard: 'En retard',
     urgentes: 'Urgentes',
+    nonAffecte: 'Non affecté',
+    precedent: 'Précédent',
+    suivant: 'Suivant',
+    affichage: 'Affichage',
+    sur: 'sur',
   },
   ar: {
     appName: 'تتبع الامتثال',
@@ -108,17 +113,25 @@ const dictionaries = {
     traitees: 'معالجة',
     enRetard: 'متأخرة',
     urgentes: 'عاجلة',
+    nonAffecte: 'غير مخصص',
+    precedent: 'السابق',
+    suivant: 'التالي',
+    affichage: 'عرض',
+    sur: 'من',
   },
 };
 
 const I18nContext = createContext(null);
 
 export function I18nProvider({ children }) {
-  const [lang, setLang] = useState('fr');
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem('lang') || 'fr'; } catch { return 'fr'; }
+  });
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = dir;
+    try { localStorage.setItem('lang', lang); } catch { /* ignore */ }
   }, [lang, dir]);
   const t = (key) => dictionaries[lang][key] ?? dictionaries.fr[key] ?? key;
   const value = { lang, dir, setLang, t };

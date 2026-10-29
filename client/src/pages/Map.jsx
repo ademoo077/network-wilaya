@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { apiFetch } from '../api';
@@ -11,15 +11,17 @@ const STATUS_COLORS = {
 
 export default function Map() {
   const containerRef = useRef(null);
+  const [tilesFailed, setTilesFailed] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
     const map = L.map(container).setView([36.7538, 3.0588], 12);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
+    tiles.on('tileerror', () => setTilesFailed(true));
 
     const divIcon = (color) => L.divIcon({
       className: '',
@@ -52,5 +54,14 @@ export default function Map() {
     };
   }, []);
 
-  return <div ref={containerRef} style={{ height: '60vh', width: '100%', background: '#e5e7eb', borderRadius: '0.5rem' }} />;
+  return (
+    <div className="space-y-2">
+      {tilesFailed && (
+        <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded text-sm text-gray-600 dark:text-gray-300">
+          Fond de carte indisponible hors-ligne — les marqueurs restent actifs.
+        </div>
+      )}
+      <div ref={containerRef} style={{ height: '60vh', width: '100%', background: '#e5e7eb', borderRadius: '0.5rem' }} />
+    </div>
+  );
 }

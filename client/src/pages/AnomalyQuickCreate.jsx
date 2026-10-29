@@ -82,7 +82,7 @@ export default function AnomalyQuickCreate({ onCreated }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4 max-w-3xl">
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4 max-w-3xl">
       <h2 className="text-xl font-bold">{t('nouvelleAnomalie')}</h2>
       {error && <div className="p-3 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
       <div>
@@ -121,7 +121,7 @@ export default function AnomalyQuickCreate({ onCreated }) {
         <div>
           <label className="block text-sm font-medium mb-1">{t('epic')}</label>
           <select value={epicId} onChange={(e) => setEpicId(e.target.value)}>
-            <option value="">{t('all')}</option>
+            <option value="">{t('nonAffecte')}</option>
             {epics.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
         </div>
@@ -149,11 +149,14 @@ export default function AnomalyQuickCreate({ onCreated }) {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t('observations')}</label>
-          <input value={observations} onChange={(e) => setObservations(e.target.value)} />
+          <textarea value={observations} onChange={(e) => setObservations(e.target.value)} rows={4} className="w-full" />
         </div>
       </div>
       <button type="submit" disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">
         {busy ? '...' : t('enregistrer')}
+      </button>
+      <button type="button" disabled={busy} onClick={async (e) => { e.preventDefault(); await handleSubmit(e); }} className="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded disabled:opacity-50">
+        {t('enregistrerEtNouveau')}
       </button>
     </form>
   );
