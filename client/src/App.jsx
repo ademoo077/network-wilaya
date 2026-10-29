@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import AnomaliesList from './pages/AnomaliesList';
 import AnomalyQuickCreate from './pages/AnomalyQuickCreate';
 import Dashboard from './pages/Dashboard';
+import Rapport from './pages/Rapport';
 
 function Shell() {
   const { t } = useI18n();
@@ -58,6 +59,8 @@ function Shell() {
         <AnomaliesList onOpen={() => {}} filters={anomaliesFilters} setFilters={setAnomaliesFilters} />
       ) : view === 'quick' ? (
         <AnomalyQuickCreate onCreated={() => {}} />
+      ) : view === 'rapport' ? (
+        <Rapport />
       ) : (
         <Dashboard onDrillDown={handleDrillDown} />
       )}
