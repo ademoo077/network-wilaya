@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useState } from 'react';
 import { apiFetch } from '../api';
 import { useI18n } from '../i18n';
 
@@ -56,9 +54,6 @@ export default function AnomalyQuickCreate({ onCreated }) {
   const [busy, setBusy] = useState(false);
   const [duplicate, setDuplicate] = useState(null);
 
-  const mapRef = useRef(null);
-  const containerRef = useRef(null);
-
   useEffect(() => {
     apiFetch('/references/domaines').then((d) => setDomaines(d.data)).catch(() => {});
     apiFetch('/references/dairas').then((d) => setDairas(d.data)).catch(() => {});
@@ -73,25 +68,6 @@ export default function AnomalyQuickCreate({ onCreated }) {
     apiFetch('/references/communes?dairaId=' + (dairaId || '')).then((d) => { setCommunes(d.data); setCommuneId(''); }).catch(() => {});
   }, [dairaId]);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const map = L.map(containerRef.current).setView([36.7538, 3.0588], 13);
-    mapRef.current = map;
-    const isDark = document.documentElement.classList.contains('dark');
-    L.tileLayer(isDark ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© CARTO' }).addTo(map);
-    return () => { map.remove(); mapRef.current = null; };
-  }, []);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map && gpsLat !== null && gpsLng !== null) {
-      map.setView([gpsLat, gpsLng], 15);
-      if (map._marker) map.removeLayer(map._marker);
-      const m = L.marker([gpsLat, gpsLng]).addTo(map);
-      map._marker = m;
-    }
-  }, [gpsLat, gpsLng]);
-
   async function checkDuplicate() {
     if (!lien) return;
     try {
@@ -104,6 +80,7 @@ export default function AnomalyQuickCreate({ onCreated }) {
     setGps(value);
     const parsed = parseGps(value);
     if (parsed) { setGpsLat(parsed.lat); setGpsLng(parsed.lng); }
+    else { setGpsLat(null); setGpsLng(null); }
   }
 
   function useMyPosition() {
@@ -129,8 +106,8 @@ export default function AnomalyQuickCreate({ onCreated }) {
           typeId: Number(typeId),
           dairaId: Number(dairaId),
           communeId: Number(communeId),
-          gpsLat: gpsLat ?? (gps ? Number(gps.split(',')[0]) : undefined),
-          gpsLng: gpsLng ?? (gps ? Number(gps.split(',')[1]) : undefined),
+          gpsLat: gpsLat ?? undefined,
+          gpsLng: gpsLng ?? undefined,
           statut,
           epicId: epicId ? Number(epicId) : undefined,
           priorite,
@@ -148,7 +125,7 @@ export default function AnomalyQuickCreate({ onCreated }) {
   const inputCls = 'h-11 w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--ink)]';
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6 space-y-4 max-w-5xl">
+    <form onSubmit={handleSubmit} className="bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] p-6 space-y-4 max-w-4xl">
       <h2 className="text-xl font-bold text-[var(--ink)]">{t('nouvelleAnomalie')}</h2>
       {error && <div className="p-3 bg-[var(--st-non-bg)] text-[var(--st-non)] rounded-[var(--r-md)] text-sm">{error}</div>}
       {duplicate && (
@@ -222,7 +199,6 @@ export default function AnomalyQuickCreate({ onCreated }) {
           <button type="button" onClick={useMyPosition} className="h-11 px-3 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface-2)] text-sm whitespace-nowrap">Ma position</button>
         </div>
         {gpsLat !== null && <div className="text-xs text-[var(--muted)] mt-1">Lat {gpsLat.toFixed(6)}, Lng {gpsLng.toFixed(6)}</div>}
-        <div ref={containerRef} className="mt-2 w-full h-40 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--surface-2)]" />
       </div>
 
       <div>
