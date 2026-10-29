@@ -16,6 +16,12 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
   const [epics, setEpics] = useState([]);
   const [agents, setAgents] = useState([]);
 
+  const domaineMap = useMemo(() => Object.fromEntries(domaines.map((d) => [d.id, d])), [domaines]);
+  const typeMap = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t])), [types]);
+  const dairaMap = useMemo(() => Object.fromEntries(dairas.map((d) => [d.id, d])), [dairas]);
+  const communeMap = useMemo(() => Object.fromEntries(communes.map((c) => [c.id, c])), [communes]);
+  const epicMap = useMemo(() => Object.fromEntries(epics.map((e) => [e.id, e])), [epics]);
+
   const filtersState = useMemo(() => filters || { page: 1, pageSize: 25 }, [filters]);
 
   const load = useCallback(async () => {
@@ -62,8 +68,19 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
   }, [filtersState.dairaId]);
 
   async function changeStatus(id, statut) {
-    await apiFetch(`/anomalies/${id}`, { method: 'PATCH', body: { statut } });
-    await load();
+    const row = items.find((r) => r.id === id);
+    const patch = { statut };
+    if ((statut === 'en_cours' || statut === 'traite') && !row?.epic_id) {
+      const epic = window.prompt('EPIC requis (id) pour ce statut :', '');
+      if (!epic) return;
+      patch.epicId = Number(epic);
+    }
+    try {
+      await apiFetch(`/anomalies/${id}`, { method: 'PATCH', body: patch });
+      await load();
+    } catch (e) {
+      alert(e.message);
+    }
   }
 
   async function bulkChangeStatus(statut) {
@@ -243,10 +260,10 @@ export default function AnomaliesList({ onOpen, filters, setFilters }) {
                       </select>
                       <span className={`inline-block w-2.5 h-2.5 rounded-full ms-2 ${STATUS_DOT[row.statut]}`} />
                     </td>
-                    <td className="p-3">{row.domaine_id}</td>
-                    <td className="p-3">{row.type_id}</td>
-                    <td className="p-3">{row.daira_id} / {row.commune_id}</td>
-                    <td className="p-3">{row.epic_id ?? '—'}</td>
+                    <td className="p-3">{domaineMap[row.domaine_id]?.name_ar || row.domaine_id}</td>
+                    <td className="p-3">{typeMap[row.type_id]?.name_ar || row.type_id}</td>
+                    <td className="p-3">{dairaMap[row.daira_id]?.name_fr || row.daira_id} / {communeMap[row.commune_id]?.name_fr || row.commune_id}</td>
+                    <td className="p-3">{row.epic_id ? (epicMap[row.epic_id]?.name || row.epic_id) : '—'}</td>
                     <td className="p-3">{row.verification}</td>
                     <td className="p-3">{row.priorite}</td>
                     <td className="p-3">
