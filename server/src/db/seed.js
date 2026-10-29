@@ -60,9 +60,16 @@ export function seedTaxonomy() {
 export function ensureSeedUsers() {
   const username = config.adminUsername;
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-  if (existing) return { created: false };
-
   const now = new Date().toISOString();
+
+  if (existing) {
+    if (config.adminPassword) {
+      db.prepare('UPDATE users SET password_hash = ?, must_change_password = 1, updated_at = ? WHERE username = ?').run(bcrypt.hashSync(config.adminPassword, 12), now, username);
+      console.log(`[seed] Mot de passe admin mis a jour: username=${username} password=${config.adminPassword} (must_change_password=1)`);
+    }
+    return { created: false, updated: !!config.adminPassword };
+  }
+
   const password = config.adminPassword || Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   const hash = bcrypt.hashSync(password, 12);
   db.prepare('INSERT INTO users (username, full_name, password_hash, role, active, must_change_password, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 1, ?, ?)').run(username, 'Administrateur', hash, 'admin', now, now);

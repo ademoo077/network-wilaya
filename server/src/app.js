@@ -68,8 +68,8 @@ export function createApp() {
 
   const distDir = path.resolve(process.cwd(), 'client/dist');
   if (fs.existsSync(distDir)) {
-    app.use(express.static(distDir));
-    app.get('*', (req, res) => res.sendFile(path.join(distDir, 'index.html')));
+    app.use(express.static(distDir, { etag: false, lastModified: false, setHeaders: (res) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); res.setHeader('Pragma', 'no-cache'); res.setHeader('Expires', '0'); } }));
+    app.get('*', (req, res) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); res.sendFile(path.join(distDir, 'index.html')); });
   }
 
   app.use('/api', (req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ressource introuvable' } }));
