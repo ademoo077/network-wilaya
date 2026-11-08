@@ -30,7 +30,7 @@ export function securityHeaders() {
         upgradeInsecureRequests: null,
       },
     },
-    hsts: config.cookieSecure ? undefined : false,
+    hsts: config.https ? undefined : false,
     crossOriginOpenerPolicy: false,
     originAgentCluster: false,
     crossOriginEmbedderPolicy: false,

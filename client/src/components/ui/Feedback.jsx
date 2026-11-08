@@ -27,18 +27,18 @@ export function EmptyState({ icon: Icon = Info, title, description, action, comp
 const ToastContext = createContext(null);
 export function ToastProvider({ children }) {
   const [items, setItems] = useState([]);
-  const push = useCallback((message, variant = 'success') => {
+  const push = useCallback((message, variant = 'success', action = null) => {
     const id = `${Date.now()}-${Math.random()}`;
-    setItems((current) => [...current, { id, message, variant }]);
+    setItems((current) => [...current, { id, message, variant, action }]);
     window.setTimeout(() => setItems((current) => current.filter((item) => item.id !== id)), 4500);
   }, []);
   const value = useMemo(() => ({ push }), [push]);
   return <ToastContext.Provider value={value}>{children}<div className="fixed end-4 top-4 z-[100] grid w-[min(92vw,380px)] gap-2" aria-live="polite">{items.map((item) => <Toast key={item.id} {...item} onClose={() => setItems((current) => current.filter((entry) => entry.id !== item.id))} />)}</div></ToastContext.Provider>;
 }
 
-function Toast({ message, variant, onClose }) {
+function Toast({ message, variant, action, onClose }) {
   const Icon = variant === 'danger' ? AlertCircle : variant === 'warning' ? TriangleAlert : CheckCircle2;
-  return <div className="flex items-center gap-3 rounded-md border border-border bg-surface p-3 text-sm text-ink shadow-3"><Icon className={`h-5 w-5 ${variant === 'danger' ? 'text-danger' : variant === 'warning' ? 'text-warning' : 'text-straite'}`} aria-hidden="true" /><span className="min-w-0 flex-1">{message}</span><IconButton aria-label="×" className="h-8 w-8" onClick={onClose}><X className="h-4 w-4" /></IconButton></div>;
+  return <div className="flex items-center gap-3 rounded-md border border-border bg-surface p-3 text-sm text-ink shadow-3"><Icon className={`h-5 w-5 ${variant === 'danger' ? 'text-danger' : variant === 'warning' ? 'text-warning' : 'text-straite'}`} aria-hidden="true" /><span className="min-w-0 flex-1">{message}</span>{action && <Button size="sm" variant="ghost" onClick={() => { action.onClick?.(); onClose(); }}>{action.label}</Button>}<IconButton aria-label="×" className="h-8 w-8" onClick={onClose}><X className="h-4 w-4" /></IconButton></div>;
 }
 
 export function ErrorState({ message, onRetry }) {

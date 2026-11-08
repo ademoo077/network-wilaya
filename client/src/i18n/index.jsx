@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import fr from './fr.json';
 import ar from './ar.json';
+import frV5 from './fr-v5.json';
+import arV5 from './ar-v5.json';
 
-const dictionaries = { fr, ar };
+const dictionaries = { fr: { ...fr, ...frV5 }, ar: { ...ar, ...arV5 } };
 const I18nContext = createContext(null);
 
 function storedLanguage() {

@@ -15,4 +15,10 @@ router.post('/locate', requireAuth, limiter, (req, res) => {
   res.json({ item: locatePoint(getDb(), parsed.data.lat, parsed.data.lng) });
 });
 
+router.get('/limit/:communeId', requireAuth, (req, res) => {
+  const row = getDb().prepare('SELECT geojson FROM limites_communes WHERE commune_id = ?').get(Number(req.params.communeId));
+  if (!row) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Limite communale non configuree' } });
+  return res.json({ item: JSON.parse(row.geojson) });
+});
+
 export default router;

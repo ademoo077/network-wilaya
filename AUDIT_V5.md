@@ -81,3 +81,13 @@ Le tag demandé `v4-avant-v5` ne peut donc pas désigner un commit V4 historique
 - Les champs GPS V5 passent par les schémas et le service ; retirer le GPS efface source/précision/confirmation. Les répétitions sont rattachées à la fiche mère et comptées.
 - Garde SSRF testée sur domaines, ports, IPv4/IPv6 privés, DNS rebinding, redirection interne et nombre de sauts ; aucune requête sortante n'est encore activée.
 - Fermeture : 15 tests d'intégration géographique + 23 tests SSRF ; chaîne complète à 22 fichiers / 230 tests, build/lint/styles/contrastes verts.
+
+### Phase 4 — Collage intelligent UI
+
+- `SmartPasteZone` : zone dédiée (bords pointillés), bouton « Coller depuis le presse-papiers » uniquement en contexte sécurisé, placeholder Ctrl+V hors HTTPS, glisser-déposer texte/fichiers, analyse via `parseSmartPaste` partagé, puces « ce que j'ai compris » (liens, positions, dates) modifiables/supprimables, choix explicite quand plusieurs positions distinctes (> 100 m), message guidé si lien social sans position.
+- Formulaire : capture globale `paste` sur `smart-paste`, `lien_url`, `gps_text` (sans intercepter les autres champs) ; application non destructive (champs déjà renseignés manuellement protégés via `manualFields`) avec toast + action « Annuler » ; remplissage lien/plateforme/contenu/date estimée/GPS/observations optionnelles ; suppression de puce retire le champ auto-rempli correspondant quand il n'a pas été modifié manuellement.
+- GPS/carte : mini-carte avec marqueur déplaçable, clic carte, badge/source (`gps_source`), case « Position confirmée », copie/OSM/Waze, limites communales connues (`/api/geo/limit/:id`), anomalies proches (`/anomalies/nearby`) affichées en liste + marqueurs, bandeau doublon géographique avec actions (voir fiche / autre anomalie / lier comme signalement répété via `lie_a_id`).
+- EXIF : lecture navigateur via `exifr` (import dynamique), proposition d'utiliser la position/photo, message clair si absente ; HTTPS : bouton « Ma position » désactivé avec explication hors contexte sécurisé.
+- Admin : onglet « Limites territoriales » (aperçu, propriété, associations manuelles, commit) branché sur `/api/admin/limites/import-geojson`.
+- Détail : affichage du compteur « Signalée N fois » quand `repetitions_count > 1` (donnée déjà fournie par l'API).
+- Chaîne : build, 22 fichiers/230 tests, lint, check:styles, check:a11y tokens et `scripts/e2e.js` (health/auth/liste/stats/parse-paste/locate) verts. Les scénarios UI 18–26 ne sont pas rejoués automatiquement par navigateur dans cet environnement.

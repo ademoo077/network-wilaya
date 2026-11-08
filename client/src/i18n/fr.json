@@ -172,6 +172,7 @@
   "form.duplicateTitle": "Ce lien est déjà utilisé",
   "form.duplicateQuestion": "S'agit-il d'une anomalie différente de celles-ci ?",
   "form.forceDuplicate": "Oui, c'est une autre anomalie",
+  "form.repetitions": "Signalée {count} fois",
   "form.locationButton": "Ma position",
   "form.openMaps": "Ouvrir dans Google Maps",
   "form.gpsShort": "Lien court non résolu hors-ligne : collez les coordonnées.",

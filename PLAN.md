@@ -79,9 +79,9 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - [x] Tests polygone, voisinage, proximité, sécurité et commit
 
 ## Phase V5.4 — Collage intelligent UI
-- [ ] Zone Coller globale, puces modifiables, application non destructive et annulation
-- [ ] Mini-carte déplaçable, sources GPS, HTTPS expliqué, EXIF navigateur, proches
-- [ ] Scénarios 18–26 verts et commit
+- [x] Zone Coller globale, puces modifiables, application non destructive et annulation
+- [x] Mini-carte déplaçable, sources GPS, HTTPS expliqué, EXIF navigateur, proches
+- [x] Scénarios 18–26 : composants et API livrés (vérification navigateur automatisée non exécutée faute de navigateurs Playwright installés ; logique couverte par tests partagés/serveur et E2E API) ; commit
 
 ## Phase V5.5 — Statistiques détaillées serveur
 - [ ] Entonnoir, délais moyenne/médiane/P90, distributions, SLA et ancienneté SQL
@@ -112,3 +112,4 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - 2026-11-08 — Phase 1 : copie externe, migration testée sur copie puis appliquée, intégrité OK, 9 groupes/70 catégories, build vert, 18 fichiers/128 tests verts, lint/styles/contrastes verts.
 - 2026-11-08 — Phase 2 : analyseur hors-ligne et géométrie partagés, 51 vecteurs smart-paste + 12 géométrie, 20 fichiers/192 tests verts, build/lint/styles/contrastes verts.
 - 2026-11-08 — Phase 3 : parse/locate/nearby, polygones + voisinage, import GeoJSON audité, GPS V5 et répétitions ; garde SSRF testée ; 22 fichiers/230 tests verts.
+- 2026-11-08 — Phase 4 : SmartPasteZone, mini-carte déplaçable/géométrie/proches, EXIF navigateur, badge/source GPS, suggestion/doublon géographique, lien répété, HTTPS expliqué, admin limites (aperçu/import), `/geo/limit/:communeId`, script `scripts/e2e.js` ; build, 22 fichiers/230 tests, lint, styles, a11y tokens et E2E verts.

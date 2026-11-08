@@ -1,4 +1,7 @@
 import { pathToFileURL } from 'node:url';
+import fs from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
 import { config, ensureDirs } from './config/index.js';
 import { logger } from './utils/logger.js';
 import { prepareDatabase, startBackgroundJobs } from './bootstrap.js';
@@ -9,8 +12,15 @@ export async function startServer() {
   ensureDirs();
   const prepared = await prepareDatabase();
   const app = createApp();
-  const server = app.listen(config.port, config.host, () => {
-    logger.info(`Serveur démarré sur http://${config.host}:${config.port} (${config.env})`, {
+  if (config.https && (!fs.existsSync(config.httpsCert) || !fs.existsSync(config.httpsKey))) {
+    throw new Error('HTTPS activé mais certificat ou clé introuvable — lancez npm run https:setup');
+  }
+  const server = config.https
+    ? https.createServer({ cert: fs.readFileSync(config.httpsCert), key: fs.readFileSync(config.httpsKey) }, app)
+    : http.createServer(app);
+  server.listen(config.port, config.host, () => {
+    const protocol = config.https ? 'https' : 'http';
+    logger.info(`Serveur démarré sur ${protocol}://${config.host}:${config.port} (${config.env})`, {
       version: config.version,
       db: config.dbPath,
       taxonomie: prepared.taxonomy,

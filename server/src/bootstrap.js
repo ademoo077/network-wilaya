@@ -10,6 +10,8 @@ export async function prepareDatabase({ db = getDb(), seed = true, backup = true
   runMigrations(db, { logger: log });
   const taxonomy = seed ? ensureTaxonomy(db, config.seedCsv, { logger: log }) : null;
   const groups = seed ? ensureDomainGroups(db, config.groupsCsv, { logger: log }) : null;
+  db.prepare(`INSERT INTO parametres(cle,valeur) VALUES ('https_actif',?)
+              ON CONFLICT(cle) DO UPDATE SET valeur=excluded.valeur`).run(config.https ? '1' : '0');
   const admin = await ensureAdmin(db, config, log);
   if (backup) {
     try {

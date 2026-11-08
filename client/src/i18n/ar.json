@@ -172,6 +172,7 @@
   "form.duplicateTitle": "هذا الرابط مستعمل مسبقاً",
   "form.duplicateQuestion": "هل هذه نقطة سوداء مختلفة عن الحالات التالية؟",
   "form.forceDuplicate": "نعم، إنها حالة أخرى",
+  "form.repetitions": "تم الإبلاغ عنها {count} مرة",
   "form.locationButton": "موقعي",
   "form.openMaps": "فتح في خرائط Google",
   "form.gpsShort": "لا يمكن حل الرابط المختصر دون إنترنت؛ ألصق الإحداثيات.",
