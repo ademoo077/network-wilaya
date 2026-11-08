@@ -1,26 +1,32 @@
-import { getUserById } from '../services/userService.js';
+import { getDb } from '../db/index.js';
+import { readSession } from '../services/sessions.js';
+import { unauthorized, forbidden } from '../utils/errors.js';
 
-export function requireAuth(req, res, next) {
-  const userId = req.session?.userId;
-  if (!userId) {
-    return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentification requise' } });
+export function attachUser(req, _res, next) {
+  try {
+    const session = readSession(getDb(), req);
+    if (session) {
+      req.session = { id: session.sessionId, csrf: session.csrf };
+      req.user = session.user;
+    }
+  } catch {
+    // une session illisible est traitée comme non authentifiée
   }
-  const user = getUserById(userId);
-  if (!user || user.active !== 1) {
-    return res.status(401).json({ error: { code: 'AUTH_SESSION_INVALID', message: 'Session invalide' } });
-  }
-  req.user = user;
   next();
 }
 
-export function requireRoles(...roles) {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentification requise' } });
-    }
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Acces refuse pour ce role' } });
-    }
-    next();
+export function requireAuth(req, _res, next) {
+  if (!req.user) return next(unauthorized());
+  return next();
+}
+
+export function requireRole(...roles) {
+  return (req, _res, next) => {
+    if (!req.user) return next(unauthorized());
+    if (!roles.includes(req.user.role)) return next(forbidden('Votre rôle ne permet pas cette action'));
+    return next();
   };
 }
+
+export const requireAdmin = requireRole('admin');
+export const requireWrite = requireRole('admin', 'operateur');

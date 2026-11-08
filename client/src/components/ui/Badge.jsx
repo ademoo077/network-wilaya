@@ -1,21 +1,33 @@
-const tone = {
-  non_traite: 'bg-[var(--st-non-bg)] text-[var(--st-non)]',
-  en_cours: 'bg-[var(--st-cours-bg)] text-[var(--st-cours)]',
-  traite: 'bg-[var(--st-traite-bg)] text-[var(--st-traite)]',
-  default: 'bg-[var(--surface-2)] text-[var(--ink-2)]',
+import { AlertCircle, CheckCircle2, CircleDot, Clock3, HelpCircle, ShieldAlert } from 'lucide-react';
+import { useI18n } from '../../i18n/index.jsx';
+
+const statusConfig = {
+  non_traite: ['bg-stnonbg text-stnon', AlertCircle],
+  en_cours: ['bg-stcoursbg text-stcours', Clock3],
+  traite: ['bg-straitebg text-straite', CheckCircle2],
+};
+const verificationConfig = {
+  a_verifier: ['bg-surface2 text-muted', HelpCircle],
+  confirmee: ['bg-straitebg text-straite', CheckCircle2],
+  infirmee: ['bg-stnonbg text-stnon', AlertCircle],
+};
+const priorityConfig = {
+  normale: ['bg-surface2 text-ink2', CircleDot],
+  haute: ['bg-stcoursbg text-stcours', ShieldAlert],
+  urgente: ['bg-stnonbg text-stnon', AlertCircle],
 };
 
-export function Badge({ tone: t = 'default', className = '', children }) {
-  return <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${tone[t] || tone.default} ${className}`}>{children}</span>;
+function Badge({ value, config, prefix }) {
+  const { t } = useI18n();
+  const [classes, Icon] = config[value] || ['bg-surface2 text-muted', CircleDot];
+  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${classes}`}><Icon className="h-3.5 w-3.5" aria-hidden="true" />{t(`${prefix}.${value}`)}</span>;
 }
 
-export function StatusBadge({ status }) {
-  const label = status === 'non_traite' ? 'Non traité' : status === 'en_cours' ? 'En cours' : 'Traité';
-  const icon = status === 'non_traite' ? '●' : status === 'en_cours' ? '◐' : '✓';
-  return <Badge tone={status}><span aria-hidden>{icon}</span> {label}</Badge>;
-}
+export function StatusBadge({ value }) { return <Badge value={value} config={statusConfig} prefix="status" />; }
+export function VerificationBadge({ value }) { return <Badge value={value} config={verificationConfig} prefix="verification" />; }
+export function PriorityBadge({ value }) { return <Badge value={value} config={priorityConfig} prefix="priority" />; }
 
-export function PriorityBadge({ priority }) {
-  const color = priority === 'urgente' ? 'text-[var(--st-non)]' : priority === 'haute' ? 'text-[var(--st-cours)]' : 'text-[var(--muted)]';
-  return <span className={`text-xs font-medium ${color}`}>{priority}</span>;
+export function PlatformBadge({ value }) {
+  const { t } = useI18n();
+  return <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs font-semibold text-ink2"><span className="grid h-6 w-6 place-items-center rounded-full bg-brand-100 text-[10px] font-black text-brand-800">{String(value || '?').slice(0, 2).toUpperCase()}</span>{t(`platform.${value}`)}</span>;
 }

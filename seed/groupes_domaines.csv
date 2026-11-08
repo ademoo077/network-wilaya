@@ -1,0 +1,71 @@
+ordre_groupe,groupe_fr,groupe_ar,domaine_ar
+1,Propreté et déchets,النظافة والنفايات,نفايات منزلية
+1,Propreté et déchets,النظافة والنفايات,النفايات الصلبة
+1,Propreté et déchets,النظافة والنفايات,نفايات مختلطة
+1,Propreté et déchets,النظافة والنفايات,نفايات خضراء
+1,Propreté et déchets,النظافة والنفايات,عملية الكنس
+1,Propreté et déchets,النظافة والنفايات,حاويات القمامة
+1,Propreté et déchets,النظافة والنفايات,مخلفات بحرية
+2,Assainissement et eaux,التطهير والمياه,البالوعات
+2,Assainissement et eaux,التطهير والمياه,أغطية قنوات الصرف الصحي
+2,Assainissement et eaux,التطهير والمياه,تسرب المياه الصالحة للشرب
+2,Assainissement et eaux,التطهير والمياه,تسرب مياه الصرف الصحي
+2,Assainissement et eaux,التطهير والمياه,خزان الصرف الصحي
+3,Voirie et signalisation,الطرق والإشارات,الإشارات العمودية
+3,Voirie et signalisation,الطرق والإشارات,الإشارات الأفقية
+3,Voirie et signalisation,الطرق والإشارات,واقيات مواقف الحافلات
+3,Voirie et signalisation,الطرق والإشارات,الطريق
+3,Voirie et signalisation,الطرق والإشارات,أرصفة
+4,Éclairage et réseaux,الإنارة والشبكات,الإنارة العمومية
+5,Espaces verts et environnement,المساحات الخضراء والبيئة,حشائش ضارة
+5,Espaces verts et environnement,المساحات الخضراء والبيئة,نقص في العناية بالمساحة الخضراء
+5,Espaces verts et environnement,المساحات الخضراء والبيئة,العناية بالأشجار
+4,Éclairage et réseaux,الإنارة والشبكات,حالة الأعمدة الكهربائية
+3,Voirie et signalisation,الطرق والإشارات,أشغال طور الإنجاز
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,الرايات الوطنية
+2,Assainissement et eaux,التطهير والمياه,أودية
+3,Voirie et signalisation,الطرق والإشارات,حواجز حديدية
+3,Voirie et signalisation,الطرق والإشارات,حواجز إسمنتية
+2,Assainissement et eaux,التطهير والمياه,ركود المياه
+3,Voirie et signalisation,الطرق والإشارات,سيارات مهترئة
+8,Occupation illégale,الاستغلال غير القانوني,الإستغلال الغير قانوني للطريق العام
+8,Occupation illégale,الاستغلال غير القانوني,الإستغلال الغير قانوني للشواطئ
+2,Assainissement et eaux,التطهير والمياه,أقبية العمارات
+4,Éclairage et réseaux,الإنارة والشبكات,أقبية الأسلاك الهاتفية
+2,Assainissement et eaux,التطهير والمياه,مجاري مياه الأمطار
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,الساعات
+4,Éclairage et réseaux,الإنارة والشبكات,عمود أسلاك الهاتف
+6,Bâtiments et habitat,البنايات والسكن,واجهات المباني
+3,Voirie et signalisation,الطرق والإشارات,مدخل الموقف
+6,Bâtiments et habitat,البنايات والسكن,بناية مهدمة
+3,Voirie et signalisation,الطرق والإشارات,جسر المشاة
+5,Espaces verts et environnement,المساحات الخضراء والبيئة,حيونات ظالة
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,مقاعد عمومية
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,نافورات المياه
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,لافتات إشهارية
+6,Bâtiments et habitat,البنايات والسكن,حالة السلالم والأدراج
+8,Occupation illégale,الاستغلال غير القانوني,قوارب الصيد
+9,Risques naturels,المخاطر الطبيعية,إنهيار صخري
+9,Risques naturels,المخاطر الطبيعية,زحف الرمال
+9,Risques naturels,المخاطر الطبيعية,إنجراف التربة
+2,Assainissement et eaux,التطهير والمياه,الينابيع
+6,Bâtiments et habitat,البنايات والسكن,حالة المصاعد
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,الملاعب الجوارية
+6,Bâtiments et habitat,البنايات والسكن,بيوت قصديرية
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,فضاء التسلية
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,مرشات
+3,Voirie et signalisation,الطرق والإشارات,المنحدرات
+1,Propreté et déchets,النظافة والنفايات,سلات المهملات
+3,Voirie et signalisation,الطرق والإشارات,لافتات
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,مقصورات
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,مداخل
+3,Voirie et signalisation,الطرق والإشارات,ممهلات
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,وضعية القبور
+2,Assainissement et eaux,التطهير والمياه,خزان المياه
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,المنصة الإسمنتية
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,دورات المياه
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,خزانة طفاية الحرائق
+6,Bâtiments et habitat,البنايات والسكن,أقبية
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,ساحات عمومية
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,نقص في الغسل
+7,Équipements et mobilier urbain,التجهيزات والأثاث الحضري,نصب تذكاري مهترئ

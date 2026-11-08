@@ -1,78 +1,115 @@
 import express from 'express';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import session from 'express-session';
-import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
+import { VERSION } from '@anm/shared';
 import { config } from './config/index.js';
-import authRoutes from './routes/authRoutes.js';
-import anomaliesRoutes from './routes/anomaliesRoutes.js';
-import referenceRoutes from './routes/referenceRoutes.js';
-import statsRoutes from './routes/statsRoutes.js';
-import reportsRoutes from './routes/reportsRoutes.js';
-import adminUsersRoutes from './routes/adminUsersRoutes.js';
-import adminAuditRoutes from './routes/adminAuditRoutes.js';
-import adminBackupRoutes from './routes/adminBackupRoutes.js';
-import adminReferencesRoutes from './routes/adminReferencesRoutes.js';
-import adminAnomalyExportRoutes from './routes/adminAnomalyExportRoutes.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import { getDb } from './db/index.js';
+import { getParams } from './services/settings.js';
+import { securityHeaders } from './middleware/security.js';
+import { attachUser } from './middleware/auth.js';
+import { csrfProtection } from './middleware/csrf.js';
+import { maintenanceMode } from './middleware/maintenance.js';
+import { errorHandler, notFoundApi } from './middleware/errors.js';
+import authRoutes from './routes/auth.js';
+import refRoutes from './routes/ref.js';
+import usersRoutes from './routes/users.js';
+import settingsRoutes from './routes/settings.js';
+import anomaliesRoutes from './routes/anomalies.js';
+import piecesRoutes from './routes/pieces.js';
+import statsRoutes from './routes/stats.js';
+import reportsRoutes from './routes/reports.js';
+import adminRoutes from './routes/admin.js';
+import { setupStatus } from './services/refs.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distDir = config.clientDist;
+
+function apiRateLimit() {
+  return rateLimit({
+    windowMs: 60 * 1000,
+    max: config.env === 'test' ? 100000 : 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (_req, res) => res.status(429).json({
+      error: { code: 'TROP_DE_REQUETES', message: 'Trop de requêtes — réessayez dans une minute' },
+    }),
+  });
+}
+
+function health(_req, res) {
+  let dbOk = false;
+  try {
+    dbOk = getDb().prepare('SELECT 1 AS ok').get()?.ok === 1;
+  } catch {
+    dbOk = false;
+  }
+  const payload = { ok: dbOk, version: VERSION, db: dbOk, at: new Date().toISOString() };
+  return res.status(dbOk ? 200 : 503).json(payload);
+}
+
+function configPayload() {
+  const params = getParams(getDb());
+  return {
+    version: VERSION,
+    nom_cellule: params.nom_cellule,
+    tile_url: params.tile_url,
+    week_start_day: Number(params.week_start_day) || 0,
+    gps_bbox: params.gps_bbox,
+  };
+}
+
+function mountStatic(app) {
+  if (!fs.existsSync(distDir)) return;
+  app.use(express.static(distDir, {
+    index: false,
+    etag: true,
+    lastModified: false,
+    setHeaders(res, filePath) {
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    },
+  }));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    return res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
 
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org', 'https://*.basemaps.cartocdn.com', 'https://server.arcgisonline.com', 'https://*.arcgisonline.com'],
-          connectSrc: ["'self'"],
-          fontSrc: ["'self'"],
-          objectSrc: ["'none'"],
-          frameAncestors: ["'none'"],
-        },
-      },
-    }),
-  );
-  app.use(express.json({ limit: '10kb' }));
-  app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+  app.use(maintenanceMode);
+  app.use(securityHeaders());
+  app.use(express.json({ limit: '256kb' }));
+  app.use(express.urlencoded({ extended: false, limit: '256kb' }));
   app.use(cookieParser());
-  app.use(
-    session({
-      secret: config.sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      cookie: { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' },
-    }),
-  );
-  app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, limit: 200, standardHeaders: true, legacyHeaders: false }));
-  app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false }));
+
+  app.get('/api/health', health);
+  app.get('/api/config', (_req, res) => res.json(configPayload()));
+
+  app.use('/api', apiRateLimit());
+  app.use('/api', attachUser);
+  app.use('/api', csrfProtection);
+
   app.use('/api/auth', authRoutes);
+  app.use('/api/ref', refRoutes);
+  app.use('/api/users', usersRoutes);
+  app.use('/api/settings', settingsRoutes);
   app.use('/api/anomalies', anomaliesRoutes);
-  app.use('/api/references', referenceRoutes);
+  app.use('/api/pieces', piecesRoutes);
   app.use('/api/stats', statsRoutes);
   app.use('/api/reports', reportsRoutes);
-  app.use('/api/admin/users', adminUsersRoutes);
-  app.use('/api/admin/audit', adminAuditRoutes);
-  app.use('/api/admin/backup', adminBackupRoutes);
-  app.use('/api/admin/references', adminReferencesRoutes);
-  app.use('/api/admin/anomalies', adminAnomalyExportRoutes);
-  app.get('/api/health', (req, res) => res.json({ ok: true, service: 'wilaya-anomalies-api', at: new Date().toISOString() }));
-  app.get('/api/config', (req, res) => res.json({ tileUrl: config.tileUrl }));
+  app.use('/api/admin', adminRoutes);
+  app.get('/api/setup/status', (_req, res) => res.json(setupStatus(getDb())));
 
-  const distDir = path.resolve(process.cwd(), 'client/dist');
-  if (fs.existsSync(distDir)) {
-    app.use(express.static(distDir, { etag: false, lastModified: false, setHeaders: (res) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); res.setHeader('Pragma', 'no-cache'); res.setHeader('Expires', '0'); } }));
-    app.get('*', (req, res) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); res.sendFile(path.join(distDir, 'index.html')); });
-  }
-
-  app.use('/api', (req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ressource introuvable' } }));
+  app.use('/api', notFoundApi);
+  mountStatic(app);
   app.use(errorHandler);
   return app;
 }

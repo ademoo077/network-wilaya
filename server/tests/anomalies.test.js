@@ -1,153 +1,214 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
-import bcrypt from 'bcryptjs';
+import { addDays, todayAlgiers } from '@anm/shared';
 import { createApp } from '../src/app.js';
-import db from '../src/db/database.js';
-import { runMigrations } from '../src/db/migrations/index.js';
-import { seedTaxonomy } from '../src/db/seed.js';
+import { freshDatabase, login, write, anomalyPayload } from './helpers.js';
 
-const app = createApp();
+let app;
+let refs;
+let agent;
+let csrf;
 
-beforeAll(() => {
-  runMigrations();
-  seedTaxonomy();
-  db.prepare('DELETE FROM anomalie_historique').run();
-  db.prepare('DELETE FROM pieces_jointes').run();
-  db.prepare('DELETE FROM anomalies').run();
-  db.prepare('DELETE FROM users').run();
+const today = todayAlgiers();
+const day = (offset) => addDays(today, offset);
+
+beforeAll(async () => {
+  ({ refs } = freshDatabase());
+  app = createApp();
+  ({ agent, csrf } = await login(app, 'admin'));
 });
 
-describe('Anomalies API', () => {
-  let agent;
-  let refs;
+async function create(payload) {
+  const res = await write(agent, csrf, 'post', '/api/anomalies', payload);
+  return res;
+}
 
-  beforeAll(async () => {
-    const now = new Date().toISOString();
-    db.prepare('INSERT INTO users (username, full_name, password_hash, role, active, must_change_password, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 0, ?, ?)').run('operateur_test', 'Operateur Test', bcrypt.hashSync('Password123!', 12), 'operateur', now, now);
+async function transition(id, body, endpoint = 'statut') {
+  return write(agent, csrf, 'post', `/api/anomalies/${id}/${endpoint}`, body);
+}
 
-    const agentRef = request.agent(app);
-    const loginRes = await agentRef.post('/api/auth/login').send({ username: 'operateur_test', password: 'Password123!' });
-    expect(loginRes.status).toBe(200);
-    agent = agentRef;
+describe('Création et doublons', () => {
+  let first;
 
-    const daira = db.prepare('INSERT INTO dairas (name_fr, name_ar, actif) VALUES (?, ?, 1)').run('Daia Test', 'daia_test_ar');
-    const dairaId = Number(daira.lastInsertRowid);
-    const commune = db.prepare('INSERT INTO communes (daira_id, name_fr, name_ar, actif) VALUES (?, ?, ?, 1)').run(dairaId, 'Commune Test', 'commune_test_ar');
-    const communeId = Number(commune.lastInsertRowid);
-    const epic = db.prepare('INSERT INTO epics (name, sigle, contact_nom, contact_tel, actif) VALUES (?, ?, ?, ?, 1)').run('EPIC Test', 'EPCT', 'Contact', '0500000000');
-    const epicId = Number(epic.lastInsertRowid);
-    const domaine = db.prepare('SELECT id FROM domaines ORDER BY id LIMIT 1').get();
-    const type = db.prepare('SELECT id, domaine_id FROM types_anomalie WHERE domaine_id = ? ORDER BY id LIMIT 1').get(domaine.id);
-
-    refs = { dairaId, communeId, epicId, domaineId: domaine.id, typeId: type.id };
-  });
-
-  it('POST /api/anomalies -> 201 cree une anomalie', async () => {
-    const res = await agent.post('/api/anomalies').send({
-      plateforme: 'facebook',
-      lienUrl: 'https://facebook.com/watch?v=abc123',
-      domaineId: refs.domaineId,
-      typeId: refs.typeId,
-      dairaId: refs.dairaId,
-      communeId: refs.communeId,
-      adresseTexte: 'Rue Test',
-      statut: 'non_traite',
-    });
+  it('crée une anomalie avec référence séquentielle et URL normalisée', async () => {
+    const res = await create(anomalyPayload(refs, {
+      lien_url: 'https://www.facebook.com/watch/?v=123456&utm_source=test&fbclid=abc#fragment',
+      date_signalement: day(-5),
+    }));
     expect(res.status).toBe(201);
-    expect(res.body.anomaly.reference).toMatch(/^ANM-\d{4}-\d{5}$/);
+    first = res.body.item;
+    expect(first.reference).toMatch(/^ANM-\d{4}-00001$/);
+    expect(first.plateforme).toBe('facebook');
+    expect(first.lien_normalise).toBe('https://facebook.com/watch?v=123456');
+    expect(first.statut).toBe('non_traite');
+    expect(first.version).toBe(1);
   });
 
-  it('POST /api/anomalies -> 400 INTEGRITY si le type n appartient pas au domaine', async () => {
-    const otherDomaine = db.prepare('SELECT id FROM domaines WHERE id != ? ORDER BY id LIMIT 1').get(refs.domaineId);
-    const otherType = db.prepare('SELECT id FROM types_anomalie WHERE domaine_id = ? ORDER BY id LIMIT 1').get(otherDomaine.id);
-    const res = await agent.post('/api/anomalies').send({
-      plateforme: 'youtube',
-      lienUrl: 'https://youtube.com/watch?v=xyz',
-      domaineId: refs.domaineId,
-      typeId: otherType.id,
-      dairaId: refs.dairaId,
-      communeId: refs.communeId,
-    });
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('INTEGRITY');
+  it('avertit DUPLICATE_LINK puis accepte une autre anomalie du même lien', async () => {
+    const sameLink = await create(anomalyPayload(refs, {
+      lien_url: 'https://facebook.com/watch/?v=123456', date_signalement: day(-5),
+      daira_id: refs.otherDairaId, commune_id: refs.otherCommuneId,
+    }));
+    expect(sameLink.status).toBe(409);
+    expect(sameLink.body.error.code).toBe('DUPLICATE_LINK');
+    expect(sameLink.body.error.details.length).toBeGreaterThan(0);
+    const forced = await create(anomalyPayload(refs, {
+      lien_url: 'https://facebook.com/watch/?v=123456', date_signalement: day(-4),
+      daira_id: refs.otherDairaId, commune_id: refs.otherCommuneId, force_duplicate: true,
+    }));
+    expect(forced.status).toBe(201);
   });
 
-  it('POST /api/anomalies -> 400 si statut=traite sans EPIC', async () => {
-    const res = await agent.post('/api/anomalies').send({
-      plateforme: 'tiktok',
-      lienUrl: 'https://tiktok.com/@user/video/1',
-      domaineId: refs.domaineId,
-      typeId: refs.typeId,
-      dairaId: refs.dairaId,
-      communeId: refs.communeId,
-      statut: 'traite',
-    });
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe('INTEGRITY');
+  it('refuse DUPLICATE_STRICT même avec force_duplicate', async () => {
+    const res = await create(anomalyPayload(refs, {
+      lien_url: 'https://facebook.com/watch/?v=123456', date_signalement: day(-3), force_duplicate: true,
+    }));
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('DUPLICATE_STRICT');
   });
 
-  it('GET /api/anomalies/check-duplicate -> true pour un lien normalise existant', async () => {
-    const res = await agent.get('/api/anomalies/check-duplicate?url=' + encodeURIComponent('https://facebook.com/watch?v=abc123&utm_source=fb'));
+  it('contrôle le lien en direct', async () => {
+    const res = await agent.get(`/api/anomalies/check-link?url=${encodeURIComponent('https://m.facebook.com/watch/?v=123456&si=x')}`);
     expect(res.status).toBe(200);
-    expect(res.body.duplicate).toBe(true);
+    expect(res.body.item.matches.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('GET /api/anomalies/check-duplicate -> false pour un lien inconnu', async () => {
-    const res = await agent.get('/api/anomalies/check-duplicate?url=' + encodeURIComponent('https://facebook.com/watch?v=inconnu999'));
-    expect(res.status).toBe(200);
-    expect(res.body.duplicate).toBe(false);
+  it('refuse type hors catégorie et commune hors daïra', async () => {
+    const badType = await create(anomalyPayload(refs, { type_id: refs.otherTypeId, lien_url: 'https://x.com/a/1' }));
+    expect(badType.status).toBe(422);
+    expect(badType.body.error.code).toBe('INTEGRITE_TYPE');
+    const badCommune = await create(anomalyPayload(refs, { daira_id: refs.otherDairaId, lien_url: 'https://x.com/a/2' }));
+    expect(badCommune.status).toBe(422);
+    expect(badCommune.body.error.code).toBe('INTEGRITE_COMMUNE');
   });
 
-  it('GET /api/anomalies -> pagination + total', async () => {
-    const created = [];
-    for (let i = 0; i < 3; i += 1) {
-      const res = await agent.post('/api/anomalies').send({
-        plateforme: 'whatsapp',
-        lienUrl: `https://wa.me/21260000${i}`,
-        domaineId: refs.domaineId,
-        typeId: refs.typeId,
-        dairaId: refs.dairaId,
-        communeId: refs.communeId,
-        statut: 'non_traite',
-      });
-      expect(res.status).toBe(201);
-      created.push(res.body.anomaly.id);
-    }
-    const page1 = await agent.get('/api/anomalies?page=1&pageSize=2');
-    expect(page1.status).toBe(200);
-    expect(page1.body.data.length).toBe(2);
-    expect(page1.body.pagination.total).toBeGreaterThanOrEqual(3);
-    expect(page1.body.pagination.totalPages).toBeGreaterThanOrEqual(2);
+  it('refuse une URL dangereuse', async () => {
+    const res = await create(anomalyPayload(refs, { lien_url: 'javascript:alert(1)' }));
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('LIEN_INVALIDE');
+  });
+});
 
-    const page2 = await agent.get('/api/anomalies?page=2&pageSize=2');
-    expect(page2.status).toBe(200);
-    expect(page2.body.data.length).toBeGreaterThanOrEqual(1);
+describe('Transitions de vérification et de statut', () => {
+  let id;
+  let version = 1;
+
+  it('crée une fiche à vérifier', async () => {
+    const res = await create(anomalyPayload(refs, {
+      lien_url: 'https://www.tiktok.com/@user/video/1', date_signalement: day(-5),
+    }));
+    expect(res.status).toBe(201);
+    id = res.body.item.id;
   });
 
-  it('POST /api/anomalies/bulk-status -> maj statut + ecriture historique', async () => {
-    const createRes = await agent.post('/api/anomalies').send({
-      plateforme: 'x',
-      lienUrl: 'https://x.com/user/status/42',
-      domaineId: refs.domaineId,
-      typeId: refs.typeId,
-      dairaId: refs.dairaId,
-      communeId: refs.communeId,
-      statut: 'non_traite',
+  it('refuse « en cours » sans vérification confirmée', async () => {
+    const res = await transition(id, {
+      version, statut: 'en_cours', epic_id: refs.epicId, date_intervention: day(-2),
     });
-    expect(createRes.status).toBe(201);
-    const anomalyId = createRes.body.anomaly.id;
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('VERIFICATION_REQUISE');
+  });
 
-    const bulk = await agent.post('/api/anomalies/bulk-status').send({ ids: [anomalyId], statut: 'en_cours', epicId: refs.epicId });
-    expect(bulk.status).toBe(200);
+  it('confirme avec agent puis passe en cours puis traité', async () => {
+    const confirmed = await transition(id, {
+      version, verification: 'confirmee', agent_id: refs.agentId,
+    }, 'verification');
+    expect(confirmed.status).toBe(200);
+    version = confirmed.body.item.version;
 
-    const getRes = await agent.get(`/api/anomalies/${anomalyId}`);
-    expect(getRes.status).toBe(200);
-    expect(getRes.body.anomaly.statut).toBe('en_cours');
-    expect(getRes.body.anomaly.epic_id).toBe(refs.epicId);
+    const inProgress = await transition(id, {
+      version, statut: 'en_cours', epic_id: refs.epicId, date_intervention: day(-2),
+    });
+    expect(inProgress.status).toBe(200);
+    expect(inProgress.body.item.date_traitement).toBeNull();
+    version = inProgress.body.item.version;
 
-    const histo = await agent.get(`/api/anomalies/${anomalyId}/historique`);
-    expect(histo.status).toBe(200);
-    expect(histo.body.data.length).toBeGreaterThanOrEqual(1);
-    expect(histo.body.data[0].champ).toBe('statut');
+    const done = await transition(id, {
+      version, statut: 'traite', date_traitement: day(-1),
+    });
+    expect(done.status).toBe(200);
+    expect(done.body.item.statut).toBe('traite');
+    expect(done.body.item.date_intervention).toBe(day(-2));
+    expect(done.body.item.date_traitement).toBe(day(-1));
+    version = done.body.item.version;
+
+    const history = await agent.get(`/api/anomalies/${id}/historique`);
+    const fields = history.body.items.map((h) => h.champ);
+    expect(fields).toContain('creation');
+    expect(fields.filter((f) => f === 'statut').length).toBeGreaterThanOrEqual(2);
+    expect(history.body.items.every((h) => h.at && h.user_nom)).toBe(true);
+  });
+
+  it('refuse la réouverture sans motif, l’accepte avec motif', async () => {
+    const noMotif = await transition(id, { version, statut: 'en_cours', date_intervention: day(-1) });
+    expect(noMotif.status).toBe(422);
+    expect(noMotif.body.error.code).toBe('MOTIF_REQUIS');
+    const reopened = await transition(id, { version, statut: 'en_cours', motif: 'Réouverture demandée' });
+    expect(reopened.status).toBe(200);
+    expect(reopened.body.item.statut).toBe('en_cours');
+    expect(reopened.body.item.date_traitement).toBeNull();
+    version = reopened.body.item.version;
+  });
+
+  it('détecte un conflit de version', async () => {
+    const current = await agent.get(`/api/anomalies/${id}`);
+    const stale = current.body.item.version;
+    const first = await write(agent, csrf, 'patch', `/api/anomalies/${id}`, { version: stale, observations: 'Première édition' });
+    expect(first.status).toBe(200);
+    const second = await write(agent, csrf, 'patch', `/api/anomalies/${id}`, { version: stale, observations: 'Seconde édition' });
+    expect(second.status).toBe(409);
+    expect(second.body.error.code).toBe('VERSION_CONFLICT');
+    version = first.body.item.version;
+  });
+
+  it('infirme : statut forcé non traité, EPIC effacé, motif obligatoire', async () => {
+    const reset = await transition(id, { version, statut: 'non_traite', motif: 'Remise à zéro' });
+    expect(reset.status).toBe(200);
+    version = reset.body.item.version;
+    const noMotif = await transition(id, { version, verification: 'infirmee', agent_id: refs.agentId }, 'verification');
+    expect(noMotif.status).toBe(422);
+    expect(noMotif.body.error.code).toBe('MOTIF_REQUIS');
+    const inferred = await transition(id, {
+      version, verification: 'infirmee', agent_id: refs.agentId, motif: 'Non constatée sur place',
+    }, 'verification');
+    expect(inferred.status).toBe(200);
+    expect(inferred.body.item.statut).toBe('non_traite');
+    expect(inferred.body.item.epic_id).toBeNull();
+    expect(inferred.body.item.date_verification).toBeTruthy();
+    version = inferred.body.item.version;
+    const forbidden = await transition(id, { version, statut: 'en_cours', epic_id: refs.epicId });
+    expect(forbidden.status).toBe(422);
+    expect(forbidden.body.error.code).toBe('STATUT_INFIRMEE');
+  });
+
+  it('exclut les infirmées des statistiques sauf option explicite', async () => {
+    const reference = (await agent.get(`/api/anomalies/${id}`)).body.item.reference;
+    const excluded = await agent.get('/api/stats/overview').query({ all_periods: '1', q: reference });
+    expect(excluded.status).toBe(200);
+    expect(excluded.body.item.cohorte.total).toBe(0);
+    const included = await agent.get('/api/stats/overview').query({ all_periods: '1', q: reference, include_infirmees: '1' });
+    expect(included.body.item.cohorte.total).toBe(1);
+  });
+});
+
+describe('Suppression logique et corbeille', () => {
+  let id;
+
+  it('supprime puis restaure une fiche', async () => {
+    const created = await create(anomalyPayload(refs, {
+      lien_url: 'https://youtu.be/abc', date_signalement: day(-2),
+    }));
+    id = created.body.item.id;
+    const del = await write(agent, csrf, 'delete', `/api/anomalies/${id}`, { motif: 'Doublon' });
+    expect(del.status).toBe(200);
+    const get = await agent.get(`/api/anomalies/${id}`);
+    expect(get.status).toBe(404);
+    const list = await agent.get('/api/anomalies');
+    expect(list.body.items.some((item) => item.id === id)).toBe(false);
+    const trash = await agent.get('/api/anomalies?corbeille=1');
+    expect(trash.body.items.some((item) => item.id === id)).toBe(true);
+    const restored = await write(agent, csrf, 'post', `/api/anomalies/${id}/restore`);
+    expect(restored.status).toBe(200);
+    const after = await agent.get(`/api/anomalies/${id}`);
+    expect(after.status).toBe(200);
   });
 });

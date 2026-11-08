@@ -1,71 +1,42 @@
-# AUDIT — Plateforme de suivi des anomalies (V1)
+# AUDIT — Passage V3 → V4
 
-Date : 2026-10-29. Base : code source + exécution réelle (`npm run build`, `npm start`, `npm test` : 24/24 verts, lint 0 erreur).
+Date : 2026-11-08. Base : inspection de l'existant + exécution (DB legacy lue en lecture seule).
 
-## 1. Build / runtime
-- `npm run build` OK (841 modules, chunk ~713 ko gzip — à découper par route).
-- `npm start` OK, /api/health 200, login admin OK, taxonomie seedée 70/156.
-- Aucune erreur serveur sur les parcours principaux. Rate limit + CSP actifs.
+## 0. Sauvegarde et préservation
+- `data/` et `backups/` copiés dans `C:\Users\pc\Desktop\_v4_safe_20261108-101141` (hors dépôt).
+- Tag git `v-avant-v4` posé.
+- Base legacy conservée : `data/anomalies.db` (copie de travail) et `data/legacy-v3.db`.
 
-## 2. Constats par écran
+## 1. Constat sur les données legacy (vérifié par requête)
+- `domaines` 70 / `types_anomalie` 156 : conformes à la taxonomie officielle.
+- `anomalies` : 2 lignes de test (`facebook.com/test123`, référentiels « Daia Test »).
+- `dairas` 61, `communes` 61, `epics` 61, `agents` 0 : **toutes synthétiques** (« Daia Test », « EPIC Test », noms arabes `daia_test_ar`).
+- `users` : 2 comptes de test (`admin`, `admin_test`), aucun agent réel.
+- `parametres` vide, `audit_log` 7 lignes de test, 1 rapport de test.
+- Tables parasites `t1`, `t2` (vides), colonnes hors spec (`anomalies` sans `version`, `search_norm`, `intervenant_autre`, `deleted_by`).
+- Conclusion : **aucune donnée métier réelle**. La base est archivée intacte (aucune perte) ; V4 repart d'une base propre et réimporte la taxonomie depuis le CSV de référence (même 70/156). Décision consignée dans `DECISIONS.md`.
 
-### Global (client/src/components/Layout.jsx, App.jsx)
-- Navigation brute : liens soulignés, pas d'icônes, pas d'indicateur actif, pas de logo.
-- Aucun sélecteur FR/AR visible → RTL non vérifiable à l'UI (le contexte i18n existe dans client/src/i18n/index.jsx mais aucun toggle).
-- Pas de bascule thème clair/sombre (tokens sombres absents).
-- Rapport et Administration absents de la navigation ; page Administration inexistante côté client.
-- Textes FR sans accents : client/src/i18n/index.jsx (lignes 5,6,12,13,21,23-26,32,34,35,45,49-54) : "Repartition", "Evolution", "Recues", "Traitees", "Deconnexion", "Details", "Delai", "Par categorie".
-- Accents absents aussi dans les composants (Dashboard, AnomaliesList, Rapport).
-- Pas de conteneur centré sur la page Anomalies (Layout main = p-4, pas de max-width).
+## 2. Écarts structurels vs SPEC V4 (fichier + cause)
+| Domaine | Constat | Cause |
+|---|---|---|
+| Architecture | Pas de npm workspaces, pas de `shared/` | V1 monolithique ; règles dupliquées serveur/client |
+| Sessions | `express-session` MemoryStore | Contraire à § 7 (jetons hachés en base) |
+| CSRF | Absent | Non implémenté |
+| Helmet | CSP par défaut, `upgrade-insecure-requests` | Risque de page blanche en HTTP (§ 7) |
+| Modèle | `anomalies` sans `version`, `search_norm`, `intervenant_autre`, `deleted_by`, CHECK métier | Migration 001 V1 incomplète |
+| Migrations | Table `migrations` maison | Spec exige `schema_migrations` versionnée |
+| Stats | `stats.js` V3 partiel, pas de `statutAu`, pas de plus grand reste, % côté client | § 5 non couvert |
+| Rapport | 4 KPI, pas de versions figées, pas de comparaison S−1 | § 9.8 non couvert |
+| UI | 15 composants ui/ seulement, pages ad hoc, accents manquants, pas de preuve RTL | § 9.1–9.11 non couvert |
+| Admin | 3 onglets sur 7 | Référentiels/users/paramètres/import/corbeille manquants |
+| Sécurité PJ | MIME seul, pas de signature binaire | § 7 |
+| Tests | 24 tests, pas de perf, pas de styles/a11y bloquants, tests écrivant dans `backups/` réel | § 12 |
+| Démo | Absente (données de test non purgeables) | § 8.5 |
 
-### Dashboard (client/src/pages/Dashboard.jsx)
-- Graphiques : ResponsiveContainer height={260/300} mais parents flex/grid sans hauteur explicite → risque de hauteur 0 ; pas d'état vide (quand données à 0, l'anneau s'affiche vide sans message).
-- Seulement 4 KPI (Total, Taux, En retard, Urgentes) — manquent Non traitées, En cours, Traitées, Délai moyen.
-- Pas de filtre de période, pas de graphiques par type/daïra/commune/EPIC, pas de tableau Catégorie→Type.
-- categoryData ne transporte pas domaine_id → drill-down inopérant.
+## 3. Décision de migration
+Reconstruction V4 conforme à la spécification dans le dépôt, en conservant :
+1. la taxonomie officielle (`seed/taxonomie_anomalies.csv`) ;
+2. la base legacy archivée (`data/legacy-v3.db`, + copie hors dépôt) ;
+3. le tag `v-avant-v4` pour l'historique.
 
-### Liste des anomalies (client/src/pages/AnomaliesList.jsx)
-- Pagination illisible : boutons "G"/"P" (lignes 136,138) au lieu de Précédent/Suivant + icônes.
-- Filtres : premier select sans libellé (statut), pas de filtre période/vérification/plateforme/commune/agent.
-- Colonnes manquantes : Référence, Commune, Vérification, Priorité, actions par ligne.
-- Pas de bouton Export ni "Nouvelle anomalie" visible, pas d'état vide illustré.
-- Tableau non responsive avant Phase 7 (corrigé).
-
-### Carte (client/src/pages/Map.jsx)
-- Conteneur 60vh, fond gris si tuiles échouent ; pas de message de repli, pas de filtres, pas de légende, pas de liste latérale.
-- Marqueurs en divIcon colorés OK mais clustering absent.
-
-### Formulaire Nouvelle anomalie (client/src/pages/AnomalyQuickCreate.jsx)
-- Observations = <input> (ligne 152) au lieu de <textarea>.
-- EPIC placeholder t('all') (ligne 124) au lieu de "Non affecté".
-- Pas de date de signalement/publication, vérification, agent, dates intervention/traitement, "Ma position", détection de doublon, "Enregistrer et nouveau".
-- Grille hétérogène.
-
-### Fiche détail
-- Absente côté client (aucune page Detail).
-
-### Administration
-- Page absente côté client ; API admin existe (server/src/routes/admin*.js).
-
-### Rapport
-- Page présente (Rapport.jsx) mais absente du menu ; pas de CSS d'impression A4.
-
-## 3. Design / UX
-- Aucun design system : styles ad hoc dans les pages, pas de tokens, pas de composants ui/.
-- Polices système uniquement (pas Inter/Cairo embarqués).
-- Icônes : pas de librairie (lucide non installé).
-- Pas d'animations, pas d'états chargement/erreur/empty.
-
-## 4. i18n
-- Pas de test de parité FR/AR.
-- Clés manquantes pour plusieurs libellés (statut, urgentes, etc.) → fallback sur la clé.
-- RTL : dir mis à jour mais composants utilisent left/right au lieu de propriétés logiques.
-
-## 5. Performance
-- Bundle initial 713 ko gzip (carte + recharts non découpés par route).
-
-## 6. Accessibilité
-- Pas de focus visible personnalisé, pas d'aria-label sur boutons-icônes, statuts par couleur seule dans certains endroits.
-
-## Conclusion
-V1 fonctionnelle côté API et données, mais UI minimale, accents manquants, graphiques à risque, pages manquantes (Admin, Détail), pas de design system. Phase B → F à exécuter.
+Aucune donnée réelle n'étant présente, aucune transformation de lignes n'est nécessaire ; la migration `001_init.sql` crée le schéma cible. Un script `scripts/import-legacy.js` documente la correspondance V3→V4 pour d'éventuelles bases legacy réelles (testé sur copie).

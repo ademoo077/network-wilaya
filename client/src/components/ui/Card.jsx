@@ -1,19 +1,16 @@
-export function Card({ className = '', children }) {
-  return <div className={`bg-[var(--surface)] rounded-[var(--r-lg)] shadow-[var(--shadow-1)] border border-[var(--border)] ${className}`}>{children}</div>;
+export function Card({ children, className = '', as: Tag = 'section', ...props }) {
+  return <Tag className={`rounded-lg border border-border bg-surface shadow-1 ${className}`} {...props}>{children}</Tag>;
 }
 
-export function CardHeader({ title, subtitle, actions, className = '' }) {
+export function CardHeader({ title, description, action, className = '', children }) {
   return (
-    <div className={`flex items-start justify-between gap-3 px-5 py-4 border-b border-[var(--border)] ${className}`}>
-      <div>
-        {title && <h3 className="text-base font-semibold text-[var(--ink)]">{title}</h3>}
-        {subtitle && <p className="text-sm text-[var(--muted)] mt-0.5">{subtitle}</p>}
+    <div className={`flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4 ${className}`}>
+      <div className="min-w-0">
+        {title && <h2 className="text-base font-bold text-ink"><bdi>{title}</bdi></h2>}
+        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+        {children}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
-}
-
-export function CardBody({ className = '', children }) {
-  return <div className={`px-5 py-4 ${className}`}>{children}</div>;
 }

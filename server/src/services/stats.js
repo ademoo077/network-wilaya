@@ -1,157 +1,210 @@
-import db from '../db/database.js';
+import {
+  splitPercent, addDays, weekStart, weekEnd, todayAlgiers,
+  previousPeriod, eachWeek, PLATEFORMES, PRIORITES,
+} from '@anm/shared';
+import { buildFilters } from './anomalyQuery.js';
+import { getParams } from './settings.js';
 
-function buildConditions(filters = {}) {
-  const conditions = [];
-  const params = [];
-  if (filters.from) { conditions.push('date_signalement >= ?'); params.push(filters.from); }
-  if (filters.to) { conditions.push('date_signalement <= ?'); params.push(filters.to); }
-  if (filters.statut) { conditions.push('statut = ?'); params.push(filters.statut); }
-  if (filters.domaineId) { conditions.push('domaine_id = ?'); params.push(filters.domaineId); }
-  if (filters.typeId) { conditions.push('type_id = ?'); params.push(filters.typeId); }
-  if (filters.dairaId) { conditions.push('daira_id = ?'); params.push(filters.dairaId); }
-  if (filters.communeId) { conditions.push('commune_id = ?'); params.push(filters.communeId); }
-  if (filters.epicId) { conditions.push('epic_id = ?'); params.push(filters.epicId); }
-  if (filters.agentId) { conditions.push('agent_id = ?'); params.push(filters.agentId); }
-  if (filters.plateforme) { conditions.push('plateforme = ?'); params.push(filters.plateforme); }
-  if (filters.q) { conditions.push('(adresse_texte LIKE ? OR lieu_dit LIKE ? OR lien_url LIKE ? OR observations LIKE ?)'); params.push(`%${filters.q}%`, `%${filters.q}%`, `%${filters.q}%`, `%${filters.q}%`); }
-  const whereSql = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
-  return { whereSql, params, conditions };
+const PLATFORM_LABELS = {
+  facebook: ['فيسبوك', 'Facebook'], instagram: ['إنستغرام', 'Instagram'], tiktok: ['تيك توك', 'TikTok'],
+  youtube: ['يوتيوب', 'YouTube'], x: ['إكس', 'X'], whatsapp: ['واتساب', 'WhatsApp'],
+  telegram: ['تلغرام', 'Telegram'], autre: ['أخرى', 'Autre'],
+};
+const PRIORITY_LABELS = { normale: ['عادية', 'Normale'], haute: ['عالية', 'Haute'], urgente: ['عاجلة', 'Urgente'] };
+
+export const DIMENSIONS = {
+  domaine: { join: 'JOIN domaines dim ON dim.id = a.domaine_id', id: 'dim.id', ar: 'dim.name_ar', fr: 'dim.name_fr', list: 'SELECT id, name_ar, name_fr FROM domaines ORDER BY ordre', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
+  type: { join: 'JOIN types_anomalie dim ON dim.id = a.type_id', id: 'dim.id', ar: 'dim.name_ar', fr: 'dim.name_fr', list: 'SELECT id, name_ar, name_fr FROM types_anomalie ORDER BY ordre', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
+  daira: { join: 'JOIN dairas dim ON dim.id = a.daira_id', id: 'dim.id', ar: 'dim.name_ar', fr: 'dim.name_fr', list: 'SELECT id, name_ar, name_fr FROM dairas ORDER BY name_fr', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
+  commune: { join: 'JOIN communes dim ON dim.id = a.commune_id', id: 'dim.id', ar: 'dim.name_ar', fr: 'dim.name_fr', list: 'SELECT id, name_ar, name_fr FROM communes ORDER BY name_fr', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
+  epic: { join: 'JOIN epics dim ON dim.id = a.epic_id', id: 'dim.id', ar: 'dim.name', fr: 'dim.name', list: 'SELECT id, name AS name_ar, name AS name_fr FROM epics ORDER BY name', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
+  agent: { join: 'JOIN agents dim ON dim.id = a.agent_id', id: 'dim.id', ar: 'dim.full_name', fr: 'dim.full_name', list: 'SELECT id, full_name AS name_ar, full_name AS name_fr FROM agents ORDER BY full_name', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
+  plateforme: { simple: 'a.plateforme', labels: PLATFORM_LABELS, list: PLATEFORMES.map((p) => ({ id: p, ar: PLATFORM_LABELS[p][0], fr: PLATFORM_LABELS[p][1] })) },
+  priorite: { simple: 'a.priorite', labels: PRIORITY_LABELS, list: PRIORITES.map((p) => ({ id: p, ar: PRIORITY_LABELS[p][0], fr: PRIORITY_LABELS[p][1] })) },
+};
+
+function scope(params, from, to) {
+  return buildFilters({ ...params, statut: undefined, from, to, date_traitement_from: undefined, date_traitement_to: undefined });
 }
 
-function round1(value) {
-  if (value === null || value === undefined || Number.isNaN(Number(value))) return null;
-  return Math.round(Number(value) * 10) / 10;
-}
-
-function pctWithLargestRemainder(totals) {
-  const total = Number(totals.non_traite) + Number(totals.en_cours) + Number(totals.traite);
-  const result = { non_traite: null, en_cours: null, traite: null };
-  if (total <= 0) return result;
-  const raw = {
-    non_traite: (Number(totals.non_traite) / total) * 100,
-    en_cours: (Number(totals.en_cours) / total) * 100,
-    traite: (Number(totals.traite) / total) * 100,
-  };
-  const rounded = { non_traite: round1(raw.non_traite), en_cours: round1(raw.en_cours), traite: round1(raw.traite) };
-  const sum = rounded.non_traite + rounded.en_cours + rounded.traite;
-  if (sum !== 100) {
-    const order = Object.keys(rounded).sort((a, b) => raw[b] - raw[a]);
-    rounded[order[0]] = round1(rounded[order[0]] + (100 - sum));
+function countByStatus(db, clause, values) {
+  const rows = db.prepare(`SELECT a.statut AS statut, COUNT(*) AS n FROM anomalies a ${clause} GROUP BY a.statut`).all(values);
+  const out = { non_traite: 0, en_cours: 0, traite: 0, total: 0 };
+  for (const row of rows) {
+    out[row.statut] = (out[row.statut] || 0) + row.n;
+    out.total += row.n;
   }
-  return rounded;
+  return out;
 }
 
-export function getSummary(filters = {}) {
-  const { whereSql, params, conditions } = buildConditions(filters);
-  const totalRow = db.prepare(`SELECT COUNT(*) AS c FROM anomalies${whereSql}`).all(...params);
-  const total = Number(totalRow[0].c);
-  const parStatut = db.prepare(`SELECT statut, COUNT(*) AS c FROM anomalies${whereSql} GROUP BY statut`).all(...params);
-  const totals = { non_traite: 0, en_cours: 0, traite: 0 };
-  for (const row of parStatut) totals[row.statut] = Number(row.c);
-  const tauxTraitement = total > 0 ? round1((Number(totals.traite) / total) * 100) : null;
-  const delaiConditions = [...conditions, "statut = 'traite'"];
-  const delaiWhere = delaiConditions.length ? ` WHERE ${delaiConditions.join(' AND ')}` : '';
-  const delaiRow = db.prepare(`SELECT AVG(julianday(date_traitement) - julianday(date_signalement)) AS d FROM anomalies${delaiWhere}`).all(...params);
-  const delaiMoyenJours = delaiRow[0].d === null ? null : Number(delaiRow[0].d);
-  const urgentsConditions = [...conditions, "statut != 'traite'", "priorite = 'urgente'", 'deleted_at IS NULL'];
-  const urgentsWhere = urgentsConditions.length ? ` WHERE ${urgentsConditions.join(' AND ')}` : '';
-  const urgentsRow = db.prepare(`SELECT COUNT(*) AS c FROM anomalies${urgentsWhere}`).all(...params);
-  const urgentsCount = Number(urgentsRow[0].c);
-  const enRetardConditions = [...conditions, "statut != 'traite'", "date_signalement < date('now', '-7 days')", 'deleted_at IS NULL'];
-  const enRetardWhere = enRetardConditions.length ? ` WHERE ${enRetardConditions.join(' AND ')}` : '';
-  const enRetardRow = db.prepare(`SELECT COUNT(*) AS c FROM anomalies${enRetardWhere}`).all(...params);
-  const enRetardCount = Number(enRetardRow[0].c);
+function pctBlock(counts) {
+  const [pctNon, pctCours, pctTraite] = splitPercent([counts.non_traite, counts.en_cours, counts.traite]);
+  return { ...counts, pct_non_traite: pctNon, pct_en_cours: pctCours, pct_traite: pctTraite };
+}
+
+function metrics(db, clause, values, delayParams = null) {
+  const counts = pctBlock(countByStatus(db, clause, values));
+  // Délai moyen : anomalies dont la date de traitement tombe dans la période (§ 5.1).
+  const delayScope = delayParams ? buildFilters(delayParams) : { clause, values };
+  const delay = db.prepare(`SELECT AVG(julianday(a.date_traitement) - julianday(a.date_signalement)) AS d
+                            FROM anomalies a ${delayScope.clause} ${delayScope.clause ? 'AND' : 'WHERE'} a.date_traitement IS NOT NULL`)
+    .get(delayScope.values).d;
   return {
-    total,
-    parStatut: totals,
-    tauxTraitement,
-    delaiMoyenJours: delaiMoyenJours === null ? null : round1(delaiMoyenJours),
-    urgents: urgentsCount,
-    enRetard: enRetardCount,
-    pourcentages: pctWithLargestRemainder(totals),
+    ...counts,
+    taux_traitement: counts.total ? counts.traite / counts.total : null,
+    delai_moyen_jours: delay === null ? null : Math.round(delay * 10) / 10,
+    urgentes_ouvertes: 0,
+    en_retard: 0,
   };
 }
 
-export function getByCategory(filters = {}) {
-  const { whereSql, params } = buildConditions(filters);
-  const rows = db.prepare(`SELECT d.id AS domaine_id, d.name_ar AS domaine_name, a.statut, COUNT(*) AS c FROM anomalies a JOIN domaines d ON d.id = a.domaine_id${whereSql} GROUP BY d.id, a.statut ORDER BY d.ordre`).all(...params);
-  const map = new Map();
-  for (const row of rows) {
-    if (!map.has(row.domaine_id)) map.set(row.domaine_id, { domaine_id: row.domaine_id, domaine_name: row.domaine_name, counts: { non_traite: 0, en_cours: 0, traite: 0 } });
-    map.get(row.domaine_id).counts[row.statut] = Number(row.c);
+export function overview(db, params = {}) {
+  const settings = getParams(db);
+  const wsd = Number(settings.week_start_day) || 0;
+  const retardDays = Number(settings.delai_retard_jours) || 7;
+  const today = params.today || todayAlgiers();
+  const all = params.all_periods === true || params.all_periods === '1';
+  const from = all ? null : (params.from || weekStart(today, wsd));
+  const to = all ? null : (params.to || weekEnd(today, wsd));
+  const filters = { ...params, from, to };
+  const current = scope(filters, from, to);
+  const delayParams = {
+    ...params, statut: undefined, from: undefined, to: undefined,
+    date_traitement_from: from || undefined, date_traitement_to: to || undefined,
+  };
+  const currentMetrics = metrics(db, current.clause, current.values, delayParams);
+  const allScope = buildFilters({ ...params, statut: undefined, from: undefined, to: undefined, date_traitement_from: undefined, date_traitement_to: undefined });
+  const allClause = allScope.clause;
+  const ug = db.prepare(`SELECT COUNT(*) AS c FROM anomalies a ${allClause} ${allClause ? 'AND' : 'WHERE'} a.priorite = 'urgente' AND a.statut <> 'traite'`).get(allScope.values).c;
+  const cutoff = addDays(today, -retardDays);
+  const late = db.prepare(`SELECT COUNT(*) AS c FROM anomalies a ${allClause} ${allClause ? 'AND' : 'WHERE'} a.statut <> 'traite' AND a.date_signalement < @cutoff`).get({ ...allScope.values, cutoff }).c;
+  currentMetrics.urgentes_ouvertes = ug;
+  currentMetrics.en_retard = late;
+  const prev = all ? null : previousPeriod(from, to);
+  let previousMetrics = null;
+  if (prev) {
+    const prevScope = scope(filters, prev.from, prev.to);
+    const prevDelay = {
+      ...params, statut: undefined, from: undefined, to: undefined,
+      date_traitement_from: prev.from || undefined, date_traitement_to: prev.to || undefined,
+    };
+    previousMetrics = metrics(db, prevScope.clause, prevScope.values, prevDelay);
   }
-  return Array.from(map.values());
+  const rel = (a, b) => (b ? Math.round(((a - b) / b) * 1000) / 10 : null);
+  const points = (a, b) => (a === null || b === null ? null : Math.round((a - b) * 1000) / 10);
+  return {
+    periode: { from, to, all, week_start_day: wsd, aujourd_hui: today, delai_retard_jours: retardDays },
+    cohorte: {
+      total: currentMetrics.total,
+      non_traite: currentMetrics.non_traite,
+      en_cours: currentMetrics.en_cours,
+      traite: currentMetrics.traite,
+      pct_non_traite: currentMetrics.pct_non_traite,
+      pct_en_cours: currentMetrics.pct_en_cours,
+      pct_traite: currentMetrics.pct_traite,
+    },
+    taux_traitement: currentMetrics.taux_traitement,
+    delai_moyen_jours: currentMetrics.delai_moyen_jours,
+    urgentes_ouvertes: currentMetrics.urgentes_ouvertes,
+    en_retard: currentMetrics.en_retard,
+    previous: previousMetrics ? {
+      periode: prev,
+      total: previousMetrics.total,
+      taux_traitement: previousMetrics.taux_traitement,
+      delai_moyen_jours: previousMetrics.delai_moyen_jours,
+    } : null,
+    variations: previousMetrics ? {
+      total: rel(currentMetrics.total, previousMetrics.total),
+      non_traite: rel(currentMetrics.non_traite, previousMetrics.non_traite),
+      en_cours: rel(currentMetrics.en_cours, previousMetrics.en_cours),
+      traite: rel(currentMetrics.traite, previousMetrics.traite),
+      taux_traitement: points(currentMetrics.taux_traitement, previousMetrics.taux_traitement),
+      delai_moyen_jours: currentMetrics.delai_moyen_jours === null || previousMetrics.delai_moyen_jours === null
+        ? null : Math.round((currentMetrics.delai_moyen_jours - previousMetrics.delai_moyen_jours) * 10) / 10,
+    } : null,
+  };
 }
 
-export function getByType(filters = {}) {
-  const { whereSql, params } = buildConditions(filters);
-  const rows = db.prepare(`SELECT t.id AS type_id, t.name_ar AS type_name, t.domaine_id AS domaine_id, a.statut, COUNT(*) AS c FROM anomalies a JOIN types_anomalie t ON t.id = a.type_id${whereSql} GROUP BY t.id, a.statut ORDER BY t.domaine_id, t.ordre`).all(...params);
-  const map = new Map();
-  for (const row of rows) {
-    if (!map.has(row.type_id)) map.set(row.type_id, { type_id: row.type_id, type_name: row.type_name, domaine_id: row.domaine_id, counts: { non_traite: 0, en_cours: 0, traite: 0 } });
-    map.get(row.type_id).counts[row.statut] = Number(row.c);
+function groupRows(db, by, params) {
+  const dim = DIMENSIONS[by];
+  if (!dim) return [];
+  const scopeFilters = buildFilters({ ...params, statut: undefined });
+  const agg = `COUNT(*) AS total,
+    SUM(CASE WHEN a.statut = 'non_traite' THEN 1 ELSE 0 END) AS non_traite,
+    SUM(CASE WHEN a.statut = 'en_cours' THEN 1 ELSE 0 END) AS en_cours,
+    SUM(CASE WHEN a.statut = 'traite' THEN 1 ELSE 0 END) AS traite`;
+  if (dim.simple) {
+    const rows = db.prepare(`SELECT ${dim.simple} AS id, ${agg} FROM anomalies a
+                             ${scopeFilters.clause} GROUP BY ${dim.simple} ORDER BY total DESC`).all(scopeFilters.values);
+    return rows.map((r) => {
+      const labels = dim.labels[r.id] || [r.id, r.id];
+      return { ...r, label_ar: labels[0], label_fr: labels[1] };
+    });
   }
-  return Array.from(map.values());
-}
-
-export function getByDaira(filters = {}) {
-  const { whereSql, params } = buildConditions(filters);
-  const rows = db.prepare(`SELECT a.daira_id AS daire_id, d.name_fr AS daire_name, a.statut, COUNT(*) AS c FROM anomalies a JOIN dairas d ON d.id = a.daira_id${whereSql} GROUP BY a.daira_id, a.statut ORDER BY a.daira_id`).all(...params);
-  const map = new Map();
-  for (const row of rows) {
-    if (!map.has(row.daire_id)) map.set(row.daire_id, { daire_id: row.daire_id, daire_name: row.daire_name, counts: { non_traite: 0, en_cours: 0, traite: 0 } });
-    map.get(row.daire_id).counts[row.statut] = Number(row.c);
+  const rows = db.prepare(`SELECT ${dim.id} AS id, ${dim.ar} AS label_ar, ${dim.fr} AS label_fr, ${agg}
+                           FROM anomalies a ${dim.join} ${scopeFilters.clause}
+                           GROUP BY ${dim.id} ORDER BY total DESC`).all(scopeFilters.values);
+  if (params.include_empty) {
+    const existing = new Set(rows.map((r) => String(r.id)));
+    const all = db.prepare(dim.list).all();
+    for (const row of all) {
+      if (!existing.has(String(row[dim.listId]))) {
+        rows.push({ id: row[dim.listId], label_ar: row[dim.listAr], label_fr: row[dim.listFr], total: 0, non_traite: 0, en_cours: 0, traite: 0 });
+      }
+    }
   }
-  return Array.from(map.values());
+  return rows;
 }
 
-export function getByCommune(filters = {}) {
-  const { whereSql, params } = buildConditions(filters);
-  const rows = db.prepare(`SELECT a.commune_id AS commune_id, d.name_fr AS commune_name, a.statut, COUNT(*) AS c FROM anomalies a JOIN communes c ON c.id = a.commune_id JOIN dairas d ON d.id = c.daira_id${whereSql} GROUP BY a.commune_id, a.statut ORDER BY a.commune_id`).all(...params);
-  const map = new Map();
-  for (const row of rows) {
-    if (!map.has(row.commune_id)) map.set(row.commune_id, { commune_id: row.commune_id, commune_name: row.commune_name, counts: { non_traite: 0, en_cours: 0, traite: 0 } });
-    map.get(row.commune_id).counts[row.statut] = Number(row.c);
+export function groupStats(db, by, params = {}) {
+  const rows = groupRows(db, by, params);
+  const totalsRaw = rows.reduce((acc, r) => ({
+    total: acc.total + r.total, non_traite: acc.non_traite + r.non_traite,
+    en_cours: acc.en_cours + r.en_cours, traite: acc.traite + r.traite,
+  }), { total: 0, non_traite: 0, en_cours: 0, traite: 0 });
+  const totalPcts = splitPercent([totalsRaw.non_traite, totalsRaw.en_cours, totalsRaw.traite]);
+  const totals = {
+    ...totalsRaw,
+    pct_non_traite: totalPcts[0], pct_en_cours: totalPcts[1], pct_traite: totalPcts[2],
+  };
+  return {
+    by,
+    rows: rows.map((r) => {
+      const [a, b, c] = splitPercent([r.non_traite, r.en_cours, r.traite]);
+      return { ...r, pct_non_traite: a, pct_en_cours: b, pct_traite: c };
+    }).sort((x, y) => y.total - x.total),
+    totals,
+  };
+}
+
+export function timeline(db, params = {}) {
+  const settings = getParams(db);
+  const wsd = Number(settings.week_start_day) || 0;
+  const today = params.today || todayAlgiers();
+  const end = params.to || today;
+  const start = params.from || addDays(weekStart(end, wsd), -7 * 11);
+  const weeks = eachWeek(start, end, wsd);
+  const out = [];
+  for (const week of weeks) {
+    const recues = buildFilters({ ...params, statut: undefined, from: week.debut, to: week.fin });
+    const traitees = buildFilters({ ...params, statut: undefined, from: undefined, to: undefined, date_traitement_from: week.debut, date_traitement_to: week.fin });
+    out.push({
+      debut: week.debut,
+      fin: week.fin,
+      recues: db.prepare(`SELECT COUNT(*) AS c FROM anomalies a ${recues.clause}`).get(recues.values).c,
+      traitees: db.prepare(`SELECT COUNT(*) AS c FROM anomalies a ${traitees.clause}`).get(traitees.values).c,
+    });
   }
-  return Array.from(map.values());
+  return out;
 }
 
-export function getByEpic(filters = {}) {
-  const { whereSql, params } = buildConditions(filters);
-  const rows = db.prepare(`SELECT a.epic_id AS epic_id, e.name AS epic_name, a.statut, COUNT(*) AS c FROM anomalies a JOIN epics e ON e.id = a.epic_id${whereSql} GROUP BY a.epic_id, a.statut ORDER BY a.epic_id`).all(...params);
-  const map = new Map();
-  for (const row of rows) {
-    if (!map.has(row.epic_id)) map.set(row.epic_id, { epic_id: row.epic_id, epic_name: row.epic_name, counts: { non_traite: 0, en_cours: 0, traite: 0 } });
-    map.get(row.epic_id).counts[row.statut] = Number(row.c);
-  }
-  return Array.from(map.values());
+export function activite(db, limit = 10) {
+  return db.prepare(`SELECT h.id, h.anomalie_id, h.champ, h.ancienne_valeur, h.nouvelle_valeur, h.motif, h.at,
+                            a.reference, u.full_name AS user_nom, u.username AS user_username
+                     FROM anomalie_historique h
+                     JOIN anomalies a ON a.id = h.anomalie_id AND a.deleted_at IS NULL
+                     LEFT JOIN users u ON u.id = h.user_id
+                     ORDER BY h.at DESC, h.id DESC LIMIT ?`).all(limit);
 }
 
-export function getByPlatform(filters = {}) {
-  const { whereSql, params } = buildConditions(filters);
-  const rows = db.prepare(`SELECT plateforme, COUNT(*) AS c FROM anomalies${whereSql} GROUP BY plateforme ORDER BY c DESC`).all(...params);
-  return rows.map((r) => ({ plateforme: r.plateforme, count: Number(r.c) }));
-}
-
-export function getTimeline({ from, to, granularity = 'day' }) {
-  const groupBy = granularity === 'week' ? "strftime('%Y-%m-%d', date_signalement, 'weekday 0', '-6 days')" : granularity === 'month' ? "strftime('%Y-%m', date_signalement)" : 'date_signalement';
-  const rows = db.prepare(`SELECT ${groupBy} AS period, COUNT(*) AS c FROM anomalies WHERE date_signalement >= ? AND date_signalement <= ? AND deleted_at IS NULL GROUP BY ${groupBy} ORDER BY ${groupBy}`).all(from, to);
-  return rows.map((r) => ({ period: r.period, count: Number(r.c) }));
-}
-
-export function getWeekly({ weeks = 12 } = {}) {
-  const result = [];
-  const now = new Date();
-  const day = now.getUTCDay();
-  const weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - ((day + 6) % 7)));
-  for (let i = weeks - 1; i >= 0; i -= 1) {
-    const start = new Date(weekStart.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-    const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const startStr = start.toISOString().slice(0, 10);
-    const endStr = new Date(end.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const receivedRow = db.prepare('SELECT COUNT(*) AS c FROM anomalies WHERE date_signalement >= ? AND date_signalement <= ? AND deleted_at IS NULL').get(startStr, endStr);
-    const treatedRow = db.prepare('SELECT COUNT(*) AS c FROM anomalies WHERE date_traitement >= ? AND date_traitement <= ? AND deleted_at IS NULL').get(startStr, endStr);
-    result.push({ weekStart: startStr, weekEnd: endStr, received: Number(receivedRow.c), treated: Number(treatedRow.c) });
-  }
-  return result;
-}
+export { pctBlock, countByStatus, scope, metrics };

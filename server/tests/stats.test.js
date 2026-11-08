@@ -1,92 +1,116 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
-import bcrypt from 'bcryptjs';
+import { addDays, todayAlgiers } from '@anm/shared';
 import { createApp } from '../src/app.js';
-import db from '../src/db/database.js';
-import { runMigrations } from '../src/db/migrations/index.js';
-import { seedTaxonomy } from '../src/db/seed.js';
+import { freshDatabase, login, write, anomalyPayload } from './helpers.js';
 
-const app = createApp();
+let app;
+let refs;
+let agent;
+let csrf;
+const today = todayAlgiers();
+const day = (offset) => addDays(today, offset);
+const from = day(-3);
 
-beforeAll(() => {
-  runMigrations();
-  seedTaxonomy();
-  db.prepare('DELETE FROM anomalie_historique').run();
-  db.prepare('DELETE FROM pieces_jointes').run();
-  db.prepare('DELETE FROM anomalies').run();
-  db.prepare('DELETE FROM users').run();
+async function createPayload(overrides) {
+  const res = await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, overrides));
+  if (res.status !== 201) throw new Error(`Création échouée ${res.status}: ${JSON.stringify(res.body)}`);
+  return res.body.item;
+}
+
+beforeAll(async () => {
+  ({ refs } = freshDatabase());
+  app = createApp();
+  ({ agent, csrf } = await login(app, 'admin'));
+
+  await createPayload({ lien_url: 'https://facebook.com/a/1', date_signalement: day(-3), priorite: 'urgente' });
+
+  await createPayload({
+    lien_url: 'https://facebook.com/a/2', date_signalement: day(-3),
+    verification: 'confirmee', agent_id: refs.agentId, statut: 'en_cours',
+    epic_id: refs.epicId, date_intervention: day(-2),
+  });
+
+  await createPayload({
+    lien_url: 'https://facebook.com/a/3', date_signalement: day(-2),
+    verification: 'confirmee', agent_id: refs.agentId, statut: 'traite',
+    epic_id: refs.epicId, date_intervention: day(-1), date_traitement: today,
+  });
+
+  const inferred = await createPayload({ lien_url: 'https://facebook.com/a/4', date_signalement: day(-1) });
+  const res = await write(agent, csrf, 'post', `/api/anomalies/${inferred.id}/verification`, {
+    version: inferred.version, verification: 'infirmee', agent_id: refs.agentId, motif: 'Introuvable',
+  });
+  if (res.status !== 200) throw new Error('Infirmation échouée');
+
+  // Reçue hors période mais traitée dans la période : compte dans le délai moyen, pas dans la cohorte.
+  await createPayload({
+    lien_url: 'https://facebook.com/a/5', date_signalement: day(-20),
+    verification: 'confirmee', agent_id: refs.agentId, statut: 'traite',
+    epic_id: refs.epicId, date_intervention: day(-1), date_traitement: today,
+  });
+
+  // Ouverte ancienne : compte dans « en retard » toutes périodes.
+  await createPayload({ lien_url: 'https://facebook.com/a/6', date_signalement: day(-10) });
 });
 
-describe('Stats API', () => {
-  let agent;
-  let refs;
-
-  beforeAll(async () => {
-    const now = new Date().toISOString();
-    db.prepare('INSERT INTO users (username, full_name, password_hash, role, active, must_change_password, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 0, ?, ?)').run('stats_admin', 'Stats Admin', bcrypt.hashSync('Password123!', 12), 'admin', now, now);
-    const agentRef = request.agent(app);
-    const loginRes = await agentRef.post('/api/auth/login').send({ username: 'stats_admin', password: 'Password123!' });
-    expect(loginRes.status).toBe(200);
-    agent = agentRef;
-
-    const daira = db.prepare('INSERT INTO dairas (name_fr, name_ar, actif) VALUES (?, ?, 1)').run('Daia Stats', 'daia_stats_ar');
-    const dairaId = Number(daira.lastInsertRowid);
-    const commune = db.prepare('INSERT INTO communes (daira_id, name_fr, name_ar, actif) VALUES (?, ?, ?, 1)').run(dairaId, 'Commune Stats', 'commune_stats_ar');
-    const communeId = Number(commune.lastInsertRowid);
-    const epic = db.prepare('INSERT INTO epics (name, sigle, contact_nom, contact_tel, actif) VALUES (?, ?, ?, ?, 1)').run('EPIC Stats', 'EPCS', 'Contact', '0500000000');
-    const epicId = Number(epic.lastInsertRowid);
-    const domaine = db.prepare('SELECT id FROM domaines ORDER BY id LIMIT 1').get();
-    const type = db.prepare('SELECT id, domaine_id FROM types_anomalie WHERE domaine_id = ? ORDER BY id LIMIT 1').get(domaine.id);
-
-    refs = { dairaId, communeId, epicId, domaineId: domaine.id, typeId: type.id };
+describe('Tableau de bord', () => {
+  it('calcule la cohorte, les pourcentages et le délai moyen sur les traitées de la période', async () => {
+    const res = await agent.get('/api/stats/overview').query({ from, to: today });
+    expect(res.status).toBe(200);
+    const item = res.body.item;
+    expect(item.cohorte).toMatchObject({ total: 3, non_traite: 1, en_cours: 1, traite: 1 });
+    const sum = item.cohorte.pct_non_traite + item.cohorte.pct_en_cours + item.cohorte.pct_traite;
+    expect(Math.round(sum * 10) / 10).toBe(100);
+    expect(item.taux_traitement).toBeCloseTo(1 / 3, 4);
+    // C (2 jours) + E (20 jours, reçue hors période) => 11 jours.
+    expect(item.delai_moyen_jours).toBe(11);
+    expect(item.urgentes_ouvertes).toBe(1);
+    expect(item.en_retard).toBe(1);
+    expect(item.previous).toBeTruthy();
   });
 
-  it('GET /api/stats/summary -> totaux et taux de traitement', async () => {
-    const created1 = await agent.post('/api/anomalies').send({
-      plateforme: 'facebook',
-      lienUrl: 'https://facebook.com/watch?v=stats1',
-      domaineId: refs.domaineId,
-      typeId: refs.typeId,
-      dairaId: refs.dairaId,
-      communeId: refs.communeId,
-      statut: 'traite',
-      epicId: refs.epicId,
-      dateTraitement: new Date().toISOString().slice(0, 10),
-    });
-    expect(created1.status).toBe(201);
-
-    const created2 = await agent.post('/api/anomalies').send({
-      plateforme: 'tiktok',
-      lienUrl: 'https://tiktok.com/@user/video/2',
-      domaineId: refs.domaineId,
-      typeId: refs.typeId,
-      dairaId: refs.dairaId,
-      communeId: refs.communeId,
-      statut: 'non_traite',
-    });
-    expect(created2.status).toBe(201);
-
-    const res = await agent.get('/api/stats/summary');
+  it('retourne une période vide sans division par zéro', async () => {
+    const res = await agent.get('/api/stats/overview').query({ from: day(-100), to: day(-90) });
     expect(res.status).toBe(200);
-    expect(res.body.total).toBe(2);
-    expect(res.body.parStatut.traite).toBe(1);
-    expect(res.body.parStatut.non_traite).toBe(1);
-    expect(res.body.tauxTraitement).toBe(50);
+    expect(res.body.item.cohorte.total).toBe(0);
+    expect(res.body.item.cohorte.pct_non_traite).toBeNull();
+    expect(res.body.item.taux_traitement).toBeNull();
+    expect(res.body.item.delai_moyen_jours).toBeNull();
+  });
+});
+
+describe('Groupes et chronologie', () => {
+  it('groupe par domaine avec totaux et pourcentages cohérents', async () => {
+    const res = await agent.get('/api/stats/group').query({ by: 'domaine', from, to: today });
+    expect(res.status).toBe(200);
+    const body = res.body.item;
+    expect(body.totals.total).toBe(3);
+    expect(body.rows.reduce((n, r) => n + r.total, 0)).toBe(3);
+    const pctSum = body.totals.pct_non_traite + body.totals.pct_en_cours + body.totals.pct_traite;
+    expect(Math.round(pctSum * 10) / 10).toBe(100);
   });
 
-  it('GET /api/stats/by-platform -> retourne les plateformes presentes', async () => {
-    const res = await agent.get('/api/stats/by-platform');
+  it('inclut les lignes vides à la demande', async () => {
+    const res = await agent.get('/api/stats/group').query({ by: 'daira', from, to: today, include_empty: '1' });
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.item.rows.some((r) => r.total === 0)).toBe(true);
+    const without = await agent.get('/api/stats/group').query({ by: 'daira', from, to: today });
+    expect(without.body.item.rows.every((r) => r.total > 0)).toBe(true);
   });
 
-  it('GET /api/stats/weekly -> retourne 12 semaines', async () => {
-    const res = await agent.get('/api/stats/weekly?weeks=12');
+  it('produit 12 semaines de chronologie', async () => {
+    const res = await agent.get('/api/stats/timeline').query({ to: today });
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBe(12);
-    expect(res.body.data[0]).toHaveProperty('received');
-    expect(res.body.data[0]).toHaveProperty('treated');
+    expect(res.body.items).toHaveLength(12);
+    expect(res.body.items[0]).toHaveProperty('debut');
+    expect(res.body.items[0]).toHaveProperty('recues');
+    expect(res.body.items[0]).toHaveProperty('traitees');
+  });
+
+  it('expose l’activité récente', async () => {
+    const res = await agent.get('/api/stats/activite').query({ limit: 5 });
+    expect(res.status).toBe(200);
+    expect(res.body.items.length).toBeGreaterThan(0);
+    expect(res.body.items[0]).toHaveProperty('reference');
   });
 });
