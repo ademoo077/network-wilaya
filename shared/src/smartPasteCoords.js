@@ -66,9 +66,13 @@ export function coordinateFromMapUrl(raw, options = {}) {
   const values = firstPair([
     pin ? [pin[1], pin[2]] : null,
     pair(url.searchParams.get('q')), pair(url.searchParams.get('query')),
-    pair(url.searchParams.get('ll')), osm,
+    pair(url.searchParams.get('ll')), pair(url.searchParams.get('center')),
+    pair(url.searchParams.get('cbll')), pair(url.searchParams.get('destination')),
+    pair(url.searchParams.get('saddr')), pair(url.searchParams.get('daddr')),
+    osm,
     hash ? [hash[1], hash[2]] : null,
     at ? [at[1], at[2]] : null,
+    pair(url.pathname),
   ]);
   return values ? makeCoordinate(values[0], values[1], 'lien_carte', options) : null;
 }
