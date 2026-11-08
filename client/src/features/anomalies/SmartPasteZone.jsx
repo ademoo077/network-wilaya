@@ -52,7 +52,11 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
         });
         push(t('smart.applied'), 'success');
       } else {
-        push(t('smart.resolveFailed'), 'warning');
+        setResult((current) => current ? ({
+          ...current,
+          urls: current.urls.map((item, itemIndex) => (itemIndex === index ? { ...item, normalise: response.url_finale || item.normalise, a_resolu: true } : item)),
+        }) : current);
+        push(response?.message || t('smart.resolveFailed'), 'warning');
       }
     } catch (error) {
       push(error.message || t('smart.resolveFailed'), 'danger');
@@ -75,7 +79,7 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
       <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink2">{t('smart.understood')}</p>
       <div className="flex flex-wrap gap-2">
         {result.urls.map((url, index) => (
-          <Chip key={`${url.normalise}-${index}`} onRemove={() => remove('urls', index)} action={url.type === 'carte' && !url.coords ? (
+          <Chip key={`${url.normalise}-${index}`} onRemove={() => remove('urls', index)} action={url.type === 'carte' && !url.coords && !url.a_resolu ? (
             <button type="button" className="ms-1 inline-flex items-center gap-1 rounded-sm text-brand-700 hover:underline disabled:opacity-50" disabled={resolving === index} onClick={() => resolveUrl(url, index)} title={t('smart.resolve')}>
               <Globe className="h-3.5 w-3.5" />{resolving === index ? t('smart.resolving') : t('smart.resolve')}
             </button>

@@ -62,6 +62,7 @@ router.post('/resolve-link', requireAuth, resolveLimiter, async (req, res) => {
       url_finale: finalUrl,
       coords,
       item: classified,
+      ...(coords ? {} : { raison: 'COORDONNEES_INTROUVABLES', message: 'Lien résolu, mais aucune coordonnée trouvée dans l’URL finale.' }),
     });
   } catch (error) {
     return res.status(200).json({
