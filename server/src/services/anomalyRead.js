@@ -10,7 +10,9 @@ export const ANOMALIE_SELECT = `
          e.name AS epic_name, e.sigle AS epic_sigle,
          ag.full_name AS agent_nom, ag.matricule AS agent_matricule,
          u.full_name AS saisi_par_nom, u.username AS saisi_par_username,
-         (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id) AS pieces_count
+         (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id) AS pieces_count,
+         (SELECT COUNT(*) FROM anomalies r WHERE r.lie_a_id = a.id AND r.deleted_at IS NULL) AS repetitions_count,
+         parent.reference AS lie_a_reference
   FROM anomalies a
   JOIN domaines d ON d.id = a.domaine_id
   JOIN types_anomalie t ON t.id = a.type_id
@@ -19,6 +21,7 @@ export const ANOMALIE_SELECT = `
   LEFT JOIN epics e ON e.id = a.epic_id
   LEFT JOIN agents ag ON ag.id = a.agent_id
   LEFT JOIN users u ON u.id = a.saisi_par
+  LEFT JOIN anomalies parent ON parent.id = a.lie_a_id
 `;
 
 export function serialize(row) {

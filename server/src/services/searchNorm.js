@@ -2,6 +2,7 @@ import { normalize } from '@anm/shared';
 
 export const SEARCH_NORM_SQL = `
   SELECT a.id, a.reference, a.lien_url, a.adresse_texte, a.lieu_dit, a.observations,
+         a.legende, a.auteur_publication,
          a.intervenant_autre,
          d.name_ar AS domaine_ar, d.name_fr AS domaine_fr,
          t.name_ar AS type_ar, t.name_fr AS type_fr,
@@ -24,6 +25,8 @@ export function searchNormFromRow(row) {
     row.adresse_texte,
     row.lieu_dit,
     row.observations,
+    row.legende,
+    row.auteur_publication,
     row.intervenant_autre,
     row.domaine_ar, row.domaine_fr,
     row.type_ar, row.type_fr,

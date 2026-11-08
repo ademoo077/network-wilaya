@@ -3,6 +3,7 @@ import multer from 'multer';
 import {
   anomalieCreateSchema, anomaliePatchSchema, anomalieQuerySchema, statutChangeSchema,
   verificationChangeSchema, bulkStatutSchema, importCommitSchema, zodFields,
+  nearbyQuerySchema,
 } from '@anm/shared';
 import { getDb } from '../db/index.js';
 import { requireAuth, requireAdmin, requireWrite } from '../middleware/auth.js';
@@ -18,6 +19,7 @@ import {
   previewImport, commitImport, importTemplate, importErrorsCsv,
 } from '../services/importAnomalies.js';
 import { savePiece } from '../services/attachments.js';
+import { nearbyAnomalies } from '../services/geoLocation.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
@@ -44,6 +46,12 @@ router.get('/', requireAuth, (req, res) => {
 
 router.get('/check-link', requireAuth, (req, res) => {
   res.json({ item: checkLink(getDb(), req.query.url) });
+});
+
+router.get('/nearby', requireAuth, (req, res) => {
+  const parsed = nearbyQuerySchema.safeParse(req.query);
+  if (!parsed.success) throw badRequest('Position ou rayon invalide', zodFields(parsed.error));
+  res.json({ items: nearbyAnomalies(getDb(), parsed.data) });
 });
 
 router.get('/export', requireAuth, asyncHandler(async (req, res) => {

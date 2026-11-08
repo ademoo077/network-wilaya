@@ -72,3 +72,12 @@ Le tag demandé `v4-avant-v5` ne peut donc pas désigner un commit V4 historique
 - Dates TikTok/Instagram vérifiées par aller-retour BigInt et garde 2016…aujourd'hui+1 ; aucune date n'est inventée pour les autres plateformes.
 - Géométrie partagée : Haversine, bbox, grille, Polygon/MultiPolygon, trous et bornes ; aucun accès réseau ajouté.
 - Fermeture : 51 tests dédiés à `smartPaste`, 12 à la géométrie, 9 au parseur GPS étendu ; chaîne complète à 20 fichiers / 192 tests, build, lint, styles et contrastes verts.
+
+### Phase 3 — Géolocalisation serveur
+
+- Routes authentifiées et limitées : analyse partagée, localisation et recherche par rayon ; les POST restent protégés par CSRF.
+- La commune est cherchée par bbox + Polygon/MultiPolygon, puis par majorité réelle à 300 m (minimum 2, seuil 60 %), sans sélection inventée.
+- Import GeoJSON admin borné à 20 Mo, 5 000 entités et 500 000 sommets : propriété choisie, rapport apparié/non apparié/ambigu, association manuelle, aperçu, fusion et audit.
+- Les champs GPS V5 passent par les schémas et le service ; retirer le GPS efface source/précision/confirmation. Les répétitions sont rattachées à la fiche mère et comptées.
+- Garde SSRF testée sur domaines, ports, IPv4/IPv6 privés, DNS rebinding, redirection interne et nombre de sauts ; aucune requête sortante n'est encore activée.
+- Fermeture : 15 tests d'intégration géographique + 23 tests SSRF ; chaîne complète à 22 fichiers / 230 tests, build/lint/styles/contrastes verts.

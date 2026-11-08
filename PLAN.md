@@ -73,10 +73,10 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - [x] Au moins 30 vecteurs unitaires, build/lint/styles/a11y verts, commit
 
 ## Phase V5.3 — Géolocalisation serveur
-- [ ] `/tools/parse-paste`, `/geo/locate`, `/anomalies/nearby` avec permissions/limites
-- [ ] Déduction polygone puis voisinage ; import GeoJSON avec aperçu/validation/audit
-- [ ] Champs GPS V5, `lie_a_id`, doublon géographique et compte des répétitions
-- [ ] Tests polygone, voisinage, proximité, sécurité et commit
+- [x] `/tools/parse-paste`, `/geo/locate`, `/anomalies/nearby` avec permissions/limites
+- [x] Déduction polygone puis voisinage ; import GeoJSON avec aperçu/validation/audit
+- [x] Champs GPS V5, `lie_a_id`, doublon géographique et compte des répétitions
+- [x] Tests polygone, voisinage, proximité, sécurité et commit
 
 ## Phase V5.4 — Collage intelligent UI
 - [ ] Zone Coller globale, puces modifiables, application non destructive et annulation
@@ -111,3 +111,4 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 ## Journal V5
 - 2026-11-08 — Phase 1 : copie externe, migration testée sur copie puis appliquée, intégrité OK, 9 groupes/70 catégories, build vert, 18 fichiers/128 tests verts, lint/styles/contrastes verts.
 - 2026-11-08 — Phase 2 : analyseur hors-ligne et géométrie partagés, 51 vecteurs smart-paste + 12 géométrie, 20 fichiers/192 tests verts, build/lint/styles/contrastes verts.
+- 2026-11-08 — Phase 3 : parse/locate/nearby, polygones + voisinage, import GeoJSON audité, GPS V5 et répétitions ; garde SSRF testée ; 22 fichiers/230 tests verts.

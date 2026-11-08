@@ -13,6 +13,8 @@ export const PLATEFORMES = [
 export const STATUTS = ['non_traite', 'en_cours', 'traite'];
 export const VERIFICATIONS = ['a_verifier', 'confirmee', 'infirmee'];
 export const PRIORITES = ['normale', 'haute', 'urgente'];
+export const GPS_SOURCES = ['manuel', 'lien_carte', 'lien_court', 'legende', 'exif', 'appareil', 'carte', 'voisinage'];
+export const CONTENU_TYPES = ['reel', 'video', 'post', 'story', 'short', 'photo', 'autre'];
 
 export const REF_ENTITIES = ['domaines', 'types', 'dairas', 'communes', 'epics', 'agents'];
 
@@ -77,6 +79,7 @@ export const AUDIT_ACTIONS = [
   'REF_CREATE', 'REF_UPDATE', 'REF_DISABLE',
   'PARAM_UPDATE', 'BACKUP_CREATE', 'BACKUP_RESTORE', 'BACKUP_DELETE',
   'REPORT_SNAPSHOT',
+  'LIMITES_IMPORT',
 ];
 
 export const AUDIT_ACTION_KEYS = Object.fromEntries(

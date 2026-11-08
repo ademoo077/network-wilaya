@@ -17,3 +17,6 @@
 - **Types de contenu V5** : les segments propres aux plateformes sont ramenés aux valeurs canoniques du schéma (`p/posts/share/status → post`, `watch/tv/live → video`, `stories → story`, `shorts → short`) afin de ne pas stocker deux vocabulaires.
 - **Inversion GPS V5** : `smartPaste` ne propose l'inversion que si la première valeur dépasse 90°, conformément à la V5 ; le parseur V4 `parseGps` conserve son heuristique algéroise `3,36 → 36,3` pour compatibilité des saisies existantes.
 - **Bord des polygones** : le bord extérieur appartient à la commune ; le bord et l'intérieur d'un trou n'y appartiennent pas. Les Plus Codes restent au lot P2 comme indiqué dans la spécification.
+- **Voisinage territorial** : toutes les anomalies non supprimées et géolocalisées comptent, indépendamment de leur vérification ; il faut au moins deux voisines et 60 % pour une commune, sinon aucune suggestion.
+- **Import GeoJSON** : plusieurs entités appariées à la même commune sont fusionnées en `MultiPolygon`; un aperçu peut rester partiel, mais le commit n'enregistre que les correspondances explicites et audite leurs compteurs.
+- **Résolution distante** : la garde SSRF complète est livrée et testée en phase 3, mais la route réseau `resolve-link` reste inactive jusqu'au lot P2 conformément à la règle « P1 d'abord ».

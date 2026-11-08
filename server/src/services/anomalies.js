@@ -9,6 +9,8 @@ const FIELDS = [
   'domaine_id', 'type_id', 'daira_id', 'commune_id', 'adresse_texte', 'lieu_dit',
   'gps_lat', 'gps_lng', 'verification', 'agent_id', 'date_verification', 'statut',
   'epic_id', 'intervenant_autre', 'date_intervention', 'date_traitement', 'priorite', 'observations',
+  'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',
+  'date_publication_estimee', 'legende', 'auteur_publication',
 ];
 
 const HISTORY_FIELDS = [
@@ -16,6 +18,8 @@ const HISTORY_FIELDS = [
   'daira_id', 'commune_id', 'adresse_texte', 'lieu_dit', 'verification', 'agent_id',
   'date_verification', 'statut', 'epic_id', 'intervenant_autre', 'date_intervention',
   'date_traitement', 'priorite', 'observations',
+  'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',
+  'date_publication_estimee', 'legende', 'auteur_publication',
 ];
 
 export { validerEtat };
@@ -36,6 +40,9 @@ export function assertIntegrite(db, state) {
   }
   if (state.epic_id && !db.prepare('SELECT id FROM epics WHERE id = ?').get(state.epic_id)) {
     throw business('EPIC introuvable', 'EPIC_INVALIDE', { epic_id: 'EPIC introuvable' });
+  }
+  if (state.lie_a_id && !db.prepare('SELECT id FROM anomalies WHERE id = ? AND deleted_at IS NULL').get(state.lie_a_id)) {
+    throw business('Anomalie liée introuvable', 'ANOMALIE_LIEE_INVALIDE', { lie_a_id: 'Fiche liée introuvable' });
   }
 }
 
@@ -85,6 +92,28 @@ function applyGps(target, data) {
   }
 }
 
+function normalizeV5(db, target, data, currentId = null) {
+  if (currentId && Number(target.lie_a_id) === Number(currentId)) {
+    throw business('Une anomalie ne peut pas être liée à elle-même', 'LIEN_CIRCULAIRE', { lie_a_id: 'Lien circulaire' });
+  }
+  if (target.lie_a_id) {
+    const parent = db.prepare('SELECT id, lie_a_id FROM anomalies WHERE id = ? AND deleted_at IS NULL').get(target.lie_a_id);
+    if (parent) target.lie_a_id = parent.lie_a_id || parent.id;
+  }
+  const hasGps = target.gps_lat !== null && target.gps_lat !== undefined;
+  if (!hasGps) {
+    if (data.gps_source) throw business('Une source GPS exige des coordonnées', 'GPS_SOURCE_SANS_POSITION', { gps_source: 'Position requise' });
+    target.gps_source = null;
+    target.gps_precision_m = null;
+    target.gps_verifiee = 0;
+  } else {
+    target.gps_source = target.gps_source || 'manuel';
+    target.gps_verifiee = target.gps_verifiee ? 1 : 0;
+  }
+  if (!target.date_publication) target.date_publication_estimee = 0;
+  else target.date_publication_estimee = target.date_publication_estimee ? 1 : 0;
+}
+
 export function createAnomalie(db, input, userId, settings = {}) {
   const today = settings.today || todayAlgiers();
   let data = normalizeLink({ ...input });
@@ -96,6 +125,7 @@ export function createAnomalie(db, input, userId, settings = {}) {
   };
   const state = { ...data, gps_lat: null, gps_lng: null, saisi_par: userId };
   applyGps(state, data);
+  normalizeV5(db, state, data);
   assertIntegrite(db, state);
   checkDoublons(db, state, { force: Boolean(input.force_duplicate) });
   const etat = validerEtat(state, {
@@ -116,6 +146,8 @@ export function createAnomalie(db, input, userId, settings = {}) {
       'lieu_dit', 'gps_lat', 'gps_lng', 'verification', 'agent_id', 'date_verification',
       'statut', 'epic_id', 'intervenant_autre', 'date_intervention', 'date_traitement',
       'priorite', 'observations', 'search_norm', 'saisi_par'];
+    columns.splice(columns.length - 2, 0, 'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id',
+      'contenu_type', 'date_publication_estimee', 'legende', 'auteur_publication');
     const values = columns.map((c) => row[c] === undefined ? null : row[c]);
     const res = db.prepare(`INSERT INTO anomalies(${columns.join(', ')})
                             VALUES (${columns.map(() => '?').join(', ')})`).run(...values);
@@ -179,6 +211,7 @@ export function updateAnomalie(db, id, data, userId, settings = {}) {
   }
   if (input.lien_normalise !== undefined) merged.lien_normalise = input.lien_normalise;
   applyGps(merged, data);
+  normalizeV5(db, merged, data, id);
   if (input.lien_url !== undefined && !data.plateforme && input.lien_normalise !== current.lien_normalise) {
     merged.plateforme = normaliserUrl(input.lien_url).plateforme || merged.plateforme;
   }

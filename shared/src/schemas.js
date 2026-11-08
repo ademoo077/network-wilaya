@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { DATE_RE, PLATEFORMES, PRIORITES, ROLES, STATUTS, VERIFICATIONS } from './constants.js';
+import {
+  CONTENU_TYPES, DATE_RE, GPS_SOURCES, PLATEFORMES, PRIORITES, ROLES, STATUTS, VERIFICATIONS,
+} from './constants.js';
 import { isDateString } from './dates.js';
 
 export const dateString = z.string().regex(DATE_RE, 'Date attendue au format AAAA-MM-JJ').refine(isDateString, 'Date invalide');
@@ -56,6 +58,14 @@ const baseAnomalie = {
   adresse_texte: z.string().max(500).nullable().optional(),
   lieu_dit: z.string().max(300).nullable().optional(),
   gps: gpsSchema.optional(),
+  gps_source: z.enum(GPS_SOURCES).nullable().optional(),
+  gps_precision_m: z.coerce.number().int().min(0).max(1000000).nullable().optional(),
+  gps_verifiee: z.coerce.number().int().min(0).max(1).optional(),
+  lie_a_id: optionalId,
+  contenu_type: z.enum(CONTENU_TYPES).nullable().optional(),
+  date_publication_estimee: z.coerce.number().int().min(0).max(1).optional(),
+  legende: z.string().max(10000).nullable().optional(),
+  auteur_publication: z.string().max(500).nullable().optional(),
   priorite: z.enum(PRIORITES).optional(),
   observations: z.string().max(5000).nullable().optional(),
   verification: z.enum(VERIFICATIONS).optional(),
@@ -231,6 +241,22 @@ export const reportQuerySchema = z.object({
   version: z.coerce.number().int().min(1).optional(),
   include_infirmees: booleanFlag,
 });
+
+export const smartPasteSchema = z.object({
+  texte: z.string().min(1, 'Texte requis').max(200000),
+});
+
+export const geoLocateSchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+}).refine((value) => value.lat !== 0 || value.lng !== 0, 'La position 0,0 est invalide');
+
+export const nearbyQuerySchema = geoLocateSchema.and(z.object({
+  radius: z.coerce.number().min(1).max(5000).optional(),
+  type: optionalId,
+  domaine: optionalId,
+  exclude: optionalId,
+}));
 
 export function zodFields(error) {
   const fields = {};

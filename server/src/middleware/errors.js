@@ -14,7 +14,8 @@ export function errorHandler(error, req, res, _next) {
   }
   if (error?.name === 'MulterError') {
     const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
-    return res.status(status).json({ error: { code: 'UPLOAD', message: error.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop volumineux (5 Mo maximum)' : 'Téléversement invalide' } });
+    const limit = req.originalUrl.includes('/admin/limites/') ? '20 Mo' : '5 Mo';
+    return res.status(status).json({ error: { code: 'UPLOAD', message: error.code === 'LIMIT_FILE_SIZE' ? `Fichier trop volumineux (${limit} maximum)` : 'Téléversement invalide' } });
   }
   if (error?.type === 'entity.parse.failed') {
     return res.status(400).json({ error: { code: 'JSON_INVALIDE', message: 'Corps de requête JSON invalide' } });
