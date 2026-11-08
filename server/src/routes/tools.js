@@ -53,10 +53,23 @@ router.post('/resolve-link', requireAuth, resolveLimiter, async (req, res) => {
   if (String(params.enrichissement_en_ligne) !== '1') {
     return res.json({ disponible: false, raison: 'ENRICHISSEMENT_DESACTIVE' });
   }
+  const db = getDb();
+  const urlKey = parsed.data.url;
+  // Cache lookup
+  const cached = db.prepare('SELECT url_finale, meta_json, fetched_at FROM liens_cache WHERE url_normalise = ?').get(urlKey);
+  if (cached) {
+    try {
+      const item = JSON.parse(cached.meta_json);
+      return res.json({ disponible: true, url_finale: cached.url_finale, coords: item.coords || null, item, cache: true });
+    } catch { /* fall through */ }
+  }
   try {
     const finalUrl = await fetchFinalUrl(parsed.data.url);
     const classified = classifyUrl(finalUrl, { bbox: params.gps_bbox });
     const coords = classified.coords || coordinateFromMapUrl(finalUrl, { bbox: params.gps_bbox }) || null;
+    const meta = { ...classified, coords };
+    db.prepare('INSERT INTO liens_cache(url_normalise, url_finale, meta_json, fetched_at) VALUES (?, ?, ?, ?) ON CONFLICT(url_normalise) DO UPDATE SET url_finale=excluded.url_finale, meta_json=excluded.meta_json, fetched_at=excluded.fetched_at')
+      .run(urlKey, finalUrl, JSON.stringify(meta), new Date().toISOString());
     return res.json({
       disponible: true,
       url_finale: finalUrl,

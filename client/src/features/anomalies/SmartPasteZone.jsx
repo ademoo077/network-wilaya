@@ -9,7 +9,7 @@ function Chip({ children, onRemove, action = null }) {
   return <span className="inline-flex min-h-9 items-center gap-1 rounded-full border border-border bg-surface px-3 text-xs font-bold text-ink">{children}{action}<IconButton className="ms-1 h-6 w-6" aria-label="×" onClick={onRemove}><X className="h-3 w-3" /></IconButton></span>;
 }
 
-const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFiles, onPlaceMap, onRemove }, ref) {
+const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, enrichissement = false, onApply, onFiles, onPlaceMap, onRemove }, ref) {
   const { t } = useI18n();
   const { push } = useToast();
   const inputRef = useRef(null);
@@ -26,6 +26,13 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
     setIncludeText(hasUsefulText);
     const distinct = parsed.coords.length > 1 && parsed.coords.some((coord) => haversineMeters(parsed.coords[0], coord) > 100);
     if (!distinct) onApply?.(parsed, parsed.coords[0] || null, hasUsefulText);
+    if (enrichissement) {
+      parsed.urls.forEach((url, index) => {
+        if (url.type === 'carte' && !url.coords) {
+          resolveUrl(url, index, parsed);
+        }
+      });
+    }
     return parsed;
   };
   useImperativeHandle(ref, () => ({ analyze, focus: () => inputRef.current?.focus(), chooseFiles: () => fileRef.current?.click() }));
@@ -33,7 +40,8 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
     onRemove?.(kind, current[kind][index]);
     return { ...current, [kind]: current[kind].filter((_item, itemIndex) => itemIndex !== index) };
   });
-  const resolveUrl = async (url, index) => {
+  const resolveUrl = async (url, index, includeOverride) => {
+    const include = includeOverride !== undefined ? includeOverride : includeText;
     setResolving(index);
     try {
       const response = await api('/tools/resolve-link', { method: 'POST', body: { url: url.brut || url.normalise } });
@@ -47,15 +55,11 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
           if (!current) return current;
           const nextUrls = current.urls.map((item, itemIndex) => (itemIndex === index ? { ...item, coords: response.coords, normalise: response.url_finale || item.normalise } : item));
           const next = { ...current, urls: nextUrls, coords: [...current.coords, coord] };
-          onApply?.(next, coord, includeText);
+          onApply?.(next, coord, include);
           return next;
         });
         push(t('smart.applied'), 'success');
       } else {
-        setResult((current) => current ? ({
-          ...current,
-          urls: current.urls.map((item, itemIndex) => (itemIndex === index ? { ...item, normalise: response.url_finale || item.normalise, a_resolu: true } : item)),
-        }) : current);
         push(response?.message || t('smart.resolveFailed'), 'warning');
       }
     } catch (error) {
@@ -79,7 +83,7 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
       <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink2">{t('smart.understood')}</p>
       <div className="flex flex-wrap gap-2">
         {result.urls.map((url, index) => (
-          <Chip key={`${url.normalise}-${index}`} onRemove={() => remove('urls', index)} action={url.type === 'carte' && !url.coords && !url.a_resolu ? (
+          <Chip key={`${url.normalise}-${index}`} onRemove={() => remove('urls', index)} action={url.type === 'carte' && !url.coords ? (
             <button type="button" className="ms-1 inline-flex items-center gap-1 rounded-sm text-brand-700 hover:underline disabled:opacity-50" disabled={resolving === index} onClick={() => resolveUrl(url, index)} title={t('smart.resolve')}>
               <Globe className="h-3.5 w-3.5" />{resolving === index ? t('smart.resolving') : t('smart.resolve')}
             </button>
