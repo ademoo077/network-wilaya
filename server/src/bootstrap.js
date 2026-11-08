@@ -12,6 +12,14 @@ export async function prepareDatabase({ db = getDb(), seed = true, backup = true
   const groups = seed ? ensureDomainGroups(db, config.groupsCsv, { logger: log }) : null;
   db.prepare(`INSERT INTO parametres(cle,valeur) VALUES ('https_actif',?)
               ON CONFLICT(cle) DO UPDATE SET valeur=excluded.valeur`).run(config.https ? '1' : '0');
+  // Corrige l'ancien fond OSM bloqué par la politique d'utilisation des tuiles.
+  const oldTile = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const newTile = 'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
+  const tile = db.prepare('SELECT valeur FROM parametres WHERE cle = ?').get('tile_url');
+  if (tile?.valeur === oldTile) {
+    db.prepare('UPDATE parametres SET valeur = ? WHERE cle = ?').run(newTile, 'tile_url');
+    log.info?.('Paramètre tile_url mis à jour (ancien fond OSM bloqué remplacé)');
+  }
   const admin = await ensureAdmin(db, config, log);
   if (backup) {
     try {

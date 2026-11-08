@@ -24,7 +24,9 @@ function Protected() {
   if (loading || (user && refsLoading && !setup)) return <div className="page-container"><LoadingBlock /></div>;
   if (!user) return <Navigate to="/connexion" state={{ from: `${location.pathname}${location.search}` }} replace />;
   if (user.must_change_password && location.pathname !== '/profil') return <Navigate to="/profil" replace />;
-  if (user.role === 'admin' && setup?.premierDemarrage && !['/assistant', '/profil'].includes(location.pathname)) return <Navigate to="/assistant" replace />;
+  // Premier démarrage : l'assistant reste accessible, sans bloquer la navigation.
+  // (rediriger ici empêchait de fermer/découvrir les autres onglets)
+
   return <Outlet />;
 }
 

@@ -188,6 +188,40 @@ export function disableRef(db, entite, id) {
   return updateRef(db, entite, id, { actif: 0 });
 }
 
+function splitCommunes(value) {
+  return String(value || '')
+    .split(/[,،;|]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function splitDairaCommunes(line) {
+  if (line.includes(';')) {
+    const parts = line.split(';').map((part) => part.trim()).filter(Boolean);
+    return { dairaName: parts[0] || '', communes: parts.slice(1) };
+  }
+  if (line.includes(':')) {
+    const idx = line.indexOf(':');
+    return { dairaName: line.slice(0, idx).trim(), communes: splitCommunes(line.slice(idx + 1)) };
+  }
+  if (line.includes('\t')) {
+    const parts = line.split('\t').map((part) => part.trim()).filter(Boolean);
+    return { dairaName: parts[0] || '', communes: splitCommunes(parts.slice(1).join(',')) };
+  }
+  if (line.includes('|')) {
+    const parts = line.split('|').map((part) => part.trim()).filter(Boolean);
+    return { dairaName: parts[0] || '', communes: splitCommunes(parts.slice(1).join(',')) };
+  }
+  const dash = line.match(/\s[-–—]\s/);
+  if (dash && dash.index > 0) {
+    return {
+      dairaName: line.slice(0, dash.index).trim(),
+      communes: splitCommunes(line.slice(dash.index + dash[0].length)),
+    };
+  }
+  return null;
+}
+
 export function parseTerritoire(text) {
   const dairas = new Map();
   const doublons = [];
@@ -197,20 +231,17 @@ export function parseTerritoire(text) {
   lines.forEach((raw, index) => {
     const line = raw.trim();
     if (!line || line.startsWith('#')) return;
-    let dairaName = '';
-    let communes = [];
-    if (line.includes(';')) {
-      const parts = line.split(';').map((p) => p.trim()).filter(Boolean);
-      dairaName = parts[0];
-      communes = parts.slice(1);
-    } else if (line.includes(':')) {
-      const [left, right] = line.split(':');
-      dairaName = left.trim();
-      communes = String(right || '').split(/[,،]/).map((p) => p.trim()).filter(Boolean);
-    } else {
-      invalides.push({ ligne: index + 1, texte: line, motif: 'Format attendu « Daïra ; Commune » ou « Daïra : commune1, commune2 »' });
+    const parsed = splitDairaCommunes(line);
+    if (!parsed) {
+      invalides.push({
+        ligne: index + 1,
+        texte: line,
+        motif: 'Format attendu : « Daïra ; Commune » ou « Daïra : commune1, commune2 » (séparateurs acceptés : ; : | tab , - )',
+      });
       return;
     }
+    const dairaName = parsed.dairaName;
+    const communes = parsed.communes;
     if (!dairaName || !communes.length) {
       invalides.push({ ligne: index + 1, texte: line, motif: 'Daïra ou commune manquante' });
       return;

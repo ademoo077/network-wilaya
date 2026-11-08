@@ -1,20 +1,23 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { Check, ClipboardPaste, ImagePlus, MapPinned, MousePointer2, X } from 'lucide-react';
+import { Check, ClipboardPaste, Globe, ImagePlus, MapPinned, MousePointer2, X } from 'lucide-react';
 import { formatDate, formatGps, haversineMeters, parseSmartPaste } from '@anm/shared';
-import { Alert, Button, Checkbox, IconButton } from '../../components/ui/index.js';
+import { api } from '../../api/client.js';
+import { Alert, Button, Checkbox, IconButton, useToast } from '../../components/ui/index.js';
 import { useI18n } from '../../i18n/index.jsx';
 
-function Chip({ children, onRemove }) {
-  return <span className="inline-flex min-h-9 items-center gap-1 rounded-full border border-border bg-surface px-3 text-xs font-bold text-ink">{children}<IconButton className="ms-1 h-6 w-6" aria-label="×" onClick={onRemove}><X className="h-3 w-3" /></IconButton></span>;
+function Chip({ children, onRemove, action = null }) {
+  return <span className="inline-flex min-h-9 items-center gap-1 rounded-full border border-border bg-surface px-3 text-xs font-bold text-ink">{children}{action}<IconButton className="ms-1 h-6 w-6" aria-label="×" onClick={onRemove}><X className="h-3 w-3" /></IconButton></span>;
 }
 
 const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFiles, onPlaceMap, onRemove }, ref) {
   const { t } = useI18n();
+  const { push } = useToast();
   const inputRef = useRef(null);
   const fileRef = useRef(null);
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [includeText, setIncludeText] = useState(true);
+  const [resolving, setResolving] = useState(null);
   const analyze = (value) => {
     const parsed = parseSmartPaste(value, { bbox });
     setText(value);
@@ -30,6 +33,33 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
     onRemove?.(kind, current[kind][index]);
     return { ...current, [kind]: current[kind].filter((_item, itemIndex) => itemIndex !== index) };
   });
+  const resolveUrl = async (url, index) => {
+    setResolving(index);
+    try {
+      const response = await api('/tools/resolve-link', { method: 'POST', body: { url: url.brut || url.normalise } });
+      if (!response?.disponible) {
+        push(response?.raison === 'ENRICHISSEMENT_DESACTIVE' ? t('smart.resolveDisabled') : (response?.message || t('smart.resolveFailed')), 'warning');
+        return;
+      }
+      if (response.coords?.lat != null && response.coords?.lng != null) {
+        const coord = { lat: response.coords.lat, lng: response.coords.lng, source: 'lien_court', precision_m: response.coords.precision_m ?? null };
+        setResult((current) => {
+          if (!current) return current;
+          const nextUrls = current.urls.map((item, itemIndex) => (itemIndex === index ? { ...item, coords: response.coords, normalise: response.url_finale || item.normalise } : item));
+          const next = { ...current, urls: nextUrls, coords: [...current.coords, coord] };
+          onApply?.(next, coord, includeText);
+          return next;
+        });
+        push(t('smart.applied'), 'success');
+      } else {
+        push(t('smart.resolveFailed'), 'warning');
+      }
+    } catch (error) {
+      push(error.message || t('smart.resolveFailed'), 'danger');
+    } finally {
+      setResolving(null);
+    }
+  };
   const handleFiles = (files) => { const list = [...files].slice(0, 5); if (list.length) onFiles?.(list); };
   const drop = (event) => {
     event.preventDefault();
@@ -45,7 +75,11 @@ const SmartPasteZone = forwardRef(function SmartPasteZone({ bbox, onApply, onFil
       <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink2">{t('smart.understood')}</p>
       <div className="flex flex-wrap gap-2">
         {result.urls.map((url, index) => (
-          <Chip key={`${url.normalise}-${index}`} onRemove={() => remove('urls', index)}>
+          <Chip key={`${url.normalise}-${index}`} onRemove={() => remove('urls', index)} action={url.type === 'carte' && !url.coords ? (
+            <button type="button" className="ms-1 inline-flex items-center gap-1 rounded-sm text-brand-700 hover:underline disabled:opacity-50" disabled={resolving === index} onClick={() => resolveUrl(url, index)} title={t('smart.resolve')}>
+              <Globe className="h-3.5 w-3.5" />{resolving === index ? t('smart.resolving') : t('smart.resolve')}
+            </button>
+          ) : null}>
             <Check className="h-3.5 w-3.5" />{t('smart.link')} · {url.plateforme ? t(`platform.${url.plateforme}`) : url.type} · {url.contenuType ? t(`content.${url.contenuType}`) : '—'}
           </Chip>
         ))}

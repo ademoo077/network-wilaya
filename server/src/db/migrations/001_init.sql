@@ -216,6 +216,6 @@ INSERT INTO parametres(cle, valeur) VALUES
   ('week_start_day', '0'),
   ('delai_retard_jours', '7'),
   ('exiger_verification', '1'),
-  ('tile_url', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+  ('tile_url', 'https://tile.openstreetmap.de/{z}/{x}/{y}.png'),
   ('backup_retention_days', '30'),
   ('gps_bbox', '36.40,2.50,36.95,3.40');

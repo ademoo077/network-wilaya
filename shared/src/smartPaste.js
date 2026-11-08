@@ -44,3 +44,5 @@ export function parseSmartPaste(value, options = {}) {
 
 export { normalizeSmartText } from './smartPasteText.js';
 export { estimateTikTokDate, estimateInstagramDate, decodeInstagramMediaId } from './smartPasteDates.js';
+export { classifyUrl } from './smartPasteUrls.js';
+export { coordinateFromMapUrl } from './smartPasteCoords.js';

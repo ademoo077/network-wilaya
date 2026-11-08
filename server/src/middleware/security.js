@@ -3,12 +3,25 @@ import { config } from '../config/index.js';
 import { getDb } from '../db/index.js';
 import { getParams } from '../services/settings.js';
 
-function tileOrigin() {
+function tileOrigins() {
   try {
     const params = getParams(getDb());
-    return new URL(params.tile_url.replace('{z}', '0').replace('{x}', '0').replace('{y}', '0')).origin;
+    const template = String(params.tile_url || 'https://tile.openstreetmap.de/{z}/{x}/{y}.png');
+    const sample = template
+      .replace('{s}', 'a')
+      .replace('{z}', '0')
+      .replace('{x}', '0')
+      .replace('{y}', '0')
+      .replace('{r}', '');
+    const { origin, hostname } = new URL(sample);
+    if (template.includes('{s}')) {
+      const parts = hostname.split('.');
+      const base = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
+      return [`https://*.${base}`, origin];
+    }
+    return [origin];
   } catch {
-    return 'https://tile.openstreetmap.org';
+    return ['https://tile.openstreetmap.de'];
   }
 }
 
@@ -20,7 +33,7 @@ export function securityHeaders() {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'blob:', tileOrigin()],
+        imgSrc: ["'self'", 'data:', 'blob:', ...tileOrigins()],
         fontSrc: ["'self'", 'data:'],
         connectSrc: ["'self'"],
         objectSrc: ["'none'"],

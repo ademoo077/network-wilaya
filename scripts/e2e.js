@@ -39,7 +39,7 @@ async function waitForHealth(base, attempts = 60) {
   return null;
 }
 
-const { server, stopJobs, shutdown } = await startServer();
+const { server, stopJobs } = await startServer();
 let base = null;
 try {
   base = `http://127.0.0.1:${process.env.PORT || 4321}`;
