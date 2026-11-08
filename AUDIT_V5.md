@@ -63,3 +63,12 @@ Le tag demandé `v4-avant-v5` ne peut donc pas désigner un commit V4 historique
 - Résultat de la chaîne qualité et identifiant de commit consignés dans le journal de `PLAN.md`.
 - Chaîne de fermeture : build Vite vert (bundle initial 43,64 Ko gzip hors carte/graphiques), 18 fichiers / 128 tests verts, ESLint sans avertissement, styles verts, contrastes AA des tokens verts.
 - Smoke test réel : `/api/health` répond `5.0.0` avec DB active et la racine sert le client construit en HTTP 200.
+
+### Phase 2 — Moteur partagé
+
+- `parseSmartPaste` normalise chiffres arabes/persans, séparateur arabe, caractères directionnels et entités HTML sans interpréter le texte.
+- URL avec/sans schéma, ponctuation arabe, enveloppes Facebook/Google/Instagram/TikTok, plateformes et types canoniques sont couverts hors-ligne.
+- Coordonnées décimales, DMS FR/AR, Google Maps (épingle prioritaire), Waze, Apple Plans, OSM et `geo:` sont couvertes ; `0,0` est rejeté et une zone hors bbox reste un avertissement.
+- Dates TikTok/Instagram vérifiées par aller-retour BigInt et garde 2016…aujourd'hui+1 ; aucune date n'est inventée pour les autres plateformes.
+- Géométrie partagée : Haversine, bbox, grille, Polygon/MultiPolygon, trous et bornes ; aucun accès réseau ajouté.
+- Fermeture : 51 tests dédiés à `smartPaste`, 12 à la géométrie, 9 au parseur GPS étendu ; chaîne complète à 20 fichiers / 192 tests, build, lint, styles et contrastes verts.

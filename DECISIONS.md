@@ -14,3 +14,6 @@
 - **Seed des groupes V5** : un groupe existant est retrouvé par les catégories déjà rattachées avant son nom ; seules les catégories sans groupe sont affectées. Une relance ne rétablit donc ni un libellé ni un rattachement modifié par l'administrateur.
 - **Tables P2 en migration 002** : `liens_cache` et `boite_reception` sont créées dès 002 comme l'impose la spécification, mais aucune requête sortante ni import de réception n'est activé avant leurs phases P2.
 - **Paramètres réseau sûrs** : `enrichissement_en_ligne=0` et `https_actif=0` restent désactivés par défaut ; aucune résolution distante n'est effectuée pendant les phases P1.
+- **Types de contenu V5** : les segments propres aux plateformes sont ramenés aux valeurs canoniques du schéma (`p/posts/share/status → post`, `watch/tv/live → video`, `stories → story`, `shorts → short`) afin de ne pas stocker deux vocabulaires.
+- **Inversion GPS V5** : `smartPaste` ne propose l'inversion que si la première valeur dépasse 90°, conformément à la V5 ; le parseur V4 `parseGps` conserve son heuristique algéroise `3,36 → 36,3` pour compatibilité des saisies existantes.
+- **Bord des polygones** : le bord extérieur appartient à la commune ; le bord et l'intérieur d'un trou n'y appartiennent pas. Les Plus Codes restent au lot P2 comme indiqué dans la spécification.

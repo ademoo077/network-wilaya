@@ -6,3 +6,5 @@ export * from './dates.js';
 export * from './percent.js';
 export * from './statut.js';
 export * from './schemas.js';
+export * from './geo.js';
+export * from './smartPaste.js';

@@ -17,6 +17,13 @@ describe('parseGps', () => {
     expect(parseGps('https://www.openstreetmap.org/#map=15/36.7538/3.0588').lat).toBeCloseTo(36.7538, 6);
   });
 
+  it('étend la saisie aux formats DMS, Waze, Apple Plans et geo', () => {
+    expect(parseGps(`36°45'13.68"N 3°03'31.68"E`).lat).toBeCloseTo(36.7538, 5);
+    expect(parseGps('https://www.waze.com/ul?ll=36.7538%2C3.0588').lng).toBeCloseTo(3.0588, 5);
+    expect(parseGps('https://maps.apple.com/?ll=36.7538,3.0588').lat).toBeCloseTo(36.7538, 5);
+    expect(parseGps('geo:36.7538,3.0588').ok).toBe(true);
+  });
+
   it('signale un lien court non résolu', () => {
     const result = parseGps('https://maps.app.goo.gl/abc123');
     expect(result.ok).toBe(false);

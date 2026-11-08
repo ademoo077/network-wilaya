@@ -66,11 +66,11 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - [x] Chaîne de qualité complète verte ; commit de phase et tag annoté `v4-avant-v5`
 
 ## Phase V5.2 — Moteur partagé
-- [ ] `smartPaste` : normalisation, extraction/déballage/classification des URL et texte restant
-- [ ] Coordonnées décimales/DMS/liens de carte, chiffres arabes, précision, choix de positions
-- [ ] Dates TikTok/Instagram avec garde-fous et tests aller-retour
-- [ ] `geo.js` : Haversine, boîtes, grille, Polygon/MultiPolygon avec trous
-- [ ] Au moins 30 vecteurs unitaires, build/lint/styles/a11y verts, commit
+- [x] `smartPaste` : normalisation, extraction/déballage/classification des URL et texte restant
+- [x] Coordonnées décimales/DMS/liens de carte, chiffres arabes, précision, choix de positions
+- [x] Dates TikTok/Instagram avec garde-fous et tests aller-retour
+- [x] `geo.js` : Haversine, boîtes, grille, Polygon/MultiPolygon avec trous
+- [x] Au moins 30 vecteurs unitaires, build/lint/styles/a11y verts, commit
 
 ## Phase V5.3 — Géolocalisation serveur
 - [ ] `/tools/parse-paste`, `/geo/locate`, `/anomalies/nearby` avec permissions/limites
@@ -110,3 +110,4 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 
 ## Journal V5
 - 2026-11-08 — Phase 1 : copie externe, migration testée sur copie puis appliquée, intégrité OK, 9 groupes/70 catégories, build vert, 18 fichiers/128 tests verts, lint/styles/contrastes verts.
+- 2026-11-08 — Phase 2 : analyseur hors-ligne et géométrie partagés, 51 vecteurs smart-paste + 12 géométrie, 20 fichiers/192 tests verts, build/lint/styles/contrastes verts.

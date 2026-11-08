@@ -1,3 +1,5 @@
+import { coordinateFromMapUrl, extractCoordinatesFromText } from './smartPasteCoords.js';
+
 const SHORT_LINK_RE = /(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)/i;
 
 function round6(n) {
@@ -65,9 +67,17 @@ export function parseGps(input, options = {}) {
   if (SHORT_LINK_RE.test(raw) && !raw.includes('@')) {
     return { ok: false, error: 'LIEN_COURT_NON_RESOLU' };
   }
-  const found = (raw.includes('http') || raw.includes('maps') || raw.includes('#map') || raw.includes('mlat'))
+  let found = (raw.includes('http') || raw.includes('maps') || raw.includes('#map') || raw.includes('mlat'))
     ? fromLink(raw)
     : fromText(raw);
+  if (!found && (/^(?:https?:|geo:)/i.test(raw) || /(?:waze|apple|openstreetmap)/i.test(raw))) {
+    const parsed = coordinateFromMapUrl(raw, options);
+    if (parsed) found = { lat: parsed.lat, lng: parsed.lng };
+  }
+  if (!found) {
+    const parsed = extractCoordinatesFromText(raw, options).coords[0];
+    if (parsed) found = { lat: parsed.lat, lng: parsed.lng };
+  }
   if (!found) return { ok: false, error: 'GPS_INVALIDE' };
   let { lat, lng } = found;
   let swapped = false;
