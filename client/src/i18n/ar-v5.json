@@ -58,5 +58,15 @@
   "limits.matched": "{matched} مطابقة، {unmatched} غير مطابقة، {ambiguous} ملتبسة",
   "limits.commit": "حفظ الحدود المطابقة",
   "limits.manual": "مطابقة يدوية",
-  "audit.LIMITES_IMPORT": "استيراد الحدود الإقليمية"
+  "audit.LIMITES_IMPORT": "استيراد الحدود الإقليمية",
+  "errors.fatal.title": "الشاشة غير متاحة",
+  "errors.fatal.message": "واجه التطبيق مشكلة أثناء التحميل. يرجى المحاولة مجددًا.",
+  "errors.fatal.retry": "إعادة المحاولة",
+  "errors.fatal.back": "العودة إلى لوحة التحكم",
+  "errors.fallback.title": "حدث خطأ",
+  "errors.fallback.message": "واجهت الواجهة مشكلة : {message}",
+  "errors.fallback.reload": "إعادة تحميل الصفحة",
+  "errors.fallback.retry": "إعادة المحاولة",
+  "errors.fallback.back": "العودة إلى لوحة التحكم",
+  "errors.fallback.details": "تفاصيل تقنية"
 }

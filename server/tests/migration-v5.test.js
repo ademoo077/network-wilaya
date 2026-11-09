@@ -14,7 +14,7 @@ beforeAll(() => { ({ db } = freshDatabase()); });
 describe('Migration V5 et groupes thématiques', () => {
   it('applique 002 puis 003 (index) sans altérer les tables V4', () => {
     const versions = db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((row) => row.version);
-    expect(versions).toEqual([1, 2, 3]);
+    expect(versions).toEqual([1, 2, 3, 4]);
     const columns = db.prepare("PRAGMA table_info('anomalies')").all().map((row) => row.name);
     expect(columns).toEqual(expect.arrayContaining([
       'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',

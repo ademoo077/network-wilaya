@@ -36,7 +36,12 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try { await api('/auth/logout', { method: 'POST' }); } finally { setCsrf(null); setUser(null); }
   }, []);
-  const value = useMemo(() => ({ user, loading, login, logout, refresh, setUser }), [user, loading, login, logout, refresh]);
+  const reset = useCallback(() => {
+    setUser(null);
+    setLoading(true);
+    refresh().catch(() => setLoading(false));
+  }, [refresh]);
+  const value = useMemo(() => ({ user, loading, login, logout, refresh, setUser, reset }), [user, loading, login, logout, refresh, setUser, reset]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

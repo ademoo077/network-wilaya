@@ -6,8 +6,12 @@ import { RefsProvider } from './context/RefsContext.jsx';
 import { I18nProvider } from './i18n/index.jsx';
 import { ThemeProvider } from './hooks/useTheme.jsx';
 import { ToastProvider } from './components/ui/index.js';
+import { installClientErrorHandlers } from './utils/clientErrors.js';
 import './styles/tokens.css';
 import './styles/index.css';
+
+installClientErrorHandlers();
+window.addEventListener('vite:preloadError', () => { window.location.reload(); });
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

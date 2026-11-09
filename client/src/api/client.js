@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 let csrfToken = null;
 
 export class ApiError extends Error {
@@ -10,6 +12,15 @@ export class ApiError extends Error {
     this.details = payload?.error?.details || null;
   }
 }
+
+export const anomalyListSchema = z.object({
+  items: z.array(z.unknown()).default([]),
+  total: z.number().int().default(0),
+  page: z.number().int().default(1),
+  pageSize: z.number().int().default(20),
+});
+
+export const emptyAnomalyList = { items: [], total: 0, page: 1, pageSize: 20 };
 
 export function setCsrf(value) {
   csrfToken = value || null;
@@ -29,7 +40,8 @@ export async function api(path, options = {}) {
       method,
       headers,
       body: options.body && !bodyIsForm && typeof options.body !== 'string'
-        ? JSON.stringify(options.body) : options.body,
+        ? JSON.stringify(options.body)
+        : options.body,
     });
   } catch {
     throw new ApiError(0, { error: { code: 'NETWORK', message: 'Serveur inaccessible' } });
@@ -40,6 +52,13 @@ export async function api(path, options = {}) {
   if (!response.ok) {
     if (response.status === 401) window.dispatchEvent(new CustomEvent('anm:unauthorized'));
     throw new ApiError(response.status, payload);
+  }
+  const schema = options?.schema;
+  if (schema) {
+    const parsed = schema.safeParse(payload);
+    if (parsed.success) return parsed.data;
+    if (import.meta.env.DEV) console.warn(`[api] Réponse hors schéma pour ${path}`, payload);
+    return options.fallback ?? null;
   }
   return payload;
 }

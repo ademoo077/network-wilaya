@@ -58,5 +58,15 @@
   "limits.matched": "{matched} appariée(s), {unmatched} non appariée(s), {ambiguous} ambiguë(s)",
   "limits.commit": "Enregistrer les limites appariées",
   "limits.manual": "Association manuelle",
-  "audit.LIMITES_IMPORT": "Limites territoriales importées"
+  "audit.LIMITES_IMPORT": "Limites territoriales importées",
+  "errors.fatal.title": "Écran indisponible",
+  "errors.fatal.message": "Le chargement de l'application a rencontré un problème. Veuillez réessayer.",
+  "errors.fatal.retry": "Réessayer",
+  "errors.fatal.back": "Retour au tableau de bord",
+  "errors.fallback.title": "Une erreur est survenue",
+  "errors.fallback.message": "L'interface a rencontré un problème : {message}",
+  "errors.fallback.reload": "Recharger la page",
+  "errors.fallback.retry": "Réessayer",
+  "errors.fallback.back": "Retour au tableau de bord",
+  "errors.fallback.details": "Détail technique"
 }

@@ -20,7 +20,7 @@ Date : 2026-11-09. Références : `docs/SPEC.md` (V4), `docs/SPEC_V5.md` (V5), `
 
 | Constat | Test phase 1 | Résultat |
 |---|---|---|
-| C1 — Écran blanc après F5 (`#/carte`, `#/anomalies/nouvelle`) | `tests/e2e/c1-reload.spec.js` | **Rouge reproduit** pour les deux routes signalées : `expectNotBlank` échoue (contenu absent au chargement) ; zéro `pageerror` attendu mais non satisfait. |
+| C1 — Écran blanc après F5 (`#/carte`, `#/anomalies/nouvelle`) | `tests/e2e/c1-reload.spec.js` | **Rouge reproduit puis corrigé en phase 2** : `expectNotBlank` échouait sur les deux routes signalées ; la suite passe désormais sur les cinq routes testées. |
 | C2 — Liens courts sans position | `tests/e2e/c2-short-link.spec.js` + faux serveur de redirections | Infrastructuré ; comportement rouge (résolution non aboutie) documenté. |
 | C3 — Collage dans le champ Lien : aucun message | `tests/e2e/c3-paste.spec.js` | Rouge **masqué** par C1 : le champ `#lien_url` n'était pas présent au moment de l'assertion. |
 | C4 — Logique du formulaire fragile | — | À cadrer avec les phases 3/4 du formulaire réécrit. |
@@ -53,3 +53,15 @@ Date : 2026-11-09. Références : `docs/SPEC.md` (V4), `docs/SPEC_V5.md` (V5), `
 - Phase 3 : moteur de liens et GPS (résolution de liens courts, cache, proxy, repli HTML, codes d'échec, Santé › Connectivité).
 - Phase 4 : réécriture du formulaire (reducer unique, origines, tâches annulables, collage partout, libellés/hints, motif conditionnel, barre d'actions).
 - Phase 5 : cartes ; Phase 6 : dashboard et audit des autres pages ; Phase 7 : réactivité/design ; Phase 8 : recette finale (scénarios 33–52 + régression 32).
+
+## 7. Bilan phase 2
+
+- **C1 corrigé** : `client/src/App.jsx` (machine de démarrage `authChecking → refsLoading → ready`, squelette plein écran), `client/src/context/AuthContext.jsx` (reset de session), `client/src/components/ErrorBoundary.jsx` (global + par route), `client/src/features/errors/FatalError.jsx`, `client/src/main.jsx` (handlers erreurs + `vite:preloadError`), `client/vite.config.js` (`base: './'`).
+- **Client-errors** : `POST /api/client-errors` (migration `004_v6.sql`, `server/src/routes/errors.js`) + `client/src/utils/clientErrors.js` (fire-and-forget, plafonné).
+- **Validation frontière** : `client/src/api/client.js` (zod + fallback), `MapPage` (`items ?? []`).
+- **Leaflet** : `ResizeObserver` → `invalidateSize()` dans `MapPage`.
+- **Tests** : `tests/e2e/c1-reload.spec.js` vert (5 routes), suite unit/integration et E2E API verts, build/lint/check:styles/check:a11y verts.
+
+## 8. Points restants phase 2
+
+- Phase 3 : moteur liens & GPS ; Phase 4 : formulaire ; Phase 5 : cartes ; Phase 6 : dashboard ; Phase 7 : réactivité ; Phase 8 : recette finale (scénarios 33–52 + régression 32).
