@@ -1,0 +1,317 @@
+[
+  {
+    "id": "V01",
+    "categorie": "lien_carte",
+    "description": "Google Maps place avec epingle @",
+    "texte": "https://www.google.com/maps/place/Alger+Centre/@36.7538,3.0588,17z",
+    "attente": { "position": [36.7538, 3.0588], "source": "lien_carte" }
+  },
+  {
+    "id": "V02",
+    "categorie": "lien_carte",
+    "description": "Google Maps ?q=",
+    "texte": "https://www.google.com/maps/?q=36.75,3.05",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V03",
+    "categorie": "lien_carte",
+    "description": "Google Maps centre=",
+    "texte": "https://www.google.com/maps/place/Test?center=36.75,3.05",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V04",
+    "categorie": "lien_carte",
+    "description": "Google Maps dir destination",
+    "texte": "https://www.google.com/maps/dir/?api=1&origin=36.75,3.05&destination=36.8,3.1",
+    "attente": { "position": [36.8, 3.1], "source": "lien_carte" }
+  },
+  {
+    "id": "V05",
+    "categorie": "lien_carte",
+    "description": "Google Maps consent + continue",
+    "texte": "https://consent.google.com/?continue=https%3A%2F%2Fwww.google.com%2Fmaps%2F%4036.75%2C3.05%2C17z",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V06",
+    "categorie": "coordonnees",
+    "description": "Coordonnees decimales avec texte",
+    "texte": "36.753800, 3.058800 — point de rassemblement",
+    "attente": { "position": [36.7538, 3.0588], "source": "manuel" }
+  },
+  {
+    "id": "V07",
+    "categorie": "coordonnees",
+    "description": "Coordonnees DMS",
+    "texte": "36°45'13.68\"N 3°03'21.48\"E",
+    "attente": { "position": [36.7538, 3.055967], "source": "manuel" }
+  },
+  {
+    "id": "V08",
+    "categorie": "coordonnees",
+    "description": "Coordonnees inversees (N/S/E/W)",
+    "texte": "N 36.7538, E 3.0588",
+    "attente": { "position": [36.7538, 3.0588], "source": "manuel" }
+  },
+  {
+    "id": "V09",
+    "categorie": "lien_court",
+    "description": "Waze lien court (geohash)",
+    "texte": "https://waze.com/ul/h?ll=36.75,3.05",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V10",
+    "categorie": "lien_court",
+    "description": "Plus Code court",
+    "texte": "V75V+8R",
+    "attente": { "position": null, "source": null, "modele": "recoverNearest" }
+  },
+  {
+    "id": "V11",
+    "categorie": "social_facebook",
+    "description": "Video Facebook — aucune position",
+    "texte": "https://www.facebook.com/agentwilaya/videos/7234567890123456789",
+    "attente": { "plateforme": "facebook", "contenu": "video", "position": null }
+  },
+  {
+    "id": "V12",
+    "categorie": "social_tiktok",
+    "description": "TikTok — date estimee",
+    "texte": "https://www.tiktok.com/@agentwilaya/video/7293847562983745",
+    "attente": { "plateforme": "tiktok", "contenu": "video", "dateEstimee": true, "position": null }
+  },
+  {
+    "id": "V13",
+    "categorie": "social_instagram",
+    "description": "Story Instagram",
+    "texte": "https://www.instagram.com/stories/CxYz12345/",
+    "attente": { "plateforme": "instagram", "contenu": "story", "position": null }
+  },
+  {
+    "id": "V14",
+    "categorie": "social_x",
+    "description": "Post X",
+    "texte": "https://x.com/agentwilaya/status/1783928374659382734",
+    "attente": { "plateforme": "x", "contenu": "post", "position": null }
+  },
+  {
+    "id": "V15",
+    "categorie": "social_telegram",
+    "description": "Canal Telegram",
+    "texte": "https://t.me/+AbCdEfGhIjK",
+    "attente": { "plateforme": "telegram", "contenu": "autre", "position": null }
+  },
+  {
+    "id": "V16",
+    "categorie": "social_youtube",
+    "description": "Video YouTube",
+    "texte": "https://www.youtube.com/watch?v=xxxxxxxxxxx",
+    "attente": { "plateforme": "youtube", "contenu": "video", "position": null }
+  },
+  {
+    "id": "V17",
+    "categorie": "message_fr",
+    "description": "Message WhatsApp FR avec geohash",
+    "texte": "Salut, point de rassemblement proche de Bab Ezzouar. https://waze.com/ul/h?ll=36.75,3.05",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte", "texteConserve": true }
+  },
+  {
+    "id": "V18",
+    "categorie": "message_ar",
+    "description": "Message WhatsApp AR avec coordonnees",
+    "texte": "النقطة التجمع قرب حي البدر — 36.75, 3.05",
+    "attente": { "position": [36.75, 3.05], "source": "manuel", "texteConserve": true }
+  },
+  {
+    "id": "V19",
+    "categorie": "lien_reseau",
+    "description": "Lien court reseau social (resolution_liens=tous)",
+    "texte": "https://www.tiktok.com/@agentwilaya/video/7293847562983745",
+    "attente": { "resolutionAttendue": true, "position": null }
+  },
+  {
+    "id": "V20",
+    "categorie": "lien_carte",
+    "description": "Bing cp=lat~lng",
+    "texte": "https://www.bing.com/maps?cp=3675380~305800",
+    "attente": { "position": [36.7538, 3.0588], "source": "lien_carte" }
+  },
+  {
+    "id": "V21",
+    "categorie": "social_whatsapp",
+    "description": "WhatsApp avec lien Maps @",
+    "texte": "Alors laisse-moi te dire, elle est partie. https://www.google.com/maps/@36.75,3.05,17z",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V22",
+    "categorie": "social_facebook",
+    "description": "Post Facebook",
+    "texte": "https://www.facebook.com/agentwilaya/posts/7234567890123456789",
+    "attente": { "plateforme": "facebook", "contenu": "post", "position": null }
+  },
+  {
+    "id": "V23",
+    "categorie": "social_facebook",
+    "description": "Story Facebook",
+    "texte": "https://www.facebook.com/stories/agentwilaya/7283948374659382",
+    "attente": { "plateforme": "facebook", "contenu": "story", "position": null }
+  },
+  {
+    "id": "V24",
+    "categorie": "social_tiktok",
+    "description": "Profil TikTok",
+    "texte": "https://www.tiktok.com/@agentwilaya",
+    "attente": { "plateforme": "tiktok", "contenu": "autre", "position": null }
+  },
+  {
+    "id": "V25",
+    "categorie": "social_instagram",
+    "description": "Reel Instagram",
+    "texte": "https://www.instagram.com/reel/CxYz12345/",
+    "attente": { "plateforme": "instagram", "contenu": "reel", "position": null }
+  },
+  {
+    "id": "V26",
+    "categorie": "social_youtube",
+    "description": "Shorts YouTube",
+    "texte": "https://www.youtube.com/shorts/xxxxxxxxxxx",
+    "attente": { "plateforme": "youtube", "contenu": "short", "position": null }
+  },
+  {
+    "id": "V27",
+    "categorie": "social_telegram",
+    "description": "Lien de canal Telegram",
+    "texte": "https://t.me/joinchat/ABCDEF",
+    "attente": { "plateforme": "telegram", "contenu": "autre", "position": null }
+  },
+  {
+    "id": "V28",
+    "categorie": "coordonnees",
+    "description": "Coordonnees entieres",
+    "texte": "36.7538,3.0588",
+    "attente": { "position": [36.7538, 3.0588], "source": "manuel" }
+  },
+  {
+    "id": "V29",
+    "categorie": "lien_carte",
+    "description": "Google Maps search api query+ll",
+    "texte": "https://www.google.com/maps/search/?api=1&query=March%C3%A9+Alger&ll=36.75,3.05",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V30",
+    "categorie": "lien_carte",
+    "description": "Google Maps place nom seul (lieu)",
+    "texte": "https://www.google.com/maps/place/March%C3%A9+Alger",
+    "attente": { "lieu": "Marché Alger", "position": null }
+  },
+  {
+    "id": "V31",
+    "categorie": "lien_court",
+    "description": "Waze geohash autre",
+    "texte": "https://waze.com/ul/h?ll=36.9,3.1",
+    "attente": { "position": [36.9, 3.1], "source": "lien_carte" }
+  },
+  {
+    "id": "V32",
+    "categorie": "lien_court",
+    "description": "Plus Code complet",
+    "texte": "V75V+8R+6A Alger",
+    "attente": { "position": null, "source": null, "modele": "recoverNearest" }
+  },
+  {
+    "id": "V33",
+    "categorie": "lien_court",
+    "description": "Plus Code OLC vecteur spec",
+    "texte": "849VCWC8+R9",
+    "attente": { "position": [37.4223, -122.0846], "source": "olc" }
+  },
+  {
+    "id": "V34",
+    "categorie": "lien_court",
+    "description": "TikTok short via vm.",
+    "texte": "https://vm.tiktok.com/ZMabc123/",
+    "attente": { "resolutionAttendue": true, "position": null, "plateforme": "tiktok" }
+  },
+  {
+    "id": "V35",
+    "categorie": "social_facebook",
+    "description": "Facebook share vers Maps",
+    "texte": "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.google.com%2Fmaps%2F%4036.75%2C3.05%2C17z",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V36",
+    "categorie": "lien_carte",
+    "description": "Google Maps @ avec zoom",
+    "texte": "https://www.google.com/maps/@36.75,3.05,15z",
+    "attente": { "position": [36.75, 3.05], "source": "lien_carte" }
+  },
+  {
+    "id": "V37",
+    "categorie": "message_ar",
+    "description": "Message AR avec lien Maps q",
+    "texte": "الموقع التجمع قرب سطيف — https://www.google.com/maps/?q=36.76,3.06",
+    "attente": { "position": [36.76, 3.06], "source": "lien_carte" }
+  },
+  {
+    "id": "V38",
+    "categorie": "message_fr",
+    "description": "Message FR deux positions distinctes",
+    "texte": "Deux points : 36.75,3.05 et 36.78,3.09 — merci de preciser.",
+    "attente": { "positions": [[36.75, 3.05], [36.78, 3.09]], "modele": "choix" }
+  },
+  {
+    "id": "V39",
+    "categorie": "coordonnees",
+    "description": "Coordonnees avec N/S/E/W",
+    "texte": "36.75 N 3.05 E",
+    "attente": { "position": [36.75, 3.05], "source": "manuel" }
+  },
+  {
+    "id": "V40",
+    "categorie": "social_youtube",
+    "description": "YouTube link avec time",
+    "texte": "https://www.youtube.com/watch?v=xxxxxxxxxxx&t=42s",
+    "attente": { "plateforme": "youtube", "contenu": "video", "position": null }
+  },
+  {
+    "id": "V41",
+    "categorie": "social_instagram",
+    "description": "Instagram location tag",
+    "texte": "https://www.instagram.com/p/CxYz12345/?location=12345",
+    "attente": { "plateforme": "instagram", "contenu": "post", "position": null, "lieu": "Alger" }
+  },
+  {
+    "id": "V42",
+    "categorie": "lien_carte",
+    "description": "Google Maps dir destination",
+    "texte": "https://www.google.com/maps/dir/?api=1&destination=36.8,3.1",
+    "attente": { "position": [36.8, 3.1], "source": "lien_carte" }
+  },
+  {
+    "id": "V43",
+    "categorie": "coordonnees",
+    "description": "Coordonnees avec deux nombres",
+    "texte": "36.7538 3.0588",
+    "attente": { "position": [36.7538, 3.0588], "source": "manuel" }
+  },
+  {
+    "id": "V44",
+    "categorie": "message_ar",
+    "description": "Message AR simple non geo",
+    "texte": "السلام عليكم هذا تحذير من حي البدر",
+    "attente": { "position": null, "texteConserve": true }
+  },
+  {
+    "id": "V45",
+    "categorie": "lien_carte",
+    "description": "Google Maps plus q et ll",
+    "texte": "https://www.google.com/maps/place/?q=36.77,3.07&ll=36.77,3.07",
+    "attente": { "position": [36.77, 3.07], "source": "lien_carte" }
+  }
+]

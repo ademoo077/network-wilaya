@@ -40,7 +40,7 @@ export const DEFAULT_PARAMS = {
 export const PUBLIC_PARAMS = [
   'nom_cellule', 'week_start_day', 'tile_url', 'gps_bbox', 'delai_retard_jours',
   'rayon_doublon_m', 'objectif_taux_traitement', 'sla_urgente_j', 'sla_haute_j',
-  'sla_normale_j', 'delai_verification_cible_j', 'https_actif', 'enrichissement_en_ligne',
+  'sla_normale_j', 'delai_verification_cible_j', 'https_actif', 'enrichissement_en_ligne', 'enrichissement_metadonnees',
 ];
 
 export const PAGE_SIZE_DEFAULT = 25;

@@ -34,7 +34,7 @@ export function publicParams(db) {
   const numeric = new Set([
     'week_start_day', 'delai_retard_jours', 'rayon_doublon_m', 'objectif_taux_traitement',
     'sla_urgente_j', 'sla_haute_j', 'sla_normale_j', 'delai_verification_cible_j', 'https_actif',
-    'enrichissement_en_ligne',
+    'enrichissement_en_ligne', 'enrichissement_metadonnees',
   ]);
   return Object.fromEntries(PUBLIC_PARAMS.map((key) => [key, numeric.has(key) ? Number(params[key]) : params[key]]));
 }

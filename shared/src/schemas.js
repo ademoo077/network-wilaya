@@ -198,6 +198,8 @@ export const settingsSchema = z.object({
   sla_normale_j: z.coerce.number().int().min(0).max(365).optional(),
   delai_verification_cible_j: z.coerce.number().int().min(0).max(365).optional(),
   enrichissement_en_ligne: z.coerce.number().int().min(0).max(1).optional(),
+  resolution_liens: z.enum(['cartes', 'tous', 'aucune']).optional(),
+  enrichissement_metadonnees: z.coerce.number().int().min(0).max(1).optional(),
   rapport_auto_fige: z.coerce.number().int().min(0).max(1).optional(),
   https_actif: z.coerce.number().int().min(0).max(1).optional(),
 });

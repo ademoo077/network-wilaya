@@ -65,3 +65,9 @@ Date : 2026-11-09. Références : `docs/SPEC.md` (V4), `docs/SPEC_V5.md` (V5), `
 ## 8. Points restants phase 2
 
 - Phase 3 : moteur liens & GPS ; Phase 4 : formulaire ; Phase 5 : cartes ; Phase 6 : dashboard ; Phase 7 : réactivité ; Phase 8 : recette finale (scénarios 33–52 + régression 32).
+
+## 9. Bilan phase 3
+
+- Moteur de liens courts : POST /api/tools/resolve-link (modes cartes / tous / aucune, cache TTL succes 7 jours / echec 5 minutes, injection de dependances, boucle de redirections 6 sauts max, codes d'erreur types SSRF).
+- Tests : server/tests/resolve-v6.test.js vert (C40 red?vert, C41, C44) ; tests/fixtures/paste-vectors.json (45 vecteurs) + shared/tests/paste-vectors.test.js (39 verts / 8 rouges sur formats GPS restants).
+- Restants phase 3 : formats GPS N/S/E/W, Bing, OLC, partage Facebook, positions multiples - a traiter en phase 3/4.

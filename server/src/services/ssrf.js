@@ -41,7 +41,7 @@ export function validateResolveUrl(value, allowedHosts = RESOLVE_ALLOWED_HOSTS) 
   let url;
   try { url = new URL(String(value)); } catch { throw badRequest('URL invalide'); }
   if (!['http:', 'https:'].includes(url.protocol)) throw badRequest('Seuls les liens http(s) sont autorisés');
-  if (url.username || url.password) throw badRequest('Les identifiants intégrés à une URL sont interdits');
+  if (url.username || url.password) throw badRequest('Les identifiants intégrés dans une URL sont interdits');
   if (url.port && !['80', '443'].includes(url.port)) throw badRequest('Port réseau non autorisé');
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (!allowedHosts.has(host)) throw business('Domaine non autorisé pour la résolution', 'DOMAINE_INTERDIT');
@@ -56,7 +56,7 @@ export async function assertPublicResolveUrl(value, lookup = dns.lookup) {
   catch { throw business('Résolution DNS impossible', 'DNS_INDISPONIBLE'); }
   const list = Array.isArray(records) ? records : [records];
   if (!list.length || list.some((record) => isPrivateAddress(record.address))) {
-    throw business('Destination réseau privée ou réservée interdite', 'SSRF_INTERDIT');
+    throw business('Destination réseau privé ou réservé interdite', 'SSRF_INTERDIT');
   }
   return { url, addresses: list.map((record) => record.address) };
 }
