@@ -84,10 +84,10 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - [x] Scénarios 18–26 : composants et API livrés (vérification navigateur automatisée non exécutée faute de navigateurs Playwright installés ; logique couverte par tests partagés/serveur et E2E API) ; commit
 
 ## Phase V5.5 — Statistiques détaillées serveur
-- [ ] Entonnoir, délais moyenne/médiane/P90, distributions, SLA et ancienneté SQL
-- [ ] Flux, moyenne mobile, objectif, ventilations, récurrence et qualité
-- [ ] Faits marquants déterministes FR/AR et rapport enrichi
-- [ ] Tests de bornes/cohérence/performance et commit
+- [x] Entonnoir (infirmées incluses), délais moyenne/médiane/P90, distributions, SLA et ancienneté en SQL
+- [x] Flux, moyenne mobile MM4, objectif, ventilations, récurrence et qualité
+- [x] Faits marquants déterministes FR/AR et rapport hebdomadaire enrichi (`detail`, `faits`)
+- [x] Tests de bornes (2/3, 7/8, 14/15, 30/31), monotonie, cohérence et performance 50 000 lignes (< 300 ms) ; commit
 
 ## Phase V5.6 — Tableau de bord et rapport
 - [ ] Blocs et graphiques détaillés, heatmap, rapport A4 cinq pages et Excel multi-feuilles
@@ -113,3 +113,4 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - 2026-11-08 — Phase 2 : analyseur hors-ligne et géométrie partagés, 51 vecteurs smart-paste + 12 géométrie, 20 fichiers/192 tests verts, build/lint/styles/contrastes verts.
 - 2026-11-08 — Phase 3 : parse/locate/nearby, polygones + voisinage, import GeoJSON audité, GPS V5 et répétitions ; garde SSRF testée ; 22 fichiers/230 tests verts.
 - 2026-11-08 — Phase 4 : SmartPasteZone, mini-carte déplaçable/géométrie/proches, EXIF navigateur, badge/source GPS, suggestion/doublon géographique, lien répété, HTTPS expliqué, admin limites (aperçu/import), `/geo/limit/:communeId`, script `scripts/e2e.js` ; build, 22 fichiers/230 tests, lint, styles, a11y tokens et E2E verts.
+- 2026-11-09 — Phase 5 : `GET /api/stats/detail` (entonnoir, délais, SLA, ancienneté, tendance 12 semaines/MM4, objectif, 8 ventilations, jour/heure, récurrence, qualité, 10 faits), rapport hebdomadaire enrichi ; index partiels de performance (migration 003), 50 000 lignes en 213 ms ; 23 fichiers/245 tests, build, lint, styles, a11y et 11 scénarios E2E verts.

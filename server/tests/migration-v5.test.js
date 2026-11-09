@@ -12,9 +12,9 @@ let db;
 beforeAll(() => { ({ db } = freshDatabase()); });
 
 describe('Migration V5 et groupes thématiques', () => {
-  it('applique 002 sans altérer les tables V4', () => {
+  it('applique 002 puis 003 (index) sans altérer les tables V4', () => {
     const versions = db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((row) => row.version);
-    expect(versions).toEqual([1, 2]);
+    expect(versions).toEqual([1, 2, 3]);
     const columns = db.prepare("PRAGMA table_info('anomalies')").all().map((row) => row.name);
     expect(columns).toEqual(expect.arrayContaining([
       'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',
@@ -23,6 +23,10 @@ describe('Migration V5 et groupes thématiques', () => {
     for (const table of ['groupes_domaines', 'limites_communes', 'liens_cache', 'vues_sauvegardees', 'boite_reception']) {
       expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)?.name).toBe(table);
     }
+    const indexes = db.prepare("SELECT name, sql FROM sqlite_master WHERE type='index' AND tbl_name='anomalies'").all();
+    expect(indexes.find((row) => row.name === 'idx_anomalies_deleted').sql)
+      .toContain('WHERE deleted_at IS NOT NULL');
+    expect(indexes.some((row) => row.name === 'idx_anomalies_traitement_actif')).toBe(true);
     expect(db.pragma('integrity_check', { simple: true })).toBe('ok');
     expect(db.pragma('foreign_key_check')).toEqual([]);
   });

@@ -91,3 +91,12 @@ Le tag demandé `v4-avant-v5` ne peut donc pas désigner un commit V4 historique
 - Admin : onglet « Limites territoriales » (aperçu, propriété, associations manuelles, commit) branché sur `/api/admin/limites/import-geojson`.
 - Détail : affichage du compteur « Signalée N fois » quand `repetitions_count > 1` (donnée déjà fournie par l'API).
 - Chaîne : build, 22 fichiers/230 tests, lint, check:styles, check:a11y tokens et `scripts/e2e.js` (health/auth/liste/stats/parse-paste/locate) verts. Les scénarios UI 18–26 ne sont pas rejoués automatiquement par navigateur dans cet environnement.
+
+### Phase 5 — Statistiques détaillées serveur
+
+- `GET /api/stats/detail` (authentifié) : période par défaut sur la semaine courante, paramètres de filtres V4, entonnoir reçues → vérifiées → confirmées → engagées → traitées (infirmées à part, taux d'infirmation rapporté aux vérifiées), délais moyens/médiane/P90 et distribution, SLA global et par priorité, SLA de vérification, ancienneté du stock par priorité et plus ancienne fiche ouverte.
+- Flux : stock de fin de semaine sur douze semaines, reçues/traitées, MM4, tendance et résorption estimée ; objectif de taux de traitement avec états atteint/proche/en retard ; huit ventilations (plateforme, groupe, domaine, type, daïra, commune, EPIC, agent) et métriques de vérification par agent ; distribution par jour de semaine et carte de chaleur semaine × jour.
+- Qualité : points noirs récurrents sur cellules d'environ 100 m (≥ 2, liens comptés, nouveaux à ≥ 3 dans la période), taux de géolocalisation, de position confirmée, d'engagement et d'intervention, liste des fiches à compléter ; dix faits marquants déterministes en français et arabe.
+- Rapport hebdomadaire : le format existant est conservé et enrichi de `detail` et `faits`, sans rupture pour les consommateurs.
+- Performance : migration 003 (index partiels) ; 50 000 lignes, détail d'une semaine en 213 ms (budget 300 ms), test de non-régression ajouté.
+- Fermeture : 23 fichiers / 245 tests, build, lint, check:styles, check:a11y et 11 scénarios E2E verts.

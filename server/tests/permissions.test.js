@@ -28,6 +28,7 @@ describe('Permissions par rôle (§ 4.7)', () => {
     const anonymous = request(app);
     expect((await anonymous.get('/api/anomalies')).status).toBe(401);
     expect((await anonymous.get('/api/stats/overview')).status).toBe(401);
+    expect((await anonymous.get('/api/stats/detail')).status).toBe(401);
     expect((await anonymous.get('/api/settings')).status).toBe(401);
     expect((await anonymous.get('/api/health')).status).toBe(200);
     expect((await anonymous.get('/api/config')).status).toBe(200);
@@ -38,6 +39,7 @@ describe('Permissions par rôle (§ 4.7)', () => {
     const list = await session.agent.get('/api/anomalies');
     expect(list.status).toBe(200);
     expect((await session.agent.get('/api/stats/overview')).status).toBe(200);
+    expect((await session.agent.get('/api/stats/detail')).status).toBe(200);
     expect((await session.agent.get('/api/anomalies/export?format=csv')).status).toBe(200);
 
     expect((await createAs(session, 'lecteur')).status).toBe(403);

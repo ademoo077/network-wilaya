@@ -68,6 +68,12 @@ try {
   const stats = await fetch(`${base}/api/stats/overview?from=2026-10-01&to=2026-11-08`, { headers: { cookie: loginCookie } });
   check('stats-overview', stats.ok, `${stats.status} ${JSON.stringify(await stats.json().catch(() => null))}`);
 
+  const detail = await fetch(`${base}/api/stats/detail?from=2026-10-01&to=2026-11-08`, { headers: { cookie: loginCookie } });
+  const detailPayload = await detail.json().catch(() => null);
+  const funnel = detailPayload?.item?.entonnoir?.etapes;
+  const funnelOk = funnel && funnel.confirmees <= funnel.verifiees && funnel.verifiees <= funnel.recues;
+  check('stats-detail', detail.ok && Boolean(funnelOk) && Array.isArray(detailPayload?.item?.faits), `${detail.status}`);
+
   const paste = await fetch(`${base}/api/tools/parse-paste`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', cookie: loginCookie, 'X-CSRF-Token': loginPayload?.csrf || '' },

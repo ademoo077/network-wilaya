@@ -5,6 +5,7 @@ import {
 import { buildFilters } from './anomalyQuery.js';
 import { getParams } from './settings.js';
 import { DIMENSIONS } from './stats.js';
+import { detailStats } from './statsDetail.js';
 import { neutralizeFormula } from './export.js';
 
 const STATUS_CASE = (alias = 'a') => `CASE
@@ -169,6 +170,7 @@ export function buildWeeklyReport(db, options = {}) {
   const nom = settings.nom_cellule;
   const top = groupes.domaine.slice(0, 3).map((g) => `${g.label_fr || g.label_ar} (${g.total})`).join(', ');
   const arrow = kpis.evolution_stock > 0 ? '▲' : kpis.evolution_stock < 0 ? '▼' : '=';
+  const detail = detailStats(db, { ...options.filters, from: S, to: E });
   const resume = [
     `Synthèse hebdomadaire — ${nom}, Wilaya d'Alger`,
     `Semaine du ${formatDate(S)} au ${formatDate(E)}`,
@@ -183,6 +185,8 @@ export function buildWeeklyReport(db, options = {}) {
     groupes,
     listes: { urgentes, retard },
     serie_8_semaines: serie(db, base, S, 8),
+    detail,
+    faits: detail.faits,
     resume,
     meta: {
       genere_le: new Date().toISOString(),

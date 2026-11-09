@@ -3,18 +3,20 @@ import { addDays, todayAlgiers } from '@anm/shared';
 import { freshDatabase } from './helpers.js';
 import { listAnomalies } from '../src/services/anomalyRead.js';
 import { overview, groupStats } from '../src/services/stats.js';
+import { detailStats } from '../src/services/statsDetail.js';
 
 const ROWS = 50000;
 let db;
 let refs;
 let userId;
+let today;
 
 beforeAll(() => {
   const fresh = freshDatabase();
   db = fresh.db;
   refs = fresh.refs;
   userId = fresh.userIds.admin;
-  const today = todayAlgiers();
+  today = todayAlgiers();
   const insert = db.prepare(`INSERT INTO anomalies(
     reference, plateforme, lien_url, lien_normalise, date_signalement,
     domaine_id, type_id, daira_id, commune_id, verification, statut, priorite, search_norm, saisi_par
@@ -60,6 +62,12 @@ describe('Performance 50 000 lignes', () => {
   it('regroupement par daïra sous 300 ms', () => {
     const { result, ms } = measure(() => groupStats(db, 'daira', { all_periods: true }));
     expect(result.totals.total).toBe(ROWS);
+    expect(ms).toBeLessThan(300);
+  });
+
+  it('statistiques détaillées d’une semaine sous 300 ms', () => {
+    const { result, ms } = measure(() => detailStats(db, { from: addDays(today, -6), to: today }));
+    expect(result.kpis.total).toBeGreaterThan(0);
     expect(ms).toBeLessThan(300);
   });
 });

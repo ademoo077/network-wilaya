@@ -4,6 +4,7 @@ import { getDb } from '../db/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { badRequest } from '../utils/errors.js';
 import { overview, groupStats, timeline, activite } from '../services/stats.js';
+import { detailStats } from '../services/statsDetail.js';
 
 const router = Router();
 
@@ -28,6 +29,10 @@ router.get('/group', requireAuth, (req, res) => {
 
 router.get('/timeline', requireAuth, (req, res) => {
   res.json({ items: timeline(getDb(), parsed(req)) });
+});
+
+router.get('/detail', requireAuth, (req, res) => {
+  res.json({ item: detailStats(getDb(), parsed(req)) });
 });
 
 router.get('/activite', requireAuth, (req, res) => {
