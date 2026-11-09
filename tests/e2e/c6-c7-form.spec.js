@@ -1,0 +1,10 @@
+import { expect, test } from '@playwright/test';
+import { expectNotBlank, loginAs } from './helpers';
+
+test('C6 — le hint sous Statut porte sur le statut, pas sur la plateforme', async ({ page, baseURL }) => {
+  const session = await loginAs(baseURL, 'admin');
+  await page.context().addCookies([{ name: 'sid', value: session.token, url: baseURL }]);
+  await page.goto(`${baseURL}/#/anomalies/nouvelle`);
+  await expectNotBlank(page);
+  await expect(page.getByText('Pour passer en')).toBeVisible({ timeout: 8000 });
+});
