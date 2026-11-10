@@ -146,6 +146,8 @@ La matrice complète a révélé une seconde exception sur fiche et modification
 - **Vues enregistrées** : privées par défaut, partage administrateur, doublons et limite refusés, application remplaçant tous les filtres. Quatre tests serveur, un test navigateur.
 - **File « À faire »** : chaque compteur est comparé au `total` de la liste filtrée correspondante ; les alertes système restent réservées aux administrateurs. Trois tests serveur, un test navigateur.
 - **Cloche** : même total que la page (6 dans la base de démo), panneau accessible, lien vers la file.
+- **Santé** : tests navigateur du diagnostic de connectivité typé et du journal d'erreurs client. Le scénario 51 attend l'ouverture de la session (jeton CSRF disponible) avant de provoquer l'erreur : sans cette attente, le signalement partait sans jeton et le test était instable.
+- **Formulaire mobile** : en-tête de collage empilé (le bouton presse-papiers ne comprime plus le texte), étapes avec compteurs `n/2`, barre d'actions repliée en « Enregistrer + Plus d'actions » sous 640 px, focus initial désactivé sur petit écran. Deux tests navigateur dédiés (`form-mobile.spec.js`) mesurent la largeur du texte, la hauteur de la barre repliée et l'ouverture du menu.
 - **Screenshots** : `npm run screens` régénère 42 captures (`docs/screens/`) : 7 routes × {FR clair, FR sombre, AR sombre} × {1440, 390}. Elles servent à l'examen humain ; aucune assertion n'en dépend.
 
 ### 11.4 Résultat de la chaîne complète
@@ -155,5 +157,5 @@ La matrice complète a révélé une seconde exception sur fiche et modification
 - `npm run check:styles` : vert.
 - `npx vitest run` : **362/362**.
 - `npm run test:e2e` : **11/11** scénarios API.
-- `npx playwright test` : **56/56**, puis **58/58** avec les deux tests Santé.
+- `npx playwright test` : **60/60** (dont 2 tests Santé et 2 tests formulaire mobile), après correction d'une course sur le jeton CSRF du scénario 51.
 - `npm run check:a11y` : vert (contrastes des tokens, clair et sombre).

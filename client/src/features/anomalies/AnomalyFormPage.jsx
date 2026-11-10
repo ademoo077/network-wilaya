@@ -1,4 +1,5 @@
-import { CopyPlus, Save, X } from 'lucide-react';
+import { useState } from 'react';
+import { CopyPlus, MoreHorizontal, Save, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, Button, Dialog, ErrorState, LoadingBlock } from '../../components/ui/index.js';
 import { PageHeader } from '../../components/layout/PageHeader.jsx';
@@ -16,8 +17,9 @@ import FormActionBar from './FormActionBar.jsx';
 export default function AnomalyFormPage() {
   const { id } = useParams(); const { t } = useI18n(); const navigate = useNavigate(); const model = useAnomalieForm(id);
   const { state, errors, setup, user, loading, loadError, missing, ui } = model;
+  const [moreOpen, setMoreOpen] = useState(false);
   const saving = state.tasks.submit.status === 'loading';
-  const header = <PageHeader title={t(id ? 'form.editTitle' : 'form.newTitle')} />;
+  const header = <PageHeader title={t(id ? 'form.editTitle' : 'form.newTitle')} description={t(id ? 'form.editHelp' : 'form.newHelp')} />;
   if (loading) return <div className="page-container">{header}<LoadingBlock /></div>;
   if (loadError || missing) return <div className="page-container">{header}<ErrorState message={loadError?.message || t('notFound.title')} onRetry={model.reload} /></div>;
   if (setup?.referentielTerritorialVide) return <div className="page-container">{header}<Alert variant="danger" title={t('form.noTerritory')}
@@ -40,7 +42,18 @@ export default function AnomalyFormPage() {
       </div>
       <div className="form-action-space" aria-hidden="true" />
       <FormActionBar>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end"><Button variant="ghost" onClick={() => navigate(-1)}><X className="h-4 w-4" />{t('common.cancel')}</Button>
+        <div className="flex items-center gap-2 sm:hidden">
+          <Button type="submit" className="flex-1" loading={saving}><Save className="h-4 w-4" aria-hidden="true" />{t('common.save')}</Button>
+          <Button variant="secondary" aria-expanded={moreOpen} aria-controls="form-more-actions" onClick={() => setMoreOpen(!moreOpen)}>
+            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />{t('form.moreActions')}</Button>
+        </div>
+        {moreOpen && <div id="form-more-actions" className="mt-2 grid gap-2 sm:hidden">
+          {!id && <><Button variant="secondary" className="w-full" loading={saving} onClick={() => model.save('new')}>{t('form.saveNew')}</Button>
+            <Button variant="secondary" className="w-full" loading={saving} onClick={() => model.save('duplicate')}><CopyPlus className="h-4 w-4" aria-hidden="true" />{t('form.saveDuplicate')}</Button></>}
+          {state.tasks.submit.status === 'error' && <Button variant="secondary" className="w-full" onClick={() => model.save(state.saveMode)}>{t('common.retry')}</Button>}
+          <Button variant="ghost" className="w-full" onClick={() => navigate(-1)}><X className="h-4 w-4" aria-hidden="true" />{t('common.cancel')}</Button>
+        </div>}
+        <div className="hidden flex-wrap justify-end gap-2 sm:flex"><Button variant="ghost" onClick={() => navigate(-1)}><X className="h-4 w-4" />{t('common.cancel')}</Button>
           <Button type="submit" loading={saving}><Save className="h-4 w-4" />{t('common.save')}</Button>
           {!id && <><Button variant="secondary" loading={saving} onClick={() => model.save('new')}>{t('form.saveNew')}</Button>
             <Button variant="secondary" loading={saving} onClick={() => model.save('duplicate')}><CopyPlus className="h-4 w-4" />{t('form.saveDuplicate')}</Button></>}

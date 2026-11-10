@@ -13,6 +13,7 @@ function Chip({ children, onClick, onRemove, removeLabel }) {
 }
 export default function SmartPasteZone({ model }) {
   const { t } = useI18n(); const ref = useRef(null); const { state, paste, ui, set, handleFiles } = model; const { result } = state;
+  const desktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
   useEffect(() => { if (ref.current) { ref.current.style.height = 'auto'; ref.current.style.height = `${Math.min(360, ref.current.scrollHeight)}px`; } }, [state.paste]);
   const focus = (id) => { document.getElementById(id)?.focus(); document.getElementById(id)?.scrollIntoView({ block: 'center' }); };
   const files = () => document.getElementById('attachments')?.click();
@@ -24,10 +25,11 @@ export default function SmartPasteZone({ model }) {
   const socialWithoutGps = result?.urls.some((url) => url.type === 'social') && !state.values.gps;
   return <section className="mb-6 min-w-0 rounded-lg border border-dashed border-brand-600 bg-surface2 p-4 shadow-1"
     onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); if (event.dataTransfer.files.length) handleFiles([...event.dataTransfer.files]); else paste.analyze(event.dataTransfer.getData('text/plain')); }}>
-    <div className="flex flex-wrap items-start gap-3"><ClipboardPaste className="h-6 w-6 text-brand-700" aria-hidden="true" />
-      <div className="min-w-0 flex-1"><h2 className="font-black">{t('smart.title')}</h2><p className="mt-1 text-sm text-ink2">{t('smart.placeholder')}</p></div>
-      {window.isSecureContext && <Button variant="secondary" onClick={readClipboard}>{t('smart.paste')}</Button>}</div>
-    <textarea ref={ref} id="smart-paste" autoFocus aria-label={t('smart.title')} placeholder={t(window.isSecureContext ? 'smart.placeholder' : 'smart.ctrlV')}
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+      <div className="flex min-w-0 flex-1 items-start gap-3"><ClipboardPaste className="mt-0.5 h-6 w-6 shrink-0 text-brand-700" aria-hidden="true" />
+        <div className="min-w-0"><h2 className="font-black">{t('smart.title')}</h2><p className="mt-1 text-sm text-ink2">{t('smart.placeholder')}</p></div></div>
+      {window.isSecureContext && <Button variant="secondary" className="w-full sm:w-auto sm:shrink-0" onClick={readClipboard}><ClipboardPaste className="h-4 w-4" aria-hidden="true" />{t('smart.paste')}</Button>}</div>
+    <textarea ref={ref} id="smart-paste" autoFocus={desktop} aria-label={t('smart.title')} placeholder={t(window.isSecureContext ? 'smart.placeholder' : 'smart.ctrlV')}
       className="mt-4 min-h-24 w-full resize-y rounded-md border border-border bg-surface p-3 text-sm text-ink placeholder:text-muted" value={state.paste}
       onChange={(event) => paste.input(event.target.value, 'smart-paste')} />
     {!window.isSecureContext && <p className="text-sm text-muted">{t('smart.ctrlV')}</p>}

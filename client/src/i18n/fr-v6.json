@@ -220,4 +220,7 @@
   ,"views.removed": "Vue supprimée"
   ,"views.limit": "40 vues enregistrées maximum"
   ,"views.exists": "Une vue porte déjà ce nom"
+  ,"form.newHelp": "Collez le message reçu ou renseignez la source, la classification et la localisation. Les champs marqués * sont obligatoires."
+  ,"form.editHelp": "Mettez à jour la fiche. Les champs marqués * sont obligatoires."
+  ,"form.moreActions": "Plus d'actions"
 }
