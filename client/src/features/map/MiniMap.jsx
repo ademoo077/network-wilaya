@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { DEFAULT_PARAMS } from '@anm/shared';
+import { ErrorBoundary } from '../../components/ErrorBoundary.jsx';
 import { Alert } from '../../components/ui/index.js';
 import { useI18n } from '../../i18n/index.jsx';
+import { watchTileHealth } from './tileHealth.js';
 
-export default function MiniMap({ value, onChange, nearby = [], focusGeometry = null, tileUrl, interactive = true, className = 'h-64' }) {
+export default function MiniMap(props) { return <ErrorBoundary><MiniMapContent {...props} /></ErrorBoundary>; }
+
+function MiniMapContent({ value, onChange, nearby = [], focusGeometry = null, tileUrl = DEFAULT_PARAMS.tile_url, interactive = true, className = 'h-64' }) {
   const { t } = useI18n();
   const container = useRef(null);
   const mapRef = useRef(null);
@@ -19,13 +24,19 @@ export default function MiniMap({ value, onChange, nearby = [], focusGeometry = 
     map.attributionControl.setPrefix(false);
     map.attributionControl.addAttribution('© OpenStreetMap contributors');
     const tiles = L.tileLayer(tileUrl, { maxZoom: 19 });
-    tiles.on('tileerror', () => setOffline(true));
+    const stopTiles = watchTileHealth(tiles, setOffline);
     tiles.addTo(map);
     if (interactive) map.on('click', (event) => onChangeRef.current?.({ lat: Number(event.latlng.lat.toFixed(6)), lng: Number(event.latlng.lng.toFixed(6)) }));
     nearbyLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
-    window.setTimeout(() => map.invalidateSize(), 50);
-    return () => { map.remove(); mapRef.current = null; markerRef.current = null; nearbyLayerRef.current = null; };
+    const observer = new ResizeObserver(() => { if (mapRef.current === map) map.invalidateSize({ pan: false }); });
+    observer.observe(container.current);
+    return () => {
+      observer.disconnect(); stopTiles();
+      mapRef.current = null;
+      map.remove();
+      markerRef.current = null; nearbyLayerRef.current = null; geometryLayerRef.current = null;
+    };
   }, [interactive, tileUrl]);
   useEffect(() => {
     const map = mapRef.current;
@@ -40,8 +51,8 @@ export default function MiniMap({ value, onChange, nearby = [], focusGeometry = 
       });
     }
     else markerRef.current.setLatLng([value.lat, value.lng]);
-    map.setView([value.lat, value.lng], Math.max(map.getZoom(), 14));
-  }, [value, interactive]);
+    map.setView([value.lat, value.lng], 16, { animate: false });
+  }, [value, interactive, tileUrl]);
   useEffect(() => {
     const layer = nearbyLayerRef.current;
     if (!layer) return;
@@ -53,7 +64,7 @@ export default function MiniMap({ value, onChange, nearby = [], focusGeometry = 
         fillOpacity: 0.55,
       }).bindTooltip(item.reference).addTo(layer);
     });
-  }, [nearby]);
+  }, [nearby, interactive, tileUrl]);
   useEffect(() => {
     const map = mapRef.current;
     geometryLayerRef.current?.remove();
@@ -63,7 +74,7 @@ export default function MiniMap({ value, onChange, nearby = [], focusGeometry = 
       style: { color: 'var(--brand-700)', weight: 2, fillColor: 'var(--brand-100)', fillOpacity: 0.18 },
     }).addTo(map);
     geometryLayerRef.current = layer;
-    if (layer.getBounds().isValid()) map.fitBounds(layer.getBounds(), { padding: [20, 20] });
-  }, [focusGeometry]);
-  return <div><div ref={container} className={`${className} overflow-hidden rounded-md border border-border ${offline ? 'offline-map' : ''}`} />{offline && <Alert variant="warning" className="mt-2">{t('map.tilesDown')}</Alert>}</div>;
+    if (!markerRef.current && layer.getBounds().isValid()) map.fitBounds(layer.getBounds(), { padding: [20, 20], maxZoom: 16 });
+  }, [focusGeometry, interactive, tileUrl]);
+  return <div><div ref={container} role="region" aria-label={t('field.gps')} className={`${className} offline-map overflow-hidden rounded-md border border-border`} />{offline && <Alert variant="warning" className="mt-2">{t('map.tilesDown')}</Alert>}</div>;
 }

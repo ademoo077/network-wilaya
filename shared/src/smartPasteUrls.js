@@ -1,12 +1,7 @@
 import { detecterPlateforme, normaliserUrl } from './url.js';
 import { coordinateFromMapUrl } from './smartPasteCoords.js';
-
-const MAP_HOSTS = ['google.com', 'google.dz', 'maps.app.goo.gl', 'goo.gl', 'waze.com', 'maps.apple.com', 'openstreetmap.org'];
-const SHORT_MAP = /^(?:maps\.app\.goo\.gl|goo\.gl)$/i;
-
-function hostMatches(host, suffix) {
-  return host === suffix || host.endsWith(`.${suffix}`);
-}
+import { hostMatches, isGoogleHost, isMapUrl, isShortMapUrl, isShortSocialUrl } from './linkPolicy.js';
+import { safeDecode } from './smartPasteText.js';
 
 function withScheme(raw) {
   if (/^(?:https?:|geo:)/i.test(raw)) return raw;
@@ -20,9 +15,10 @@ export function unwrapUrl(raw) {
     try { url = new URL(current); } catch { return current; }
     const host = url.hostname.toLowerCase();
     let nested = null;
-    if (hostMatches(host, 'l.facebook.com') || hostMatches(host, 'lm.facebook.com')) nested = url.searchParams.get('u');
-    else if (hostMatches(host, 'google.com') || /^google\.[a-z.]+$/.test(host)) {
-      if (url.pathname === '/url') nested = url.searchParams.get('q') || url.searchParams.get('url');
+    if (hostMatches(host, 'l.facebook.com') || hostMatches(host, 'lm.facebook.com') || hostMatches(host, 'facebook.com') && url.pathname.startsWith('/sharer/')) nested = url.searchParams.get('u');
+    else if (isGoogleHost(host)) {
+      if (host.startsWith('consent.')) nested = url.searchParams.get('continue');
+      else if (url.pathname === '/url') nested = url.searchParams.get('q') || url.searchParams.get('url');
     } else if (hostMatches(host, 'l.instagram.com')) nested = url.searchParams.get('u');
     else if (hostMatches(host, 'out.tiktok.com')) nested = url.searchParams.get('url') || url.searchParams.get('u') || url.searchParams.get('target');
     if (!nested || !/^https?:\/\//i.test(nested)) return current;
@@ -33,6 +29,7 @@ export function unwrapUrl(raw) {
 
 function contentType(platform, url) {
   const path = url.pathname.toLowerCase();
+  if (/\/live(?:\/|$)/.test(path)) return 'direct';
   if (platform === 'facebook') {
     if (/\/(?:reel|reels)\//.test(path)) return 'reel';
     if (/\/(?:watch|videos?)\//.test(path) || url.pathname === '/watch/') return 'video';
@@ -74,12 +71,15 @@ export function classifyUrl(raw, options = {}) {
     return {
       brut: raw, type: 'social', plateforme, contenuType: contentType(plateforme, url),
       normalise: normalized.ok ? normalized.url : url.href,
+      ...(isShortSocialUrl(url) ? { a_resoudre: true } : {}),
     };
   }
-  if (MAP_HOSTS.some((candidate) => hostMatches(host, candidate)) || host.includes('google.') && url.pathname.startsWith('/maps')) {
+  if (isMapUrl(url)) {
+    const place = url.pathname.match(/\/place\/([^/]+)/)?.[1];
     return {
       brut: raw, type: 'carte', plateforme: null, contenuType: null, normalise: url.href,
-      ...(SHORT_MAP.test(host) || host === 'maps.app.goo.gl' ? { a_resoudre: true } : {}),
+      ...(isShortMapUrl(url) ? { a_resoudre: true } : {}),
+      ...(place ? { lieu: safeDecode(place.replace(/\+/g, ' ')).slice(0, 300) } : {}),
       coords: coordinateFromMapUrl(url.href, options),
     };
   }

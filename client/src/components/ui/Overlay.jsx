@@ -5,13 +5,14 @@ import { IconButton } from './Button.jsx';
 import { useI18n } from '../../i18n/index.jsx';
 
 function useModal(open, onClose, panelRef) {
+  const closeRef = useRef(onClose); closeRef.current = onClose;
   useEffect(() => {
     if (!open) return undefined;
     const before = document.activeElement;
     const handler = (event) => {
-      if (event.key === 'Escape') onClose?.();
+      if (event.key === 'Escape') closeRef.current?.();
       if (event.key === 'Tab' && panelRef.current) {
-        const focusable = [...panelRef.current.querySelectorAll('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled);
+        const focusable = [...panelRef.current.querySelectorAll('button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled && el.getClientRects().length);
         if (!focusable.length) return;
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
@@ -21,13 +22,14 @@ function useModal(open, onClose, panelRef) {
     };
     document.addEventListener('keydown', handler);
     document.body.style.overflow = 'hidden';
-    window.setTimeout(() => panelRef.current?.querySelector('button, input, select, textarea')?.focus(), 0);
+    const timer = window.setTimeout(() => panelRef.current?.querySelector('button, input, select, textarea')?.focus(), 0);
     return () => {
+      window.clearTimeout(timer);
       document.removeEventListener('keydown', handler);
       document.body.style.overflow = '';
       before?.focus?.();
     };
-  }, [open, onClose, panelRef]);
+  }, [open, panelRef]);
 }
 
 function ModalHeader({ title, onClose, id }) {
@@ -44,12 +46,12 @@ export function Dialog({ open, onClose, title, children, footer, size = 'md' }) 
   return createPortal(<div className="fixed inset-0 z-[90] grid place-items-center bg-[var(--overlay)] p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}><div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`max-h-[90dvh] w-full overflow-hidden rounded-lg border border-border bg-surface shadow-3 ${widths[size]}`}><ModalHeader title={title} onClose={onClose} id={titleId} /><div className="max-h-[calc(90dvh-136px)] overflow-y-auto p-5">{children}</div>{footer && <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-4">{footer}</div>}</div></div>, document.body);
 }
 
-export function Drawer({ open, onClose, title, children, width = 'max-w-xl' }) {
+export function Drawer({ open, onClose, title, children, width = 'max-w-xl', side = 'end' }) {
   const panelRef = useRef(null);
   const titleId = useId();
   useModal(open, onClose, panelRef);
   if (!open) return null;
-  return createPortal(<div className="fixed inset-0 z-[85] bg-[var(--overlay)]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}><aside ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`absolute inset-y-0 end-0 flex w-full ${width} flex-col border-s border-border bg-surface shadow-3`}><ModalHeader title={title} onClose={onClose} id={titleId} /><div className="min-h-0 flex-1 overflow-y-auto p-5">{children}</div></aside></div>, document.body);
+  return createPortal(<div className="fixed inset-0 z-[85] bg-[var(--overlay)]" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}><aside ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`absolute inset-y-0 ${side === 'start' ? 'start-0' : 'end-0'} flex w-full ${width} flex-col border-s border-border bg-surface shadow-3`}><ModalHeader title={title} onClose={onClose} id={titleId} /><div className="min-h-0 flex-1 overflow-y-auto p-5">{children}</div></aside></div>, document.body);
 }
 
 export function Tooltip({ content, children }) {

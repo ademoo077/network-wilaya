@@ -25,6 +25,8 @@ import toolsRoutes from './routes/tools.js';
 import geoRoutes from './routes/geo.js';
 import errorsRoutes from './routes/errors.js';
 import adminLimitsRoutes from './routes/adminLimits.js';
+import viewsRoutes from './routes/views.js';
+import workRoutes from './routes/work.js';
 import { setupStatus } from './services/refs.js';
 
 const distDir = config.clientDist;
@@ -113,6 +115,8 @@ export function createApp() {
   app.use('/api/geo', geoRoutes);
   app.use('/api', errorsRoutes);
   app.use('/api/admin/limites', adminLimitsRoutes);
+  app.use('/api/views', viewsRoutes);
+  app.use('/api/work', workRoutes);
   app.use('/api/admin', adminRoutes);
   app.get('/api/setup/status', (_req, res) => res.json(setupStatus(getDb())));
 

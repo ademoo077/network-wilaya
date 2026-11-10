@@ -8,12 +8,12 @@ const numeric = new Set([
   'week_start_day', 'delai_retard_jours', 'backup_retention_days', 'rayon_doublon_m',
   'objectif_taux_traitement', 'sla_urgente_j', 'sla_haute_j', 'sla_normale_j', 'delai_verification_cible_j',
 ]);
-const booleans = ['exiger_verification', 'enrichissement_en_ligne', 'rapport_auto_fige', 'https_actif'];
+const booleans = ['exiger_verification', 'enrichissement_en_ligne', 'enrichissement_metadonnees', 'rapport_auto_fige', 'https_actif'];
 const visible = [
   'nom_cellule', 'week_start_day', 'delai_retard_jours', 'exiger_verification', 'tile_url',
   'backup_retention_days', 'gps_bbox', 'rayon_doublon_m', 'objectif_taux_traitement',
   'sla_urgente_j', 'sla_haute_j', 'sla_normale_j', 'delai_verification_cible_j',
-  'enrichissement_en_ligne', 'rapport_auto_fige', 'https_actif',
+  'enrichissement_en_ligne', 'enrichissement_metadonnees', 'resolution_liens', 'rapport_auto_fige', 'https_actif',
 ];
 
 export default function SettingsAdmin() {

@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import { responseContract } from '@anm/shared';
+export { anomalyListSchema, emptyAnomalyList } from '@anm/shared';
 
 let csrfToken = null;
 
@@ -12,15 +13,6 @@ export class ApiError extends Error {
     this.details = payload?.error?.details || null;
   }
 }
-
-export const anomalyListSchema = z.object({
-  items: z.array(z.unknown()).default([]),
-  total: z.number().int().default(0),
-  page: z.number().int().default(1),
-  pageSize: z.number().int().default(20),
-});
-
-export const emptyAnomalyList = { items: [], total: 0, page: 1, pageSize: 20 };
 
 export function setCsrf(value) {
   csrfToken = value || null;
@@ -43,22 +35,24 @@ export async function api(path, options = {}) {
         ? JSON.stringify(options.body)
         : options.body,
     });
-  } catch {
+  } catch (error) {
+    if (options.signal?.aborted || error.name === 'AbortError') throw error;
     throw new ApiError(0, { error: { code: 'NETWORK', message: 'Serveur inaccessible' } });
   }
   if (response.status === 204) return null;
   const type = response.headers.get('content-type') || '';
-  const payload = type.includes('application/json') ? await response.json() : null;
+  const payload = type.includes('application/json') ? await response.json().catch(() => null) : null;
   if (!response.ok) {
-    if (response.status === 401) window.dispatchEvent(new CustomEvent('anm:unauthorized'));
+    if (response.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new CustomEvent('anm:unauthorized'));
     throw new ApiError(response.status, payload);
   }
-  const schema = options?.schema;
+  const [defaultSchema, fallback] = responseContract(path);
+  const schema = options.schema || (method === 'GET' ? defaultSchema : null);
   if (schema) {
     const parsed = schema.safeParse(payload);
     if (parsed.success) return parsed.data;
-    if (import.meta.env.DEV) console.warn(`[api] Réponse hors schéma pour ${path}`, payload);
-    return options.fallback ?? null;
+    if (import.meta.env.DEV) console.warn(`[api] Réponse hors schéma pour ${path.split('?')[0]}`);
+    return options.fallback ?? fallback;
   }
   return payload;
 }

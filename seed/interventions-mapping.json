@@ -1,0 +1,47 @@
+[
+  { "source": "ASROUT", "epics": ["ASROUT"], "regles": [
+    { "domaines": ["النفايات الصلبة", "نفايات خضراء"] },
+    { "domaines": ["البالوعات"], "types": ["مسدودة"], "note_fr": "Curage des avaloirs. Sur voie rapide, vérifier la compétence DTP.", "note_ar": "تنقية البالوعات. على الطرقات السريعة تُراجع صلاحية DTP." },
+    { "domaines": ["الطريق", "أرصفة"], "note_fr": "Réparation et rebouchage des trous ; création de voies ou trottoirs de moins de 100 m. À 100 m exactement, compétence à préciser.", "note_ar": "الإصلاح وغلق الحفر؛ إنشاء الطرقات والأرصفة بأقل من 100 م. عند 100 م بالضبط يلزم تحديد الاختصاص." },
+    { "domaines": ["تسرب مياه الصرف الصحي", "أغطية قنوات الصرف الصحي"], "conditionnelle": true, "note_fr": "Canalisations d'assainissement de diamètre 60 cm : diamètre à confirmer.", "note_ar": "قنوات الصرف الصحي بقطر 60 سم: يجب التأكد من القطر." }
+  ] },
+  { "source": "EDEVAL", "epics": ["EDEVAL"], "regles": [
+    { "domaines": ["حشائش ضارة", "نقص في العناية بالمساحة الخضراء", "العناية بالأشجار"], "note_fr": "Intervention selon le plan d'activité.", "note_ar": "التدخل حسب مخطط النشاط." }
+  ] },
+  { "source": "NETCOM", "epics": ["NETCOM"],
+    "dairas": ["بوزريعة", "باب الوادي", "سيدي أمحمد", "حسين داي", "الحراش", "بئر مراد رايس", "Bouzaréah", "Bab El Oued", "Sidi M'hamed", "Hussein Dey", "El Harrach", "Bir Mourad Raïs"],
+    "regles": [{ "domaines": ["نفايات منزلية", "حاويات القمامة"] }, { "domaines": ["عملية الكنس"], "conditionnelle": true, "note_fr": "Vérifier le lieu : balayage dans les quartiers par la commune ; sur voie rapide par DTP.", "note_ar": "يُراجع الموقع: الكنس داخل الأحياء للبلدية وعلى الطرقات السريعة لـ DTP." }]
+  },
+  { "source": "EXTRANET", "epics": ["EXTRANET"],
+    "dairas": ["زرالدة", "الشراقة", "درارية", "سيدي عبد الله", "بئر توتة", "براقي", "الدار البيضاء", "رويبة", "Zéralda", "Chéraga", "Draria", "Sidi Abdellah", "Sidi Abdallah", "Bir Touta", "Baraki", "Dar El Beïda", "Rouïba"],
+    "regles": [{ "domaines": ["نفايات منزلية", "حاويات القمامة"] }, { "domaines": ["عملية الكنس"], "conditionnelle": true, "note_fr": "Vérifier le lieu : balayage dans les quartiers par la commune ; sur voie rapide par DTP.", "note_ar": "يُراجع الموقع: الكنس داخل الأحياء للبلدية وعلى الطرقات السريعة لـ DTP." }]
+  },
+  { "source": "EMCU", "epics": ["EMCU"], "regles": [
+    { "domaines": ["نافورات المياه", "مقاعد عمومية", "الرايات الوطنية"], "note_fr": "Mobilier urbain et fontaines, selon le plan d'activité.", "note_ar": "الأثاث الحضري والنافورات، حسب مخطط النشاط." },
+    { "domaines": ["مقصورات"], "conditionnelle": true, "note_fr": "Cabines situées sur les plages, selon le plan d'activité.", "note_ar": "المقصورات على مستوى الشواطئ، حسب مخطط النشاط." }
+  ] },
+  { "source": "EGCTU", "epics": ["EGCTU"], "regles": [
+    { "domaines": ["الإشارات العمودية", "الإشارات الأفقية", "واقيات مواقف الحافلات", "مدخل الموقف", "لافتات"], "note_fr": "Stationnement, signalisation et panneaux, selon le plan d'activité.", "note_ar": "المواقف والإشارات واللافتات، حسب مخطط النشاط." },
+    { "domaines": ["حواجز حديدية"], "conditionnelle": true, "note_fr": "Vérifier qu'il s'agit de poteaux de protection relevant de cette mission.", "note_ar": "يُتأكد من أن الأمر يخص أعمدة الحماية ضمن هذه المهمة." }
+  ] },
+  { "source": "ERMA", "epics": ["ERMA"], "regles": [
+    { "domaines": ["الإنارة العمومية"], "conditionnelle": true, "note_fr": "Toute la wilaya, sauf les quartiers AADL de Sidi Abdellah. Le quartier doit être confirmé ; l'exception ne concerne pas toute la daïra.", "note_ar": "كل الولاية ما عدا أحياء عدل بسيدي عبد الله. يجب تحديد الحي؛ الاستثناء لا يشمل كامل المقاطعة." }
+  ] },
+  { "source": "HUPE", "epics": ["HUPE"], "regles": [
+    { "domaines": ["مخلفات بحرية", "حيونات ظالة"], "note_fr": "Selon le plan d'activité ; déchets et algues sur les plages.", "note_ar": "حسب مخطط النشاط؛ النفايات والأعشاب البحرية على مستوى الشواطئ." },
+    { "domaines": ["أقبية العمارات", "أقبية"], "conditionnelle": true, "note_fr": "Désinsectisation, fumigation, lavage et pulvérisation des caves uniquement.", "note_ar": "فقط التبخير والغسل والرش للأقبية للقضاء على الحشرات الضارة." }
+  ] },
+  { "source": "DRE بالتنسيق مع SEAAL", "epics": ["DRE", "SEAAL"], "coordination": ["DRE", "SEAAL"], "regles": [
+    { "domaines": ["تسرب المياه الصالحة للشرب", "تسرب مياه الصرف الصحي", "خزان الصرف الصحي", "أودية"], "note_fr": "DRE en coordination avec SEAAL.", "note_ar": "DRE بالتنسيق مع SEAAL." },
+    { "domaines": ["أغطية قنوات الصرف الصحي"], "conditionnelle": true, "note_fr": "Confirmer le réseau concerné avec DRE et SEAAL ; canalisations de 60 cm : vérifier la mission ASROUT.", "note_ar": "تأكيد الشبكة المعنية مع DRE وSEAAL؛ قنوات 60 سم: تُراجع مهمة ASROUT." }
+  ] },
+  { "source": "DTP", "epics": ["DTP"], "regles": [
+    { "domaines": ["الطريق", "أرصفة"], "conditionnelle": true, "note_fr": "Création de voies et trottoirs de plus de 100 m. Nature et longueur des travaux à confirmer ; 100 m exactement : compétence à préciser.", "note_ar": "إنشاء الطرقات والأرصفة بأكثر من 100 م. يلزم تأكيد طبيعة الأشغال وطولها؛ عند 100 م بالضبط يحدد الاختصاص." },
+    { "domaines": ["عملية الكنس", "النفايات الصلبة", "البالوعات", "مجاري مياه الأمطار"], "conditionnelle": true, "note_fr": "Sur les voies rapides uniquement : balayage, déchets solides, entretien et curage des avaloirs et eaux pluviales.", "note_ar": "على الطرقات السريعة فقط: الكنس والنفايات الصلبة وصيانة وتنقية البالوعات ومجاري مياه الأمطار." }
+  ] },
+  { "source": "البلديات", "epics": ["البلدية"], "regles": [
+    { "domaines": ["الإستغلال الغير قانوني للطريق العام"], "note_fr": "Enlèvement des occupations illégales, selon la compétence territoriale de la commune.", "note_ar": "نزع الاستغلال غير القانوني حسب إقليم اختصاص البلدية." },
+    { "domaines": ["عملية الكنس"], "conditionnelle": true, "note_fr": "Balayage à l'intérieur des quartiers, selon le territoire de la commune.", "note_ar": "الكنس داخل الأحياء حسب إقليم اختصاص البلدية." },
+    { "domaines": ["واجهات المباني"], "types": ["نقص في الطلاء", "كتابات على الجدران"], "conditionnelle": true, "note_fr": "Peinture des murs à l'intérieur des quartiers, selon le territoire de la commune.", "note_ar": "طلاء الجدران داخل الأحياء حسب إقليم اختصاص البلدية." }
+  ] }
+]

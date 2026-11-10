@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture.js';
 import { expectNotBlank, loginAs } from './helpers';
 
 test('C5 — catégories et types proposent un texte indicatif', async ({ page, baseURL }) => {

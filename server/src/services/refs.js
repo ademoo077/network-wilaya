@@ -2,6 +2,7 @@ import { normalize } from '@anm/shared';
 import { getParams, publicParams } from './settings.js';
 import { recalcSearchNorm } from './searchNorm.js';
 import { AppError, conflict, notFound, business } from '../utils/errors.js';
+import { withWorkflow } from './interventions.js';
 
 const SELECTS = {
   domaines: 'SELECT * FROM domaines ORDER BY ordre, id',
@@ -38,7 +39,7 @@ export function bootstrap(db) {
   return {
     domaines: domaines.map((d) => ({ ...d, types: typesByDomain.get(d.id) || [] })),
     dairas: dairas.map((d) => ({ ...d, communes: communesByDaira.get(d.id) || [] })),
-    epics: epics.map((e) => ({ ...e, domaine_ids: byEpic.get(e.id) || [] })),
+    epics: epics.map((e) => ({ ...withWorkflow(e), domaine_ids: byEpic.get(e.id) || [] })),
     agents,
     parametres: publicParams(db),
     taxonomie: {
@@ -110,8 +111,8 @@ export function createRef(db, entite, data) {
     }
     if (entite === 'epics') {
       return db.transaction(() => {
-        const res = db.prepare('INSERT INTO epics(name, sigle, contact_nom, contact_tel, actif) VALUES (?, ?, ?, ?, ?)')
-          .run(data.name, data.sigle || null, data.contact_nom || null, data.contact_tel || null, data.actif ?? 1);
+        const res = db.prepare('INSERT INTO epics(name, sigle, contact_nom, contact_tel, actif, workflow_json) VALUES (?, ?, ?, ?, ?, ?)')
+          .run(data.name, data.sigle || null, data.contact_nom || null, data.contact_tel || null, data.actif ?? 1, data.workflow ? JSON.stringify(data.workflow) : null);
         const id = res.lastInsertRowid;
         const stmt = db.prepare('INSERT OR IGNORE INTO epic_domaines(epic_id, domaine_id) VALUES (?, ?)');
         for (const domaineId of data.domaine_ids || []) stmt.run(id, domaineId);
@@ -119,8 +120,8 @@ export function createRef(db, entite, data) {
       })();
     }
     if (entite === 'agents') {
-      const res = db.prepare('INSERT INTO agents(full_name, matricule, telephone, zone_daira_id, actif) VALUES (?, ?, ?, ?, ?)')
-        .run(data.full_name, data.matricule || null, data.telephone || null, data.zone_daira_id || null, data.actif ?? 1);
+      const res = db.prepare('INSERT INTO agents(full_name, matricule, telephone, zone_daira_id, actif, grade, email) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .run(data.full_name, data.matricule || null, data.telephone || null, data.zone_daira_id || null, data.actif ?? 1, data.grade || null, data.email || null);
       return { id: res.lastInsertRowid };
     }
     throw notFound('Entité inconnue');
@@ -136,6 +137,7 @@ export function updateRef(db, entite, id, data) {
   if (!current) throw notFound('Référentiel introuvable');
   try {
     return db.transaction(() => {
+      if (entite === 'epics' && data.workflow !== undefined) db.prepare('UPDATE epics SET workflow_json=? WHERE id=?').run(data.workflow ? JSON.stringify(data.workflow) : null, id);
       if (entite === 'epics' && Array.isArray(data.domaine_ids)) {
         db.prepare('DELETE FROM epic_domaines WHERE epic_id = ?').run(id);
         const stmt = db.prepare('INSERT OR IGNORE INTO epic_domaines(epic_id, domaine_id) VALUES (?, ?)');
@@ -153,7 +155,7 @@ export function updateRef(db, entite, id, data) {
         dairas: ['name_fr', 'name_ar', 'actif'],
         communes: ['daira_id', 'name_fr', 'name_ar', 'actif'],
         epics: ['name', 'sigle', 'contact_nom', 'contact_tel', 'actif'],
-        agents: ['full_name', 'matricule', 'telephone', 'zone_daira_id', 'actif'],
+        agents: ['full_name', 'matricule', 'telephone', 'zone_daira_id', 'actif', 'grade', 'email'],
       }[entite];
       for (const key of allowed) {
         if (data[key] !== undefined) { fields.push(`${key} = ?`); params.push(data[key]); }
@@ -298,11 +300,13 @@ export function bulkTerritoire(db, texte, dryRun = false) {
 
 export function findRef(db, entite, id) {
   const table = entite === 'types' ? 'types_anomalie' : entite;
-  return db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
+  const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
+  return entite === 'epics' ? withWorkflow(row) : row;
 }
 
 export function listRef(db, entite) {
-  return db.prepare(SELECTS[entite]).all();
+  const rows = db.prepare(SELECTS[entite]).all();
+  return entite === 'epics' ? rows.map(withWorkflow) : rows;
 }
 
 export function allParams(db) {

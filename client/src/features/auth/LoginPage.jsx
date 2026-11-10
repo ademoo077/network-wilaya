@@ -11,19 +11,20 @@ export default function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const requested = new URLSearchParams(location.search).get('next') || location.state?.from || '/';
+  const next = requested.startsWith('/') && !requested.startsWith('//') && !requested.startsWith('/connexion') ? requested : '/';
   const [form, setForm] = useState({ username: '', password: '' });
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  if (user) return <Navigate to={user.must_change_password ? '/profil' : '/'} replace />;
+  if (user) return <Navigate to={user.must_change_password ? '/profil' : next} replace />;
   const submit = async (event) => {
     event.preventDefault();
     setLoading(true);
     setError('');
     try {
       const connected = await login(form.username, form.password);
-      const fallback = connected.must_change_password ? '/profil' : '/';
-      navigate(location.state?.from || fallback, { replace: true });
+      navigate(connected.must_change_password ? '/profil' : next, { replace: true });
     } catch (requestError) {
       setError(requestError.message || t('auth.invalid'));
     } finally {

@@ -6,8 +6,8 @@ import { classifyUrl } from './smartPasteUrls.js';
 
 function uniqueCoordinates(coords) {
   const out = [];
-  for (const coord of coords) {
-    if (!out.some((existing) => haversineMeters(existing, coord) <= 1)) out.push(coord);
+  for (const coord of [...coords].sort((a, b) => (b.rang || 1) - (a.rang || 1))) {
+    if (!out.some((existing) => haversineMeters(existing, coord) <= 100)) out.push(coord);
   }
   return out;
 }
@@ -44,5 +44,6 @@ export function parseSmartPaste(value, options = {}) {
 
 export { normalizeSmartText } from './smartPasteText.js';
 export { estimateTikTokDate, estimateInstagramDate, decodeInstagramMediaId } from './smartPasteDates.js';
-export { classifyUrl } from './smartPasteUrls.js';
+export { classifyUrl, unwrapUrl } from './smartPasteUrls.js';
 export { coordinateFromMapUrl } from './smartPasteCoords.js';
+export { gpsStorageSource, makeCoordinate } from './smartPasteCoords.js';

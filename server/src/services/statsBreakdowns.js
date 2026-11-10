@@ -123,9 +123,10 @@ export function ventilation(db, params, S, E, by, settings) {
 /** Reçues par jour ISO (1 = lundi … 7 = dimanche). */
 export function weekday(db, params, S, E) {
   const base = buildFilters({ ...params, statut: undefined, from: S, to: E });
-  const list = rows(db, `SELECT ((CAST(strftime('%w', a.date_signalement) AS INTEGER) + 6) % 7) + 1 AS jour,
-      COUNT(*) AS recues
-    FROM anomalies a ${base.clause} GROUP BY jour`, base.values);
+  const list = rows(db, `WITH jours AS (
+      SELECT a.date_signalement AS date, COUNT(*) AS recues FROM anomalies a ${base.clause} GROUP BY a.date_signalement
+    ) SELECT ((CAST(strftime('%w', date) AS INTEGER) + 6) % 7) + 1 AS jour,
+      SUM(recues) AS recues FROM jours GROUP BY jour`, base.values);
   const map = new Map(list.map((r) => [r.jour, r.recues]));
   return Array.from({ length: 7 }, (_, i) => ({ jour: i + 1, recues: map.get(i + 1) || 0 }));
 }
@@ -136,12 +137,13 @@ export function heatmap(db, params, E, settings, weeks = 12) {
   const endWeek = weekEnd(E, wsd);
   const start = weekStart(addDays(endWeek, -7 * (weeks - 1)), wsd);
   const base = buildFilters({ ...params, statut: undefined, from: start, to: endWeek });
-  const offset = `((CAST(strftime('%w', a.date_signalement) AS INTEGER) - @wsd + 7) % 7)`;
-  const list = rows(db, `SELECT
-      date(a.date_signalement, '-' || ${offset} || ' days') AS semaine,
-      ((CAST(strftime('%w', a.date_signalement) AS INTEGER) + 6) % 7) + 1 AS jour,
-      COUNT(*) AS recues
-    FROM anomalies a ${base.clause} GROUP BY semaine, jour ORDER BY semaine, jour`,
+  const offset = `((CAST(strftime('%w', date) AS INTEGER) - @wsd + 7) % 7)`;
+  // Une conversion de calendrier par jour agrégé, plutôt que par anomalie.
+  const list = rows(db, `WITH jours AS (
+      SELECT a.date_signalement AS date, COUNT(*) AS recues FROM anomalies a ${base.clause} GROUP BY a.date_signalement
+    ) SELECT date(date, '-' || ${offset} || ' days') AS semaine,
+      ((CAST(strftime('%w', date) AS INTEGER) + 6) % 7) + 1 AS jour, recues
+    FROM jours ORDER BY semaine, jour`,
   { ...base.values, wsd });
   return { debut: start, fin: endWeek, cellules: list };
 }

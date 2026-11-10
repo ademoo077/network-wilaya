@@ -54,36 +54,46 @@ L'application est servie sur `http://localhost:3000` (client buildé + API).
 
 ## Fonctionnalités
 
-- **Authentification** : login/logout, sessions cookies, rôles (admin / operateur / lecteur)
-- **Anomalies** : CRUD, intégrité (type dans domaine, commune dans daïra), détection de doublons, pagination/tri/filtres, statut bulk, historique, soft delete
-- **Quick-create** : formulaire rapide avec références
-- **Dashboard** : KPI, donut par statut, évolution hebdomadaire, par catégorie
+- **Authentification** : login/logout, sessions cookies, rôles (admin / operateur / lecteur), changement de mot de passe, verrouillage progressif
+- **Anomalies** : CRUD, intégrité (type dans domaine, commune dans daïra), détection de doublons, duplication contrôlée, pagination/tri/filtres, vues rapides et vues enregistrées, statut bulk, historique, soft delete
+- **Saisie assistée** : collage multi-formats (Facebook, TikTok, Instagram, cartes, GPS, Plus Codes), suggestions de types locaux FR/AR, brouillons automatiques, EXIF côté navigateur, photos avec vignettes
+- **Dashboard** : KPI, entonnoir, tendances, ventilations, statistiques détaillées et drill-downs
+- **File de travail** : page « À faire », cloche de notifications et listes filtrées alimentées par les mêmes requêtes SQL
 - **Rapport hebdomadaire** : synthèse par catégorie/type/daïra/commune/EPIC, export Excel, snapshot, impression
-- **Carte** : Leaflet, marqueurs colorés par statut, popup avec lien
+- **Carte** : Leaflet, marqueurs colorés par statut, clusters, densité, filtres synchronisés avec l'URL, liste latérale, repli de tuiles
 - **Pièces jointes** : upload multipart (png/jpg/webp, ≤5 Mo)
-- **Administration** : CRUD référentiels, import taxonomie, export anomalies CSV/XLSX, audit log, sauvegarde/restauration DB
-- **i18n** : français + arabe (RTL complet)
-- **Dark mode** : bascule clair/sombre
+- **Administration** : CRUD référentiels, import taxonomie/territoires/agents/EPIC, workflow d'intervention, export anomalies CSV/XLSX, audit log, limites communales, sauvegarde/restauration DB
+- **Réseau** : résolution de liens courts avec liste blanche, protection SSRF et proxy sortant optionnel ; diagnostic de connectivité
+- **i18n** : français + arabe (RTL complet) · **Dark mode** : bascule clair/sombre
+- **Accessibilité** : navigation clavier, focus visible, libellés explicites, contrastes vérifiés (tokens)
 
 ## API (principaux endpoints)
 
-- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
-- `GET/POST/PATCH/DELETE /api/anomalies`, `GET /api/anomalies/:id`, `POST /api/anomalies/:id/pieces`, `POST /api/anomalies/bulk-status`, `GET /api/anomalies/:id/historique`, `GET /api/anomalies/check-duplicate`
+- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `POST /api/auth/change-password`
+- `GET/POST/PATCH/DELETE /api/anomalies`, `GET /api/anomalies/:id`, `GET /api/anomalies/map`, `POST /api/anomalies/bulk-status`, `POST /api/anomalies/:id/dupliquer`, `GET /api/anomalies/:id/historique`, `GET /api/anomalies/counts`, `GET /api/anomalies/check-duplicate`
 - `GET /api/references/domaines`, `/types`, `/dairas`, `/communes`, `/epics`, `/agents`
-- `GET /api/stats/summary`, `/by-category`, `/by-type`, `/by-daira`, `/by-commune`, `/by-epic`, `/by-platform`, `/timeline`, `/weekly`
+- `GET /api/stats/overview`, `/group`, `/timeline`, `/detail`
 - `GET /api/reports/weekly`, `POST /api/reports/weekly/snapshot`, `GET /api/reports/weekly/history`, `GET /api/reports/weekly/export`
-- `GET/POST/PATCH /api/admin/users`, `GET /api/admin/audit`, `POST/GET /api/admin/backup`, `POST /api/admin/backup/restore`, `GET/POST/PATCH /api/admin/references/:entite`, `POST /api/admin/references/import/taxonomie`, `GET /api/admin/anomalies/export`
-- `GET /api/health`
+- `GET/POST /api/views`, `PATCH/DELETE /api/views/:id`, `GET /api/work`
+- `POST /api/tools/resolve-link`, `POST /api/tools/parse-paste`, `POST /api/geo/locate`
+- `GET/POST/PATCH /api/admin/users`, `GET /api/admin/audit`, `/api/admin/health`, `/api/admin/backups`, `POST /api/admin/backups/:nom/restore`, `GET/POST/PATCH /api/admin/references/:entite`, `POST /api/admin/references/import/*`, `POST /api/admin/limites/import-geojson`, `GET /api/admin/anomalies/export`
+- `POST /api/client-errors`, `GET /api/health`, `GET /api/config`
 
 Format d'erreur : `{ error: { code, message, fields? } }`.
 
 ## Tests
 
 ```bash
-npm test       # Vitest + Supertest (24 tests)
-npm run lint   # ESLint
-npm run build  # Vite build
+npm test              # Vitest + Supertest (362 tests)
+npm run test:e2e      # 11 scénarios API de bout en bout
+npm run test:e2e:browser  # Playwright (56 scénarios, FR/AR, clair/sombre, 390–1440 px)
+npm run lint          # ESLint
+npm run check:styles  # Tokens et classes autorisées
+npm run check:a11y    # Contrastes des tokens (clair/sombre)
+npm run qa            # Chaîne complète
 ```
+
+Les captures d'examen humain (FR clair, FR sombre, AR sombre · 1440 et 390 px) sont dans `docs/screens/` et se régénèrent avec `npm run screens`.
 
 ## Sauvegardes
 

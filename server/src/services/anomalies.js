@@ -1,4 +1,4 @@
-import { normaliserUrl, todayAlgiers } from '@anm/shared';
+import { normaliserUrl, roundCoordinate, todayAlgiers } from '@anm/shared';
 import { conflict, business, notFound } from '../utils/errors.js';
 import { getAnomalieRaw, getAnomalie, findDuplicateMatches } from './anomalyRead.js';
 import { validerEtat } from './etat.js';
@@ -87,8 +87,8 @@ function applyGps(target, data) {
     target.gps_lat = null;
     target.gps_lng = null;
   } else {
-    target.gps_lat = Math.round(Number(data.gps.lat) * 1e6) / 1e6;
-    target.gps_lng = Math.round(Number(data.gps.lng) * 1e6) / 1e6;
+    target.gps_lat = roundCoordinate(data.gps.lat);
+    target.gps_lng = roundCoordinate(data.gps.lng);
   }
 }
 
@@ -130,6 +130,7 @@ export function createAnomalie(db, input, userId, settings = {}) {
   checkDoublons(db, state, { force: Boolean(input.force_duplicate) });
   const etat = validerEtat(state, {
     today,
+    motif: input.motif,
     exigerVerification: settings.exigerVerification !== false,
   });
   if (settings.dryRun) {

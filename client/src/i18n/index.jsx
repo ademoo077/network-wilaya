@@ -3,8 +3,10 @@ import fr from './fr.json';
 import ar from './ar.json';
 import frV5 from './fr-v5.json';
 import arV5 from './ar-v5.json';
+import frV6 from './fr-v6.json';
+import arV6 from './ar-v6.json';
 
-const dictionaries = { fr: { ...fr, ...frV5 }, ar: { ...ar, ...arV5 } };
+const dictionaries = { fr: { ...fr, ...frV5, ...frV6 }, ar: { ...ar, ...arV5, ...arV6 } };
 const I18nContext = createContext(null);
 
 function storedLanguage() {

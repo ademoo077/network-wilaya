@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixture.js';
 import { expectNotBlank, loginAs } from './helpers';
 
 test('C8 — barre d’actions collante ne recouvre pas les champs visibles', async ({ page, baseURL }) => {
@@ -10,7 +10,7 @@ test('C8 — barre d’actions collante ne recouvre pas les champs visibles', as
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(300);
   const geometry = await page.evaluate(() => {
-    const bars = Array.from(document.querySelectorAll('div')).filter((el) => String(el.className || '').includes('fixed') && String(el.className || '').includes('bottom-0'));
+    const bars = Array.from(document.querySelectorAll('div')).filter((el) => /fixed|sticky/.test(String(el.className || '')) && String(el.className || '').includes('bottom-0'));
     const bar = bars[bars.length - 1];
     const field = document.getElementById('observations');
     const barRect = bar?.getBoundingClientRect();

@@ -67,7 +67,7 @@
     "categorie": "lien_court",
     "description": "Plus Code court",
     "texte": "V75V+8R",
-    "attente": { "position": null, "source": null, "modele": "recoverNearest" }
+    "attente": { "position": [36.858313, 3.294563], "source": "olc", "modele": "recoverNearest" }
   },
   {
     "id": "V11",
@@ -80,7 +80,7 @@
     "id": "V12",
     "categorie": "social_tiktok",
     "description": "TikTok — date estimee",
-    "texte": "https://www.tiktok.com/@agentwilaya/video/7293847562983745",
+    "texte": "https://www.tiktok.com/@agentwilaya/video/7695718964998963323",
     "attente": { "plateforme": "tiktok", "contenu": "video", "dateEstimee": true, "position": null }
   },
   {
@@ -129,14 +129,14 @@
     "id": "V19",
     "categorie": "lien_reseau",
     "description": "Lien court reseau social (resolution_liens=tous)",
-    "texte": "https://www.tiktok.com/@agentwilaya/video/7293847562983745",
+    "texte": "https://vt.tiktok.com/ZMabc123/",
     "attente": { "resolutionAttendue": true, "position": null }
   },
   {
     "id": "V20",
     "categorie": "lien_carte",
     "description": "Bing cp=lat~lng",
-    "texte": "https://www.bing.com/maps?cp=3675380~305800",
+    "texte": "https://www.bing.com/maps?cp=36.7538~3.0588",
     "attente": { "position": [36.7538, 3.0588], "source": "lien_carte" }
   },
   {
@@ -228,7 +228,7 @@
     "categorie": "lien_court",
     "description": "Plus Code OLC vecteur spec",
     "texte": "849VCWC8+R9",
-    "attente": { "position": [37.4223, -122.0846], "source": "olc" }
+    "attente": { "position": [37.422063, -122.084063], "source": "olc" }
   },
   {
     "id": "V34",
@@ -284,7 +284,7 @@
     "categorie": "social_instagram",
     "description": "Instagram location tag",
     "texte": "https://www.instagram.com/p/CxYz12345/?location=12345",
-    "attente": { "plateforme": "instagram", "contenu": "post", "position": null, "lieu": "Alger" }
+    "attente": { "plateforme": "instagram", "contenu": "post", "position": null, "lieu": null }
   },
   {
     "id": "V42",

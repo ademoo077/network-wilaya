@@ -1,4 +1,5 @@
 import { escapeLike, normalize, SORTABLE } from '@anm/shared';
+import { addQueueFilters } from './queueFilters.js';
 
 /**
  * Construit la clause WHERE commune aux listes et statistiques.
@@ -25,6 +26,9 @@ export function buildFilters(params = {}, options = {}) {
   }
   if (params.from) { where.push(`${table}.date_signalement >= @from`); values.from = params.from; }
   if (params.to) { where.push(`${table}.date_signalement <= @to`); values.to = params.to; }
+  if (params.gps === 'absent') where.push(`${table}.gps_lat IS NULL`);
+  if (params.gps === 'present') where.push(`${table}.gps_lat IS NOT NULL AND ${table}.gps_lng IS NOT NULL`);
+  addQueueFilters(params, table, where, values);
   if (params.date_traitement_from) { where.push(`${table}.date_traitement >= @dtFrom`); values.dtFrom = params.date_traitement_from; }
   if (params.date_traitement_to) { where.push(`${table}.date_traitement <= @dtTo`); values.dtTo = params.date_traitement_to; }
 

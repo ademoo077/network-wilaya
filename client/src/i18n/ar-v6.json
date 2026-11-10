@@ -1,0 +1,223 @@
+{
+  "health.title": "حالة النظام",
+  "health.version": "الإصدار",
+  "health.database": "سلامة قاعدة البيانات",
+  "health.size": "حجم قاعدة البيانات",
+  "health.protocol": "الاتصال",
+  "health.backup": "آخر نسخة احتياطية",
+  "health.certificate": "صلاحية الشهادة",
+  "health.errors": "أخطاء الواجهة الأخيرة",
+  "health.noErrors": "لا توجد أخطاء حديثة في الواجهة.",
+  "health.connectivity": "الاتصال الصادر",
+  "health.test": "اختبار",
+  "health.testHelp": "التحقق من DNS واتصال HTTPS من الخادم.",
+  "health.proxy": "استخدام خادم وسيط",
+  "health.cached": "يُحفظ التشخيص لمدة 60 ثانية.",
+  "health.advice.OK": "الاتصال الصادر يعمل بشكل سليم.",
+  "health.advice.NETWORK_UNAVAILABLE": "DNS أو الشبكة غير متاحين. تحقق من OUTBOUND_PROXY وجدار الحماية في الخادم.",
+  "health.advice.TLS_ERROR": "شهادة TLS غير معروفة. اضبط NODE_EXTRA_CA_CERTS باستخدام شهادة شبكتك.",
+  "health.advice.TIMEOUT": "انتهت المهلة. تحقق من الخادم الوسيط وجدار الحماية.",
+  "health.advice.BLOCKED_HOST": "الوجهة محظورة: أعاد DNS عنوانًا خاصًا أو غير مسموح به.",
+  "health.advice.UPSTREAM_ERROR": "الخادم البعيد لا يستجيب بشكل سليم. تحقق من الخادم الوسيط ثم أعد المحاولة.",
+  "common.clear": "مسح",
+  "common.remove": "إزالة",
+  "common.view": "عرض",
+  "field.contentType": "نوع المحتوى",
+  "content.direct": "بث مباشر",
+  "form.detectedBadge": "مكتشفة تلقائيًا",
+  "form.categoryPlaceholder": "اختر فئة…",
+  "form.typePlaceholder": "ابحث عن نوع…",
+  "form.dairaPlaceholder": "اختر دائرة…",
+  "form.communePlaceholder": "اختر بلدية…",
+  "form.chooseDaira": "اختر الدائرة أولاً",
+  "form.advanced": "خيارات متقدمة",
+  "form.statusHelp": "للانتقال إلى قيد المعالجة أو معالَجة: يلزم تأكيد التحقق وتحديد العون والمتدخل.",
+  "form.statusBlocked": "يلزم التحقق والعون والمتدخل",
+  "form.unassigned": "غير مسند",
+  "form.errorSummary": "تحقق من الحقول التالية",
+  "form.saveNew": "حفظ وإضافة جديد",
+  "validation.required": "هذا الحقل مطلوب",
+  "validation.invalid": "قيمة غير صالحة",
+  "validation.future": "لا يمكن أن يكون التاريخ في المستقبل",
+  "validation.dateOrder": "يجب أن يسبق النشر تاريخ التبليغ",
+  "draft.question": "هل تريد استئناف الإدخال الجاري؟",
+  "draft.resume": "استئناف",
+  "draft.restart": "البدء من جديد",
+  "paste.analyzing": "تحليل المحتوى…",
+  "paste.suggestion": "هل تريد الاستبدال بهذه القيمة؟",
+  "paste.replace": "استبدال",
+  "paste.ignore": "تجاهل",
+  "paste.toLink": "هذا رابط منشور: تم وضعه في حقل الرابط",
+  "paste.toGps": "هذا رابط موقع: تم وضعه في حقل GPS",
+  "paste.removeLink": "إزالة الرابط المكتشف",
+  "paste.removePosition": "إزالة الموقع المكتشف",
+  "paste.removeDate": "إزالة التاريخ المكتشف",
+  "paste.removePhoto": "إزالة الصورة",
+  "paste.date": "التاريخ: {date}",
+  "lien.ok": "رابط معروف: {plateforme} · {contenu}",
+  "lien.plateformeInconnue": "المنصة غير معروفة — اخترها عند الحاجة",
+  "lien.invalide": "يجب أن يبدأ الرابط بـ http:// أو https://",
+  "lien.corrige": "تمت إضافة https:// تلقائيًا",
+  "date.estimee": "تاريخ نشر تقديري: {date} (قابل للتعديل)",
+  "gps.ok": "موقع معروف: {lat}, {lng} · {source}",
+  "gps.invalide": "تنسيق الإحداثيات غير معروف",
+  "gps.horsZone": "يبدو أن الموقع خارج ولاية الجزائر — يرجى التحقق",
+  "gps.destination": "مسار: تم اعتماد الوجهة النهائية",
+  "gps.source.olc": "رمز Plus Code",
+  "gps.source.polygone": "الحدود الإقليمية",
+  "gps.openMaps": "فتح في الخرائط",
+  "gps.deviceError": "موقع الجهاز غير متاح. تحقق من إذن تحديد الموقع.",
+  "gps.linked": "تم ربط البلاغ المتكرر بالبطاقة",
+  "smart.ctrlC": "حدد الإحداثيات ثم اضغط Ctrl+C.",
+  "resolve.encours": "جارٍ حل الرابط المختصر…",
+  "resolve.ok": "تم العثور على الموقع عبر الرابط المختصر",
+  "resolve.DISABLED": "عطّل المسؤول حل الروابط",
+  "resolve.NETWORK_UNAVAILABLE": "الإنترنت غير متاح من الخادم — افتح الرابط وانسخ العنوان الكامل ثم ألصقه هنا",
+  "resolve.NETWORK": "الإنترنت غير متاح من الخادم — افتح الرابط وانسخ العنوان الكامل ثم ألصقه هنا",
+  "resolve.TIMEOUT": "استغرق الرابط وقتًا طويلاً — أعد المحاولة",
+  "resolve.NO_COORDINATES": "هذا الرابط لا يحتوي على إحداثيات",
+  "resolve.BLOCKED_HOST": "هذا الرابط غير مسموح به",
+  "resolve.TOO_MANY_REDIRECTS": "الرابط يعيد التوجيه كثيرًا — افتحه لنسخ العنوان النهائي",
+  "resolve.TLS_ERROR": "شهادة TLS غير معروفة لدى الخادم — راجع حالة النظام وNODE_EXTRA_CA_CERTS",
+  "resolve.UPSTREAM_ERROR": "الموقع البعيد لا يستجيب بشكل سليم — أعد المحاولة",
+  "resolve.TROP_DE_REQUETES": "طلبات كثيرة — أعد المحاولة بعد دقيقة",
+  "resolve.open": "فتح الرابط",
+  "resolve.step1": "افتح الرابط",
+  "resolve.step2": "انسخ عنوان الصفحة",
+  "resolve.step3": "ألصقه هنا",
+  "locate.loading": "جارٍ البحث عن البلدية…",
+  "locate.ok": "تم تحديد البلدية حسب حدودها الإقليمية",
+  "locate.suggestion": "بلدية مقترحة حسب البلاغات المجاورة — تحتاج تأكيدًا",
+  "locate.aucune": "لم يتم تحديد البلدية — اخترها يدويًا",
+  "dup.loading": "جارٍ التحقق من التكرار…",
+  "dup.lien": "هذا الرابط مستخدم في بطاقة أخرى",
+  "dup.strict": "تم تسجيل هذه الحالة سابقًا",
+  "dup.geo": "توجد حالة مماثلة قريبة",
+  "exif.loading": "جارٍ قراءة موقع الصورة…",
+  "exif.ok": "تم العثور على موقع في الصورة (EXIF)",
+  "exif.aucune": "هذه الصورة لا تحتوي على موقع EXIF.",
+  "settings.resolution_liens": "حل الروابط المختصرة",
+  "settings.enrichissement_metadonnees": "إثراء البيانات الوصفية",
+  "settings.cartes": "روابط الخرائط فقط",
+  "settings.tous": "الخرائط وشبكات التواصل",
+  "settings.aucune": "معطّل",
+  "map.legend": "مفتاح الخريطة",
+  "map.density": "الكثافة",
+  "map.missing": "{count} حالة بدون موقع — غير معروضة",
+  "gps.absent": "بدون موقع",
+  "gps.present": "بموقع",
+  "common.showLess": "عرض أقل",
+  "activity.changes": "{count} تعديلات",
+  "activity.change": "تعديل واحد",
+  "activity.created": "تم إنشاء الحالة",
+  "dashboard.openStock": "المخزون المفتوح"
+  ,"action.VERIFICATION_REQUISE": "أكد التحقق بواسطة عون أولاً."
+  ,"action.TRANSITION_INTERDITE": "هذا الانتقال غير مسموح في الحالة الحالية."
+  ,"list.late": "متأخرة"
+  ,"list.quickViews": "عروض سريعة"
+  ,"work.verification": "تحققات متأخرة"
+  ,"work.urgent": "تجاوز الآجال المستهدفة"
+  ,"work.incomplete": "بطاقات للاستكمال"
+  ,"work.noPhoto": "بدون صورة"
+  ,"nav.menu": "التنقل الرئيسي"
+  ,"list.all": "الكل"
+  ,"field.grade": "الرتبة"
+  ,"field.email": "البريد الإلكتروني"
+  ,"field.contact": "اسم جهة الاتصال"
+  ,"field.skills": "مجالات الاختصاص"
+  ,"refs.count": "{count} سجل"
+  ,"refs.importSummary": "{ok} صالح · {warning} موجود مسبقاً · {error} خطأ"
+  ,"refs.created": "تم إنشاء {count} سجل"
+  ,"workflow.title": "المهام وقواعد التدخل"
+  ,"workflow.missions": "المهام"
+  ,"workflow.scope": "مجال التدخل"
+  ,"workflow.coordination": "التنسيق"
+  ,"workflow.dairas": "المقاطعات المشمولة (الأسماء والتسميات البديلة)"
+  ,"workflow.dairasHelp": "اسم أو تسمية بالعربية أو الفرنسية في كل سطر. فارغ: كل الولاية مع مراعاة الشروط المذكورة."
+  ,"workflow.lines": "عنصر في كل سطر. تُحفظ نصوص الوثيقة الأصلية."
+  ,"workflow.noteFr": "شرط / توضيح بالفرنسية"
+  ,"workflow.noteAr": "شرط / توضيح بالعربية"
+  ,"workflow.suggestions": "المتدخلون المقترحون حسب المجال والإقليم"
+  ,"workflow.recommended": "اختصاص مطابق"
+  ,"workflow.conditional": "شروط يجب تأكيدها"
+  ,"workflow.outside": "المقاطعة المختارة خارج مجال تدخل هذه المؤسسة المصرح به. يُرجى مراجعة الإسناد."
+  ,"typeHints.title": "أنواع مقترحة حسب نص الرسالة"
+  ,"typeHints.help": "تسميات مطابقة للنص. اختر النوع الموافق للحالة."
+  ,"typeHints.empty": "لم يُعرف أي نوع في هذا النص. ابحث عن النوع ضمن التصنيف."
+  ,"typeHints.choose": "اختيار {type}"
+  ,"typeHints.phrase": "عبارة مطابقة: « {text} »"
+  ,"typeHints.words": "كلمات مطابقة: « {text} »"
+  ,"typeHints.undo": "التراجع عن اختيار النوع المقترح"
+  ,"form.progress": "تقدم الإدخال"
+  ,"form.requiredFields": "الحقول المطلوبة"
+  ,"form.completion": "تم ملء {count}/6 حقول أساسية"
+  ,"form.goTo": "الانتقال إلى {section}"
+  ,"form.recentTypes": "آخر 5 أنواع استخدمتها"
+  ,"form.reuseType": "إعادة استخدام {type}"
+  ,"form.agentSearch": "اسم العون أو رتبته أو بريده…"
+  ,"form.saveDuplicate": "حفظ وتكرار الإدخال"
+  ,"form.duplicateReady": "حالة جديدة من نفس المنشور · {reference}"
+  ,"form.duplicateHelp": "اختر نوعاً أو بلدية أخرى ثم حدد الموقع الجديد. تم الاحتفاظ بالرابط والتواريخ."
+  ,"form.shortcuts": "Ctrl+Enter: حفظ · Ctrl+Shift+Enter: حفظ وإضافة جديد"
+  ,"draft.idle": "حفظ المسودة تلقائياً بعد بدء الإدخال"
+  ,"draft.saving": "جارٍ حفظ المسودة…"
+  ,"draft.saved": "تم حفظ المسودة على هذا الجهاز"
+  ,"draft.memory": "تم الاحتفاظ بالمسودة لهذه الجلسة"
+  ,"attachments.preview": "صورة للإرفاق: {name}"
+  ,"attachments.remove": "إزالة {name}"
+  ,"attachments.help": "PNG أو JPEG أو WebP · 5 ميغابايت للصورة · 5 صور كحد أقصى"
+  ,"attachments.count": "{count}/5 صور"
+  ,"attachments.existing": "{count} صورة محفوظة مسبقاً ويمكن عرضها في البطاقة."
+  ,"attachments.format": "التنسيق المقبول: PNG أو JPEG أو WebP"
+  ,"attachments.size": "الصورة كبيرة جداً: 5 ميغابايت كحد أقصى"
+  ,"attachments.limit": "5 صور كحد أقصى لكل حالة"
+  ,"attachments.duplicate": "هذه الصورة مرفقة مسبقاً"
+  ,"attachments.reattach": "أرفق هذه الصورة مجدداً: لا تُحفظ الملفات ضمن المسودة"
+  ,"attachments.kb": "كيلوبايت"
+  ,"map.located": "{count} حالة محددة الموقع"
+  ,"map.search": "البحث على الخريطة"
+  ,"map.searchHelp": "المرجع، النوع، البلدية، النص…"
+  ,"map.fitAll": "عرض جميع النقاط"
+  ,"map.openList": "فتح هذه القائمة"
+  ,"map.resetFilters": "إعادة ضبط الفلاتر"
+  ,"map.filtersAndList": "فلاتر الخريطة والحالات"
+  ,"map.expand": "تكبير مساحة الخريطة"
+  ,"map.exitExpanded": "الخروج من الخريطة الموسعة"
+  ,"map.period": "الفترة والتحقق"
+  ,"map.emptyHelp": "عدّل الفلاتر أو راجع البطاقات التي لا تحتوي على موقع."
+  ,"map.zoomIn": "تكبير"
+  ,"map.zoomOut": "تصغير"
+  ,"map.retryTiles": "إعادة تحميل خلفية الخريطة"
+  ,"paste.mapNoPosition": "رابط الخريطة لا يحتوي على إحداثيات — افتحه وانسخ الموقع، أو ضع النقطة على الخريطة."
+  ,"paste.noElements": "تم تحليل النص — لم يُتعرف على رابط منشور أو موقع. يمكنك إكمال الحقول ومراجعة الاقتراحات."
+  ,"nav.work": "المهام"
+  ,"work.title": "المهام"
+  ,"work.subtitle": "قائمة عمل محسوبة عند الطلب من البطاقات والآجال المستهدفة."
+  ,"work.total": "{count} عنصراً للمعالجة"
+  ,"work.empty": "لا يوجد ما يُعالج حالياً."
+  ,"work.open": "فتح القائمة المفلترة"
+  ,"work.critical": "حرج"
+  ,"work.attention": "للمراقبة"
+  ,"work.info": "معلومة"
+  ,"work.alerts": "تنبيهات النظام"
+  ,"work.alertBackup": "لا توجد نسخة احتياطية تلقائية اليوم"
+  ,"work.alertCertificate": "شهادة HTTPS غائبة أو غير مقروءة أو تنتهي خلال 30 يوماً"
+  ,"work.refresh": "إعادة حساب القائمة"
+  ,"work.updated": "حُسبت في {date}"
+  ,"work.bell": "الإشعارات"
+  ,"work.bellEmpty": "لا توجد تنبيهات"
+  ,"work.bellCount": "{count} تنبيه"
+  ,"views.title": "العروض المحفوظة"
+  ,"views.save": "حفظ العرض"
+  ,"views.name": "اسم العرض"
+  ,"views.namePlaceholder": "مثال: الحالات العاجلة غير المعالجة في الدرارية"
+  ,"views.empty": "لا يوجد عرض محفوظ. فلتر القائمة ثم احفظها."
+  ,"views.apply": "تطبيق العرض {name}"
+  ,"views.delete": "حذف العرض {name}"
+  ,"views.share": "مشاركته مع جميع المستخدمين"
+  ,"views.shared": "مشترك"
+  ,"views.saved": "تم حفظ العرض «{name}»"
+  ,"views.removed": "تم حذف العرض"
+  ,"views.limit": "40 عرضاً محفوظاً كحد أقصى"
+  ,"views.exists": "يوجد عرض بهذا الاسم"
+}

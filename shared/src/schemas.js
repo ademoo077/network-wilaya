@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { interventionWorkflowSchema } from './interventions.js';
 import {
   CONTENU_TYPES, DATE_RE, GPS_SOURCES, PLATEFORMES, PRIORITES, ROLES, STATUTS, VERIFICATIONS,
 } from './constants.js';
@@ -127,6 +128,9 @@ export const anomalieQuerySchema = z.object({
   epic: optionalId, agent: optionalId, plateforme: z.enum(PLATEFORMES).optional(),
   priorite: z.enum(PRIORITES).optional(),
   from: optionalDate, to: optionalDate,
+  gps: z.enum(['absent', 'present']).optional(),
+  ouvertes: booleanFlag, retard: booleanFlag, verification_retard: booleanFlag, sla_depassee: booleanFlag,
+  incompletes: booleanFlag, sans_photo: booleanFlag, sans_agent: booleanFlag, lie_a: optionalId,
   include_infirmees: booleanFlag,
   page: z.coerce.number().int().min(1).max(100000).optional(),
   pageSize: z.coerce.number().int().min(1).max(200).optional(),
@@ -169,9 +173,12 @@ export const refSchemas = {
     contact_tel: z.string().trim().max(40).nullable().optional(),
     actif: z.coerce.number().int().min(0).max(1).optional(),
     domaine_ids: z.array(idSchema).max(200).optional(),
+    workflow: interventionWorkflowSchema.nullable().optional(),
   }),
   agents: z.object({
     full_name: z.string().trim().min(1, 'Nom requis').max(200),
+    grade: z.string().trim().max(200).nullable().optional(),
+    email: z.preprocess((value) => value === '' ? null : value, z.string().trim().email('Adresse e-mail invalide').max(254).nullable().optional()),
     matricule: z.string().trim().max(60).nullable().optional(),
     telephone: z.string().trim().max(40).nullable().optional(),
     zone_daira_id: optionalId,

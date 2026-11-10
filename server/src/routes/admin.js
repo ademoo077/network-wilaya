@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
-import { formatDateTime } from '@anm/shared';
+import { X509Certificate } from 'node:crypto';
+import { formatDateTime, VERSION } from '@anm/shared';
 import { config } from '../config/index.js';
 import { getDb } from '../db/index.js';
 import { runMigrations } from '../db/migrate.js';
@@ -13,9 +14,20 @@ import {
   listBackups, createBackup, requireBackupName, restoreBackup, schemaVersion,
 } from '../services/backups.js';
 import { getParams } from '../services/settings.js';
+import { checkConnectivity } from '../services/connectivity.js';
 
 const router = Router();
 router.use(requireAdmin);
+router.post('/connectivity', asyncHandler(async (_req, res) => res.json(await checkConnectivity())));
+router.get('/health', (_req, res) => {
+  let certificate = null;
+  if (config.https && fs.existsSync(config.httpsCert)) {
+    try { certificate = new X509Certificate(fs.readFileSync(config.httpsCert)).validTo; } catch { certificate = 'TLS_ERROR'; }
+  }
+  res.json({ version: VERSION, integrity: getDb().pragma('integrity_check', { simple: true }),
+    size: fs.existsSync(config.dbPath) ? fs.statSync(config.dbPath).size : 0, https: config.https, certificate,
+    backup: listBackups(config.backupDir)[0]?.nom || null });
+});
 
 function backupPath(nom) {
   const safe = requireBackupName(nom);

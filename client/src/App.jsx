@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from 'react';
-import { HashRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Suspense } from 'react';
+import { HashRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { LoadingBlock } from './components/ui/index.js';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import FatalError from './features/errors/FatalError.jsx';
@@ -7,111 +7,57 @@ import AppShell from './components/layout/AppShell.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import { useRefs } from './context/RefsContext.jsx';
 import { useI18n } from './i18n/index.jsx';
+import { LoginPage, ProfilePage, SetupPage, DashboardPage, AnomaliesPage, AnomalyFormPage,
+  AnomalyDetailPage, MapPage, ReportPage, WorkPage, AdminPage, NotFoundPage } from './routePages.js';
 
-async function retryLoad(loader, attempts = 1) {
-  try {
-    return await loader();
-  } catch (error) {
-    const retryable = error?.name === 'ChunkLoadError';
-    if (retryable && attempts > 0) {
-      await new Promise((resolve) => {
-        const handler = () => { window.removeEventListener('vite:preloadError', handler); resolve(); };
-        window.addEventListener('vite:preloadError', handler, { once: true });
-        window.setTimeout(() => { window.removeEventListener('vite:preloadError', handler); resolve(); }, 1500);
-      });
-      return retryLoad(loader, attempts - 1);
-    }
-    throw error;
-  }
-}
-
-const withRetry = (loader) => lazy(() => retryLoad(loader, 1));
-
-const LoginPage = withRetry(() => import('./features/auth/LoginPage.jsx'));
-const ProfilePage = withRetry(() => import('./features/auth/ProfilePage.jsx'));
-const SetupPage = withRetry(() => import('./features/setup/SetupPage.jsx'));
-const DashboardPage = withRetry(() => import('./features/dashboard/DashboardPage.jsx'));
-const AnomaliesPage = withRetry(() => import('./features/anomalies/AnomaliesPage.jsx'));
-const AnomalyFormPage = withRetry(() => import('./features/anomalies/AnomalyFormPage.jsx'));
-const AnomalyDetailPage = withRetry(() => import('./features/anomalies/AnomalyDetailPage.jsx'));
-const MapPage = withRetry(() => import('./features/map/MapPage.jsx'));
-const ReportPage = withRetry(() => import('./features/report/ReportPage.jsx'));
-const AdminPage = withRetry(() => import('./features/admin/AdminPage.jsx'));
-const NotFoundPage = withRetry(() => import('./features/NotFoundPage.jsx'));
-
-function BootScreen() {
+export function BootScreen() {
   const { t } = useI18n();
-  return (
-  <div className="page-container grid min-h-screen place-items-center gap-6">
-    <div className="flex flex-col items-center gap-3">
-      <span className="grid h-14 w-14 place-items-center rounded-xl bg-brand-700 text-xl font-black text-brand-50">{t('app.wilaya').charAt(0)}</span>
-      <h1 className="text-lg font-black text-ink">{t('app.title')}</h1>
-    </div>
-    <div className="h-1 w-64 overflow-hidden rounded-full bg-surface2" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={40}>
+  return <main data-boot aria-busy="true" className="page-container grid min-h-dvh content-center justify-items-center gap-6">
+    <span aria-hidden="true" className="grid h-14 w-14 place-items-center rounded-xl bg-brand-700 text-xl font-black text-brand-50">W</span>
+    <h1 className="text-center text-lg font-black">{t('app.title')}</h1>
+    <div className="h-1 w-64 overflow-hidden rounded-full bg-surface2" role="progressbar" aria-label={t('common.loading')}>
       <div className="h-full w-2/5 animate-pulse rounded-full bg-brand-700" />
-    </div>
-  </div>
-  );
+    </div><p className="text-sm text-muted">{t('common.loading')}</p>
+  </main>;
 }
 
 function Protected() {
-  const { user, loading } = useAuth();
-  const { setup, loading: refsLoading } = useRefs();
+  const { user } = useAuth();
   const location = useLocation();
-  if (loading || (user && refsLoading && !setup)) return <BootScreen />;
-  if (!user) return <Navigate to="/connexion" state={{ from: `${location.pathname}${location.search}` }} replace />;
+  if (!user) return <Navigate to={`/connexion?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   if (user.must_change_password && location.pathname !== '/profil') return <Navigate to="/profil" replace />;
-  // Premier démarrage : l'assistant reste accessible, sans bloquer la navigation.
-  // (rediriger ici empêchait de fermer/découvrir les autres onglets)
   return <Outlet />;
 }
-
-function AdminOnly() {
-  const { user } = useAuth();
-  return user?.role === 'admin' ? <Outlet /> : <Navigate to="/" replace />;
+function AdminOnly() { return useAuth().user?.role === 'admin' ? <Outlet /> : <Navigate to="/" replace />; }
+function RoutePage({ page: Page }) {
+  const location = useLocation();
+  const { id } = useParams();
+  const Content = id && !/^[1-9]\d*$/.test(id) ? NotFoundPage : Page;
+  return <ErrorBoundary key={location.pathname}><Suspense fallback={<div className="page-container" aria-busy="true"><LoadingBlock /></div>}><Content /></Suspense></ErrorBoundary>;
 }
-
-function Fallback() { return <div className="page-container"><LoadingBlock /></div>; }
-
-export default function App() {
-  const { user, loading: authLoading, reset: resetAuth } = useAuth();
-  const { setup, loading: refsLoading } = useRefs();
-  const [fatal, setFatal] = useState(null);
-  const phase = fatal ? 'fatal' : authLoading ? 'authChecking' : user ? (refsLoading && !setup ? 'refsLoading' : 'ready') : 'ready';
-
-  if (phase === 'fatal') {
-    return <FatalError error={fatal} onRetry={() => { setFatal(null); resetAuth(); }} />;
-  }
-  if (phase === 'authChecking' || phase === 'refsLoading') {
-    return <BootScreen />;
-  }
-
-  return (
-    <HashRouter>
-      <ErrorBoundary>
-        <Suspense fallback={<Fallback />}>
-          <Routes>
-            <Route path="/connexion" element={<LoginPage />} />
-            <Route element={<Protected />}>
-              <Route element={<AppShell />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="anomalies" element={<ErrorBoundary><AnomaliesPage /></ErrorBoundary>} />
-                <Route path="anomalies/nouvelle" element={<ErrorBoundary><AnomalyFormPage /></ErrorBoundary>} />
-                <Route path="anomalies/:id" element={<ErrorBoundary><AnomalyDetailPage /></ErrorBoundary>} />
-                <Route path="anomalies/:id/modifier" element={<ErrorBoundary><AnomalyFormPage /></ErrorBoundary>} />
-                <Route path="carte" element={<ErrorBoundary><MapPage /></ErrorBoundary>} />
-                <Route path="rapport" element={<ErrorBoundary><ReportPage /></ErrorBoundary>} />
-                <Route path="profil" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
-                <Route element={<AdminOnly />}>
-                  <Route path="assistant" element={<ErrorBoundary><SetupPage /></ErrorBoundary>} />
-                  <Route path="admin/:onglet" element={<ErrorBoundary><AdminPage /></ErrorBoundary>} />
-                </Route>
-              </Route>
-            </Route>
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
-    </HashRouter>
-  );
+const page = (Page) => <RoutePage page={Page} />;
+function Application() {
+  const auth = useAuth();
+  const refs = useRefs();
+  const error = auth.error || refs.error;
+  const phase = error ? 'fatal' : auth.loading ? 'authChecking' : !auth.user ? 'anonymous' : !refs.ready ? 'refLoading' : 'ready';
+  if (phase === 'fatal') return <FatalError error={error} onRetry={() => auth.error ? auth.reset() : refs.reload()} />;
+  if (['authChecking', 'refLoading'].includes(phase)) return <BootScreen />;
+  return <Routes>
+    <Route path="/connexion" element={page(LoginPage)} />
+    <Route element={<Protected />}><Route element={<AppShell />}>
+      <Route index element={page(DashboardPage)} />
+      <Route path="anomalies" element={page(AnomaliesPage)} />
+      <Route path="anomalies/nouvelle" element={page(AnomalyFormPage)} />
+      <Route path="anomalies/:id" element={page(AnomalyDetailPage)} />
+      <Route path="anomalies/:id/modifier" element={page(AnomalyFormPage)} />
+      <Route path="carte" element={page(MapPage)} />
+      <Route path="a-faire" element={page(WorkPage)} />
+      <Route path="rapport" element={page(ReportPage)} />
+      <Route path="profil" element={page(ProfilePage)} />
+      <Route element={<AdminOnly />}><Route path="assistant" element={page(SetupPage)} /><Route path="admin/:onglet" element={page(AdminPage)} /></Route>
+      <Route path="*" element={page(NotFoundPage)} />
+    </Route></Route>
+  </Routes>;
 }
+export default function App() { return <HashRouter><Application /></HashRouter>; }

@@ -11,6 +11,8 @@ export function refOptions(items, lang, extra = {}) {
   return items.filter((item) => extra.includeInactive || Number(item.actif) !== 0).map((item) => ({
     value: item.id,
     label: refLabel(item, lang),
+    search: `${item.name_fr || ''} ${item.name_ar || ''} ${item.full_name || ''} ${item.grade || ''} ${item.email || ''} ${item.matricule || ''}`,
+    description: item.grade || undefined,
     disabled: Number(item.actif) === 0,
   }));
 }
@@ -71,6 +73,7 @@ const historyKeys = {
   date_verification: 'field.verificationDate', statut: 'field.status', epic_id: 'field.epic',
   intervenant_autre: 'field.otherParty', date_intervention: 'field.interventionDate',
   date_traitement: 'field.treatmentDate', priorite: 'field.priority', observations: 'field.observations',
+  motif: 'field.reason', contenu_type: 'field.contentType', gps_source: 'gps.source',
   suppression: 'common.delete', restauration: 'common.restore',
 };
 

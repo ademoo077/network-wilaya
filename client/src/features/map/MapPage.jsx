@@ -1,92 +1,62 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, ListFilter, MapPin } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import L from 'leaflet';
-import 'leaflet.markercluster';
-import { addDays, formatDate, weekStart } from '@anm/shared';
-import { api, queryString, anomalyListSchema, emptyAnomalyList } from '../../api/client.js';
-import { Alert, Card, Checkbox, EmptyState, IconButton, Select, StatusBadge } from '../../components/ui/index.js';
+import { useMemo, useRef, useState } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { Expand, ListFilter, List, LoaderCircle, MapPin, Plus, RefreshCw, Shrink } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { api, queryString } from '../../api/client.js';
+import { Button, IconButton } from '../../components/ui/index.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { useRefs } from '../../context/RefsContext.jsx';
+import { useDebounced } from '../../hooks/useDebounced.js';
 import { useI18n } from '../../i18n/index.jsx';
-import { useTheme } from '../../hooks/useTheme.jsx';
-import { anomalyLabel } from '../anomalies/helpers.js';
-
-async function loadAll(filters) {
-  const first = await api(`/anomalies${queryString({ ...filters, page: 1, pageSize: 200 })}`, { schema: anomalyListSchema, fallback: emptyAnomalyList });
-  const items = [...(first?.items ?? [])];
-  const pages = Math.ceil(first.total / 200);
-  for (let page = 2; page <= pages; page += 1) {
-    const response = await api(`/anomalies${queryString({ ...filters, page, pageSize: 200 })}`);
-    items.push(...response.items);
-  }
-  return items.filter((item) => item.gps);
-}
+import MapCanvas from './MapCanvas.jsx';
+import MapFilters from './MapFilters.jsx';
+import MapResults from './MapResults.jsx';
 
 export default function MapPage() {
-  const { t, lang, dir } = useI18n();
-  const { refs } = useRefs();
-  const { theme } = useTheme();
-  const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [offline, setOffline] = useState(false);
-  const [panel, setPanel] = useState(true);
-  const [weekOnly, setWeekOnly] = useState(false);
-  const mapNode = useRef(null);
-  const mapRef = useRef(null);
-  const clustersRef = useRef(null);
-  const markersRef = useRef(new Map());
-  const filters = useMemo(() => Object.fromEntries(params.entries()), [params]);
-  useEffect(() => {
-    const query = { ...filters };
-    if (weekOnly) { query.from = weekStart(new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Algiers' }).format(new Date()), Number(refs.parametres.week_start_day) || 0); query.to = addDays(query.from, 6); }
-    setLoading(true);
-    loadAll(query).then(setItems).catch(() => setItems([])).finally(() => setLoading(false));
-  }, [filters, refs.parametres.week_start_day, weekOnly]);
-  useEffect(() => {
-    if (!mapNode.current || mapRef.current) return undefined;
-    const map = L.map(mapNode.current, { center: [36.7538, 3.0588], zoom: 11, attributionControl: true });
-    map.attributionControl.setPrefix(false);
-    map.attributionControl.addAttribution('© OpenStreetMap contributors');
-    const tiles = L.tileLayer(refs.parametres.tile_url, { maxZoom: 19 });
-    tiles.on('tileerror', () => setOffline(true));
-    tiles.addTo(map);
-    const clusters = L.markerClusterGroup({
-      showCoverageOnHover: false,
-      iconCreateFunction: (cluster) => L.divIcon({ html: `<span class="cluster-pin">${cluster.getChildCount()}</span>`, className: '', iconSize: [40, 40] }),
-    });
-    clusters.addTo(map);
-    clustersRef.current = clusters;
-    mapRef.current = map;
-    return () => { map.remove(); mapRef.current = null; clustersRef.current = null; };
-  }, [refs.parametres.tile_url]);
-  useEffect(() => {
-    const clusters = clustersRef.current;
-    const map = mapRef.current;
-    if (!clusters || !map) return;
-    clusters.clearLayers(); markersRef.current.clear();
-    items.forEach((item, index) => {
-      const icon = L.divIcon({ html: `<span class="map-pin ${item.statut}"><span>${index + 1}</span></span>`, className: '', iconSize: [32, 32], iconAnchor: [16, 32] });
-      const marker = L.marker([item.gps.lat, item.gps.lng], { icon });
-      const popup = document.createElement('div');
-      const title = document.createElement('strong'); title.textContent = item.reference;
-      const text = document.createElement('p'); text.textContent = anomalyLabel(item, 'type', lang);
-      const link = document.createElement('button'); link.textContent = t('anomalies.openSheet'); link.className = 'mt-2 font-bold text-brand-700'; link.onclick = () => navigate(`/anomalies/${item.id}`);
-      popup.append(title, text, link); marker.bindPopup(popup); clusters.addLayer(marker); markersRef.current.set(item.id, marker);
-    });
-    if (items.length) map.fitBounds(L.latLngBounds(items.map((item) => [item.gps.lat, item.gps.lng])), { padding: [32, 32], maxZoom: 15 });
-  }, [items, lang, navigate, t]);
-  useEffect(() => { window.setTimeout(() => mapRef.current?.invalidateSize(), 220); }, [panel, theme]);
-  useEffect(() => {
-    const node = mapNode.current;
-    const map = mapRef.current;
-    if (!node || !map) return undefined;
-    const observer = new ResizeObserver(() => { map.invalidateSize(); });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  const setFilter = (key, value) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next, { replace: true }); };
-  const focus = (item) => { const marker = markersRef.current.get(item.id); mapRef.current?.setView([item.gps.lat, item.gps.lng], 16); marker?.openPopup(); };
-  return <div className="relative flex h-[calc(100dvh-4rem)] min-w-0 overflow-hidden"><aside className={`${panel ? 'w-full sm:w-96' : 'w-0'} z-20 shrink-0 overflow-hidden border-e border-border bg-surface transition-[width] duration-200`}><div className="flex h-full w-full min-w-[320px] flex-col sm:w-96"><div className="border-b border-border p-4"><h1 className="text-xl font-black">{t('map.title')}</h1><p className="mt-1 text-xs text-muted">{t('map.visible', { count: items.length })}</p><div className="mt-4 grid grid-cols-2 gap-2"><Select label={t('field.status')} placeholder={t('common.all')} value={filters.statut || ''} options={['non_traite', 'en_cours', 'traite'].map((value) => ({ value, label: t(`status.${value}`) }))} onChange={(event) => setFilter('statut', event.target.value)} /><Select label={t('field.priority')} placeholder={t('common.all')} value={filters.priorite || ''} options={['normale', 'haute', 'urgente'].map((value) => ({ value, label: t(`priority.${value}`) }))} onChange={(event) => setFilter('priorite', event.target.value)} /></div><Checkbox label={t('dashboard.thisWeek')} checked={weekOnly} onChange={(event) => setWeekOnly(event.target.checked)} /></div><div className="min-h-0 flex-1 overflow-y-auto">{loading ? <p className="p-4 text-sm text-muted">{t('common.loading')}</p> : items.length ? items.map((item, index) => <button key={item.id} className="flex w-full items-start gap-3 border-b border-border p-4 text-start hover:bg-surface2" onClick={() => focus(item)}><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">{index + 1}</span><span className="min-w-0 flex-1"><bdi className="font-bold text-brand-700">{item.reference}</bdi><span className="mt-1 block truncate text-sm"><bdi>{anomalyLabel(item, 'type', lang)}</bdi></span><span className="mt-1 block text-xs text-muted">{formatDate(item.date_signalement)}</span></span><StatusBadge value={item.statut} /></button>) : <EmptyState icon={MapPin} title={t('map.noGps')} compact />}</div></div></aside><div className="relative min-w-0 flex-1"><div ref={mapNode} className={`h-full w-full ${offline ? 'offline-map' : ''}`} /><IconButton className="absolute start-3 top-3 z-[500] bg-surface shadow-2" aria-label={panel ? t('nav.collapse') : t('nav.expand')} onClick={() => setPanel((value) => !value)}>{panel ? dir === 'rtl' ? <ChevronRight /> : <ChevronLeft /> : <ListFilter />}</IconButton>{offline && <Alert variant="warning" className="absolute bottom-4 start-4 end-4 z-[500] sm:end-auto">{t('map.tilesDown')}</Alert>}<Card className="absolute bottom-4 end-4 z-[500] hidden p-3 sm:block"><p className="text-xs font-bold">{t('map.legend')}</p><div className="mt-2 flex gap-3">{['non_traite', 'en_cours', 'traite'].map((status) => <StatusBadge key={status} value={status} />)}</div></Card></div></div>;
+  const { t } = useI18n(); const { refs } = useRefs(); const { user } = useAuth(); const [params, setParams] = useSearchParams();
+  const [panel, setPanel] = useState(true); const [expanded, setExpanded] = useState(false);
+  const [density, setDensity] = useState(false); const [focusId, setFocusId] = useState(null); const [fitRequest, fitAll] = useState(0);
+  const shell = useRef(null);
+  const filters = useMemo(() => Object.fromEntries(params.entries()), [params]); const search = useDebounced(filters.q || '');
+  const query = useMemo(() => ({ ...filters, q: search || undefined }), [filters, search]);
+  const result = useQuery({ queryKey: ['map-anomalies', query], queryFn: ({ signal }) => api(`/anomalies/map${queryString(query)}`, { signal }), placeholderData: keepPreviousData });
+  const items = result.data?.items || []; const selectedId = items.some((item) => item.id === focusId?.id) ? focusId.id : null;
+  const busy = result.isFetching || (filters.q || '') !== search;
+  const setFilter = (key, value, extra = {}) => {
+    const next = new URLSearchParams(params);
+    for (const [name, entry] of Object.entries({ [key]: value, ...extra })) { if (entry) next.set(name, entry); else next.delete(name); }
+    next.delete('page'); setParams(next, { replace: true });
+  };
+  const select = (id) => {
+    setFocusId({ id, at: Date.now() });
+    if (window.innerWidth < 768) setPanel(false);
+  };
+  return <section ref={shell} data-map-page className={`flex min-w-0 flex-col overflow-hidden bg-surface ${expanded ? 'fixed inset-0 z-[1000] h-dvh' : 'relative h-[calc(100dvh-4rem)] min-h-[620px]'}`}
+    onKeyDown={(event) => { if (event.key === 'Escape' && expanded) { setExpanded(false); shell.current?.querySelector('[data-expand-map]')?.focus(); } }}>
+    <header className="z-20 shrink-0 border-b border-border bg-surface px-4 py-3 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0"><h1 className="text-xl font-black text-ink sm:text-2xl">{t('map.title')}</h1>
+          <p className="mt-1 flex items-center gap-2 text-sm text-muted" aria-live="polite">{busy && <LoaderCircle className="h-4 w-4 animate-spin" aria-label={t('common.loading')} />}
+            {t('map.located', { count: items.length })}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" aria-expanded={panel} aria-controls="map-panel" onClick={() => setPanel(!panel)}><ListFilter className="h-4 w-4" />{t('common.filters')}</Button>
+          <IconButton aria-label={t('map.fitAll')} title={t('map.fitAll')} onClick={() => { setFocusId(null); fitAll((value) => value + 1); }}><MapPin className="h-5 w-5" /></IconButton>
+          <IconButton aria-label={t('common.refresh')} title={t('common.refresh')} disabled={busy} onClick={() => result.refetch()}><RefreshCw className={`h-5 w-5 ${busy ? 'animate-spin' : ''}`} /></IconButton>
+          <IconButton data-expand-map aria-label={t(expanded ? 'map.exitExpanded' : 'map.expand')} title={t(expanded ? 'map.exitExpanded' : 'map.expand')} onClick={() => setExpanded(!expanded)}>{expanded ? <Shrink className="h-5 w-5" /> : <Expand className="h-5 w-5" />}</IconButton>
+          <Button as={Link} to={`/anomalies${queryString(filters)}`} variant="secondary" aria-label={t('map.openList')}><List className="h-4 w-4" /><span className="hidden xl:inline">{t('map.openList')}</span></Button>
+          {user.role !== 'lecteur' && <Button as={Link} to="/anomalies/nouvelle" aria-label={t('form.newTitle')}><Plus className="h-4 w-4" /><span className="hidden xl:inline">{t('form.newTitle')}</span></Button>}
+        </div>
+      </div>
+      {result.data?.missing > 0 && <Link className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface2 px-3 text-xs font-semibold text-brand-700 underline" to={`/anomalies${queryString({ ...filters, gps: 'absent' })}`}>
+        <MapPin className="h-4 w-4 shrink-0" />{t('map.missing', { count: result.data.missing })}</Link>}
+    </header>
+    <div className="relative flex min-h-0 flex-1 flex-col md:flex-row">
+      {panel && <aside id="map-panel" aria-label={t('map.filtersAndList')} className="z-20 flex max-h-[58%] min-h-0 w-full shrink-0 flex-col border-b border-border bg-surface shadow-1 md:max-h-full md:w-[340px] md:border-b-0 md:border-e">
+        <div className="max-h-[65%] shrink-0 overflow-auto border-b border-border md:max-h-[68%]"><MapFilters {...{ filters, setFilter, refs, density, setDensity }} reset={() => setParams({}, { replace: true })} /></div>
+        <div className="min-h-0 flex-1 overflow-auto" aria-busy={busy}><MapResults {...{ result, selectedId }} onSelect={select} /></div>
+      </aside>}
+      <div className="min-h-[240px] min-w-0 flex-1"><MapCanvas {...{ items, density, fitRequest }} focusId={selectedId ? focusId : null} onSelect={select} tileUrl={refs.parametres.tile_url} /></div>
+    </div>
+  </section>;
 }

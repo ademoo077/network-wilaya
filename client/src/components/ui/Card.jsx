@@ -1,5 +1,5 @@
 export function Card({ children, className = '', as: Tag = 'section', ...props }) {
-  return <Tag className={`rounded-lg border border-border bg-surface shadow-1 ${className}`} {...props}>{children}</Tag>;
+  return <Tag data-card className={`min-w-0 self-start rounded-lg border border-border bg-surface shadow-1 ${className}`} {...props}>{children}</Tag>;
 }
 
 export function CardHeader({ title, description, action, className = '', children }) {

@@ -198,13 +198,6 @@ export function timeline(db, params = {}) {
   return out;
 }
 
-export function activite(db, limit = 10) {
-  return db.prepare(`SELECT h.id, h.anomalie_id, h.champ, h.ancienne_valeur, h.nouvelle_valeur, h.motif, h.at,
-                            a.reference, u.full_name AS user_nom, u.username AS user_username
-                     FROM anomalie_historique h
-                     JOIN anomalies a ON a.id = h.anomalie_id AND a.deleted_at IS NULL
-                     LEFT JOIN users u ON u.id = h.user_id
-                     ORDER BY h.at DESC, h.id DESC LIMIT ?`).all(limit);
-}
+export { activite } from './activity.js';
 
 export { pctBlock, countByStatus, scope, metrics };

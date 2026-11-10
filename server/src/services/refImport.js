@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync';
+import { normalize, refSchemas } from '@anm/shared';
 import { createRef } from './refs.js';
 
 const COLUMNS = {
@@ -7,7 +8,7 @@ const COLUMNS = {
   dairas: ['name_fr', 'name_ar'],
   communes: ['daira_fr', 'name_fr', 'name_ar'],
   epics: ['name', 'sigle', 'contact_nom', 'contact_tel', 'domaines'],
-  agents: ['full_name', 'matricule', 'telephone', 'daira'],
+  agents: ['full_name', 'grade', 'email', 'matricule', 'telephone', 'daira'],
 };
 
 export function parseCsv(buffer) {
@@ -61,7 +62,8 @@ function resolveRow(db, entite, row) {
   if (entite === 'agents') {
     if (!row.full_name) throw new Error('full_name requis');
     const daira = lookup(db, 'dairas', 'name_fr', row.daira);
-    return { full_name: row.full_name, matricule: row.matricule || null, telephone: row.telephone || null, zone_daira_id: daira?.id || null };
+    return { full_name: row.full_name, grade: row.grade || null, email: row.email || null,
+      matricule: row.matricule || null, telephone: row.telephone || null, zone_daira_id: daira?.id || null };
   }
   throw new Error('Entité inconnue');
 }
@@ -72,15 +74,23 @@ function findExisting(db, entite, data) {
   if (entite === 'dairas') return db.prepare('SELECT id FROM dairas WHERE name_fr = ? COLLATE NOCASE').get(data.name_fr);
   if (entite === 'communes') return db.prepare('SELECT id FROM communes WHERE daira_id = ? AND name_fr = ? COLLATE NOCASE').get(data.daira_id, data.name_fr);
   if (entite === 'epics') return db.prepare('SELECT id FROM epics WHERE name = ? COLLATE NOCASE').get(data.name);
-  if (entite === 'agents') return data.matricule ? db.prepare('SELECT id FROM agents WHERE matricule = ?').get(data.matricule) : null;
+  if (entite === 'agents') {
+    if (data.matricule) return db.prepare('SELECT id FROM agents WHERE matricule = ?').get(data.matricule);
+    if (data.email) return db.prepare('SELECT id FROM agents WHERE email = ? COLLATE NOCASE').get(data.email);
+    return db.prepare('SELECT id FROM agents WHERE full_name = ? AND matricule IS NULL AND email IS NULL').get(data.full_name);
+  }
   return null;
 }
 
 export function importRefRows(db, entite, rows, { commit = false } = {}) {
+  const seen = new Set();
   const preview = rows.map((row, index) => {
     try {
-      const data = resolveRow(db, entite, row);
-      const existing = findExisting(db, entite, data);
+      const data = refSchemas[entite].parse(resolveRow(db, entite, row));
+      const identity = JSON.stringify([data.domaine_id, data.daira_id,
+        normalize(data.matricule || data.email || data.name || data.name_ar || data.name_fr || data.full_name)]);
+      const existing = findExisting(db, entite, data) || seen.has(identity);
+      seen.add(identity);
       return { ligne: index + 2, statut: existing ? 'warning' : 'ok', message: existing ? 'Existe déjà — ignorée' : 'Prête', data, existing: Boolean(existing) };
     } catch (error) {
       return { ligne: index + 2, statut: 'error', message: error.message, raw: row };

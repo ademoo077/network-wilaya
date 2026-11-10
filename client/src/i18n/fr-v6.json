@@ -1,0 +1,223 @@
+{
+  "health.title": "Santé",
+  "health.version": "Version",
+  "health.database": "Intégrité de la base",
+  "health.size": "Taille de la base",
+  "health.protocol": "Connexion",
+  "health.backup": "Dernière sauvegarde",
+  "health.certificate": "Validité du certificat",
+  "health.errors": "Erreurs client récentes",
+  "health.noErrors": "Aucune erreur client récente.",
+  "health.connectivity": "Connectivité sortante",
+  "health.test": "Tester",
+  "health.testHelp": "Vérifier le DNS et l'accès HTTPS depuis le serveur.",
+  "health.proxy": "Proxy utilisé",
+  "health.cached": "Diagnostic conservé pendant 60 secondes.",
+  "health.advice.OK": "Connexion sortante opérationnelle.",
+  "health.advice.NETWORK_UNAVAILABLE": "DNS ou réseau indisponible. Vérifiez le proxy OUTBOUND_PROXY et le pare-feu du serveur.",
+  "health.advice.TLS_ERROR": "Certificat TLS non reconnu. Configurez NODE_EXTRA_CA_CERTS avec le certificat de votre réseau.",
+  "health.advice.TIMEOUT": "Délai dépassé. Vérifiez le proxy et le pare-feu du serveur.",
+  "health.advice.BLOCKED_HOST": "Destination bloquée : le DNS a renvoyé une adresse privée ou non autorisée.",
+  "health.advice.UPSTREAM_ERROR": "Le serveur distant ne répond pas normalement. Vérifiez le proxy puis réessayez.",
+  "common.clear": "Effacer",
+  "common.remove": "Retirer",
+  "common.view": "Voir",
+  "field.contentType": "Type de contenu",
+  "content.direct": "Direct",
+  "form.detectedBadge": "Détectée automatiquement",
+  "form.categoryPlaceholder": "Choisir une catégorie…",
+  "form.typePlaceholder": "Rechercher un type…",
+  "form.dairaPlaceholder": "Choisir une daïra…",
+  "form.communePlaceholder": "Choisir une commune…",
+  "form.chooseDaira": "Choisissez d'abord la daïra",
+  "form.advanced": "Options avancées",
+  "form.statusHelp": "Pour passer en en cours ou traité : vérification confirmée, agent et intervenant requis.",
+  "form.statusBlocked": "Vérification, agent et intervenant requis",
+  "form.unassigned": "Non affecté",
+  "form.errorSummary": "Vérifiez les champs suivants",
+  "form.saveNew": "Enregistrer et nouveau",
+  "validation.required": "Ce champ est requis",
+  "validation.invalid": "Valeur invalide",
+  "validation.future": "La date ne peut pas être dans le futur",
+  "validation.dateOrder": "La publication doit précéder le signalement",
+  "draft.question": "Reprendre la saisie en cours ?",
+  "draft.resume": "Reprendre",
+  "draft.restart": "Recommencer",
+  "paste.analyzing": "Analyse du contenu…",
+  "paste.suggestion": "Remplacer par cette valeur ?",
+  "paste.replace": "Remplacer",
+  "paste.ignore": "Ignorer",
+  "paste.toLink": "Ce lien est une publication : placé dans Lien",
+  "paste.toGps": "Ce lien est une localisation : placé dans GPS",
+  "paste.removeLink": "Retirer le lien reconnu",
+  "paste.removePosition": "Retirer la position reconnue",
+  "paste.removeDate": "Retirer la date reconnue",
+  "paste.removePhoto": "Retirer la photo",
+  "paste.date": "Date : {date}",
+  "lien.ok": "Lien reconnu : {plateforme} · {contenu}",
+  "lien.plateformeInconnue": "Plateforme non reconnue — choisissez-la si besoin",
+  "lien.invalide": "Le lien doit commencer par http:// ou https://",
+  "lien.corrige": "https:// ajouté automatiquement",
+  "date.estimee": "Date de publication estimée : {date} (modifiable)",
+  "gps.ok": "Position reconnue : {lat}, {lng} · {source}",
+  "gps.invalide": "Format de coordonnées non reconnu",
+  "gps.horsZone": "Cette position semble hors de la wilaya d'Alger — vérifiez",
+  "gps.destination": "Itinéraire : la destination a été retenue",
+  "gps.source.olc": "Plus Code",
+  "gps.source.polygone": "Limites territoriales",
+  "gps.openMaps": "Ouvrir dans Maps",
+  "gps.deviceError": "Position de l'appareil indisponible. Vérifiez l'autorisation de localisation.",
+  "gps.linked": "Signalement répété lié à la fiche",
+  "smart.ctrlC": "Sélectionnez les coordonnées puis faites Ctrl+C.",
+  "resolve.encours": "Résolution du lien court…",
+  "resolve.ok": "Position trouvée via le lien court",
+  "resolve.DISABLED": "Résolution des liens désactivée par l'administrateur",
+  "resolve.NETWORK_UNAVAILABLE": "Internet indisponible depuis le serveur — ouvrez le lien, copiez l'adresse complète, collez-la ici",
+  "resolve.NETWORK": "Internet indisponible depuis le serveur — ouvrez le lien, copiez l'adresse complète, collez-la ici",
+  "resolve.TIMEOUT": "Le lien met trop de temps à répondre — réessayez",
+  "resolve.NO_COORDINATES": "Ce lien ne contient pas de coordonnées",
+  "resolve.BLOCKED_HOST": "Ce lien n'est pas autorisé",
+  "resolve.TOO_MANY_REDIRECTS": "Le lien redirige trop de fois — ouvrez-le pour copier l'adresse finale",
+  "resolve.TLS_ERROR": "Certificat TLS non reconnu par le serveur — voir Santé et NODE_EXTRA_CA_CERTS",
+  "resolve.UPSTREAM_ERROR": "Le site distant ne répond pas correctement — réessayez",
+  "resolve.TROP_DE_REQUETES": "Trop de demandes — réessayez dans une minute",
+  "resolve.open": "Ouvrir le lien",
+  "resolve.step1": "Ouvrez le lien",
+  "resolve.step2": "Copiez l'adresse de la page",
+  "resolve.step3": "Collez-la ici",
+  "locate.loading": "Recherche de la commune…",
+  "locate.ok": "Commune identifiée par ses limites territoriales",
+  "locate.suggestion": "Commune suggérée par les anomalies voisines — à confirmer",
+  "locate.aucune": "Aucune commune identifiée — choisissez-la manuellement",
+  "dup.loading": "Vérification des doublons…",
+  "dup.lien": "Ce lien est déjà utilisé dans une fiche",
+  "dup.strict": "Cette anomalie a déjà été enregistrée",
+  "dup.geo": "Une anomalie similaire est proche",
+  "exif.loading": "Lecture de la position de la photo…",
+  "exif.ok": "Position trouvée dans la photo (EXIF)",
+  "exif.aucune": "Cette image ne contient pas de position EXIF.",
+  "settings.resolution_liens": "Résolution des liens courts",
+  "settings.enrichissement_metadonnees": "Enrichissement des métadonnées",
+  "settings.cartes": "Liens de cartes uniquement",
+  "settings.tous": "Cartes et réseaux sociaux",
+  "settings.aucune": "Désactivée",
+  "map.legend": "Légende",
+  "map.density": "Densité",
+  "map.missing": "{count} anomalie(s) sans position — non affichées",
+  "gps.absent": "Sans position",
+  "gps.present": "Avec position",
+  "common.showLess": "Réduire",
+  "activity.changes": "{count} modifications",
+  "activity.change": "1 modification",
+  "activity.created": "Anomalie créée",
+  "dashboard.openStock": "Stock ouvert"
+  ,"action.VERIFICATION_REQUISE": "Confirmez d'abord la vérification avec un agent."
+  ,"action.TRANSITION_INTERDITE": "Cette transition n'est pas permise dans l'état actuel."
+  ,"list.late": "En retard"
+  ,"list.quickViews": "Vues rapides"
+  ,"work.verification": "Vérifications en retard"
+  ,"work.urgent": "Délais cibles dépassés"
+  ,"work.incomplete": "Fiches à compléter"
+  ,"work.noPhoto": "Sans photo"
+  ,"nav.menu": "Navigation principale"
+  ,"list.all": "Tout"
+  ,"field.grade": "Grade"
+  ,"field.email": "Adresse e-mail"
+  ,"field.contact": "Nom du contact"
+  ,"field.skills": "Catégories de compétence"
+  ,"refs.count": "{count} entrée(s)"
+  ,"refs.importSummary": "{ok} valide(s) · {warning} déjà présente(s) · {error} erreur(s)"
+  ,"refs.created": "{count} entrée(s) créée(s)"
+  ,"workflow.title": "Missions et règles d'intervention"
+  ,"workflow.missions": "Missions"
+  ,"workflow.scope": "Périmètre d'intervention"
+  ,"workflow.coordination": "Coordination"
+  ,"workflow.dairas": "Daïras couvertes (noms et alias)"
+  ,"workflow.dairasHelp": "Un nom ou alias FR/AR par ligne. Vide : toute la wilaya, sous réserve des conditions indiquées."
+  ,"workflow.lines": "Un élément par ligne. Les textes du document source sont conservés."
+  ,"workflow.noteFr": "Condition / précision en français"
+  ,"workflow.noteAr": "Condition / précision en arabe"
+  ,"workflow.suggestions": "Intervenants proposés pour cette catégorie et ce territoire"
+  ,"workflow.recommended": "Compétence correspondante"
+  ,"workflow.conditional": "Conditions à confirmer"
+  ,"workflow.outside": "La daïra sélectionnée est hors du périmètre déclaré de cet intervenant. Vérifiez l'affectation."
+  ,"typeHints.title": "Types suggérés d'après le message"
+  ,"typeHints.help": "Libellés reconnus dans le texte. Choisissez le type correspondant à la situation."
+  ,"typeHints.empty": "Aucun type reconnu dans ce texte. Recherchez un type dans Classification."
+  ,"typeHints.choose": "Choisir {type}"
+  ,"typeHints.phrase": "Expression reconnue : « {text} »"
+  ,"typeHints.words": "Mots correspondants : « {text} »"
+  ,"typeHints.undo": "Annuler la suggestion de type"
+  ,"form.progress": "Progression de la saisie"
+  ,"form.requiredFields": "Champs obligatoires"
+  ,"form.completion": "{count}/6 champs essentiels renseignés"
+  ,"form.goTo": "Aller à {section}"
+  ,"form.recentTypes": "Vos 5 derniers types utilisés"
+  ,"form.reuseType": "Réutiliser {type}"
+  ,"form.agentSearch": "Nom, grade ou e-mail de l'agent…"
+  ,"form.saveDuplicate": "Enregistrer et dupliquer"
+  ,"form.duplicateReady": "Nouvelle anomalie de la même publication · {reference}"
+  ,"form.duplicateHelp": "Choisissez un autre type ou une autre commune, puis placez la nouvelle position. Le lien et les dates sont conservés."
+  ,"form.shortcuts": "Ctrl+Entrée : enregistrer · Ctrl+Maj+Entrée : enregistrer et nouveau"
+  ,"draft.idle": "Brouillon automatique après la première saisie"
+  ,"draft.saving": "Enregistrement du brouillon…"
+  ,"draft.saved": "Brouillon enregistré sur cet appareil"
+  ,"draft.memory": "Brouillon conservé pour cette session"
+  ,"attachments.preview": "Photo à joindre : {name}"
+  ,"attachments.remove": "Retirer {name}"
+  ,"attachments.help": "PNG, JPEG ou WebP · 5 Mo par photo · 5 photos maximum"
+  ,"attachments.count": "{count}/5 photos"
+  ,"attachments.existing": "{count} photo(s) déjà enregistrée(s), consultables sur la fiche."
+  ,"attachments.format": "Format accepté : PNG, JPEG ou WebP"
+  ,"attachments.size": "Photo trop volumineuse : 5 Mo maximum"
+  ,"attachments.limit": "5 photos maximum par anomalie"
+  ,"attachments.duplicate": "Cette photo est déjà jointe"
+  ,"attachments.reattach": "Joignez de nouveau cette photo : les fichiers ne sont pas conservés dans le brouillon"
+  ,"attachments.kb": "Ko"
+  ,"map.located": "{count} anomalie(s) géolocalisée(s)"
+  ,"map.search": "Rechercher sur la carte"
+  ,"map.searchHelp": "Référence, type, commune, texte…"
+  ,"map.fitAll": "Afficher tous les points"
+  ,"map.openList": "Ouvrir cette liste"
+  ,"map.resetFilters": "Réinitialiser les filtres"
+  ,"map.filtersAndList": "Filtres et anomalies de la carte"
+  ,"map.expand": "Agrandir la carte"
+  ,"map.exitExpanded": "Quitter la carte agrandie"
+  ,"map.period": "Période et vérification"
+  ,"map.emptyHelp": "Ajustez les filtres ou consultez les fiches sans position."
+  ,"map.zoomIn": "Zoom avant"
+  ,"map.zoomOut": "Zoom arrière"
+  ,"map.retryTiles": "Réessayer le fond de carte"
+  ,"paste.mapNoPosition": "Ce lien de carte ne contient pas de coordonnées — ouvrez-le puis copiez la position, ou placez le point sur la carte."
+  ,"paste.noElements": "Texte analysé — aucun lien de publication ni position reconnus. Vous pouvez compléter les champs et consulter les suggestions."
+  ,"nav.work": "À faire"
+  ,"work.title": "À faire"
+  ,"work.subtitle": "File de travail calculée à la volée à partir des fiches et des délais cibles."
+  ,"work.total": "{count} élément(s) à traiter"
+  ,"work.empty": "Rien à traiter pour le moment."
+  ,"work.open": "Ouvrir la liste filtrée"
+  ,"work.critical": "Critique"
+  ,"work.attention": "À surveiller"
+  ,"work.info": "Information"
+  ,"work.alerts": "Alertes système"
+  ,"work.alertBackup": "Aucune sauvegarde automatique aujourd'hui"
+  ,"work.alertCertificate": "Certificat HTTPS absent, illisible ou expirant sous 30 jours"
+  ,"work.refresh": "Recalculer la file"
+  ,"work.updated": "Calculée le {date}"
+  ,"work.bell": "Notifications"
+  ,"work.bellEmpty": "Aucune alerte"
+  ,"work.bellCount": "{count} alerte(s)"
+  ,"views.title": "Vues enregistrées"
+  ,"views.save": "Enregistrer la vue"
+  ,"views.name": "Nom de la vue"
+  ,"views.namePlaceholder": "Ex. Urgences non traitées à Draria"
+  ,"views.empty": "Aucune vue enregistrée. Filtrez la liste puis enregistrez-la."
+  ,"views.apply": "Appliquer la vue {name}"
+  ,"views.delete": "Supprimer la vue {name}"
+  ,"views.share": "Partager avec tous les utilisateurs"
+  ,"views.shared": "Partagée"
+  ,"views.saved": "Vue « {name} » enregistrée"
+  ,"views.removed": "Vue supprimée"
+  ,"views.limit": "40 vues enregistrées maximum"
+  ,"views.exists": "Une vue porte déjà ce nom"
+}

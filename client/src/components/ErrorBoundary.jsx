@@ -41,7 +41,7 @@ function ErrorFallback({ error, onReset }) {
     <div className="page-container grid min-h-[60vh] place-items-center">
       <div className="w-full max-w-xl rounded-md border border-danger bg-surface p-6 text-center">
         <AlertCircle className="mx-auto h-12 w-12 text-danger" aria-hidden="true" />
-        <h2 className="mt-4 text-xl font-black text-ink">{t('errors.fallback.title')}</h2>
+        <h1 className="mt-4 text-xl font-black text-ink">{t('errors.fallback.title')}</h1>
         <p className="mt-2 text-sm text-ink2">{t('errors.fallback.message', { message: error?.message || '—' })}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <Button onClick={() => window.location.reload()}>{t('errors.fallback.reload')}</Button>

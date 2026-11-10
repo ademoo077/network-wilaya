@@ -29,14 +29,21 @@ describe('V6 — vecteurs de collage (tests/fixtures/paste-vectors.json)', () =>
       const result = parseSmartPaste(vector.texte, options);
       const attente = vector.attente || {};
       if (attente.resolutionAttendue) {
-        expect(Array.isArray(result.coords)).toBe(true);
+        expect(result.coords).toHaveLength(0);
+        expect(result.urls[0].a_resoudre).toBe(true);
         return;
       }
       if (attente.positions) {
         expect(result.coords).toHaveLength(attente.positions.length);
+        attente.positions.forEach(([lat, lng], index) => {
+          expect(result.coords[index].lat).toBeCloseTo(lat, 5);
+          expect(result.coords[index].lng).toBeCloseTo(lng, 5);
+        });
         return;
       }
       coordOk(result, attente);
+      if (attente.dateEstimee) expect(result.dates.some((date) => date.estimee)).toBe(true);
+      if (Object.hasOwn(attente, 'lieu')) expect(result.urls[0].lieu ?? null).toBe(attente.lieu);
       if (attente.plateforme) {
         const classified = classifyUrl(vector.texte);
         expect(classified.plateforme).toBe(attente.plateforme);

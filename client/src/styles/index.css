@@ -5,6 +5,7 @@
 @import 'leaflet/dist/leaflet.css';
 @import 'leaflet.markercluster/dist/MarkerCluster.css';
 @import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+@import './maps.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,7 +13,7 @@
 @layer base {
   * { box-sizing: border-box; }
   html { background: var(--bg); color: var(--ink); font-variant-numeric: tabular-nums; }
-  body { margin: 0; min-width: 320px; min-height: 100dvh; overflow-x: hidden; background: var(--bg); }
+  body { margin: 0; min-width: 320px; min-height: 100dvh; background: var(--bg); }
   body, button, input, select, textarea { font-family: 'Inter Variable', 'Segoe UI', Tahoma, Arial, sans-serif; }
   html[lang='ar'] body, html[lang='ar'] button, html[lang='ar'] input,
   html[lang='ar'] select, html[lang='ar'] textarea { font-family: Cairo, 'Segoe UI', Tahoma, Arial, sans-serif; }
@@ -31,22 +32,18 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='white' stroke-width='1' shape-rendering='geometricPrecision'%3E%3Crect x='18' y='18' width='20' height='20'/%3E%3Crect x='18' y='18' width='20' height='20' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E");
     mask-image: linear-gradient(to bottom, transparent, black);
   }
-  .offline-map { background-color: var(--surface-2); background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); background-size: 24px 24px; }
-  .leaflet-container { background: var(--surface-2); color: var(--ink); font-family: inherit; }
-  [data-theme='dark'] .leaflet-tile-pane { filter: brightness(.72) contrast(1.12) saturate(.75); }
-  .leaflet-control-attribution, .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--ink); }
-  .map-pin { display: grid; place-items: center; width: 32px; height: 32px; border: 3px solid var(--surface); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: var(--shadow-2); }
-  .map-pin > span { transform: rotate(45deg); color: var(--surface); font-size: 10px; font-weight: 700; }
-  .map-pin.non_traite { background: var(--st-non); }
-  .map-pin.en_cours { background: var(--st-cours); }
-  .map-pin.traite { background: var(--st-traite); }
-  .cluster-pin { display: grid; place-items: center; width: 40px; height: 40px; border: 3px solid var(--surface); border-radius: 999px; background: var(--brand-700); color: var(--brand-50); font-weight: 700; box-shadow: var(--shadow-2); }
-  .smart-map-marker { display: block; width: 28px; height: 28px; border: 4px solid var(--surface); border-radius: 999px; background: var(--brand-700); box-shadow: var(--shadow-2); }
+  .form-action-space { height: var(--form-action-height, 110px); }
+  .form-page { padding-bottom: calc(var(--form-action-height, 110px) + env(safe-area-inset-bottom)); }
+  [data-action-bar] { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .app-grid { display: block; }
+}
+@media (max-width: 767px) {
   .page-container { padding: 16px 16px 32px; }
+  .form-action-space { height: var(--form-action-height, 230px); }
+  .form-page { padding-bottom: calc(var(--form-action-height, 230px) + env(safe-area-inset-bottom)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

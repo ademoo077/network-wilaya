@@ -59,13 +59,13 @@ export function funnel(db, params, S, E) {
 /** Ancienneté du stock ouvert à la date E (3.4). */
 export function stockAge(db, params, E) {
   const base = buildFilters({ ...params, statut: undefined, from: undefined, to: undefined });
-  const clause = andClause(base.clause, `a.date_signalement <= @D AND ${statusAt()} <> 'traite'`);
-  const values = { ...base.values, D: E };
+  const clause = andClause(base.clause, "a.date_signalement <= @D AND (a.date_traitement IS NULL OR a.date_traitement > @D)");
+  const values = { ...base.values, D: E, j7: addDays(E, -7), j14: addDays(E, -14), j30: addDays(E, -30) };
   const age = 'julianday(@D) - julianday(a.date_signalement)';
-  const buckets = `SUM(CASE WHEN ${age} <= 7 THEN 1 ELSE 0 END) AS j0_7,
-    SUM(CASE WHEN ${age} > 7 AND ${age} <= 14 THEN 1 ELSE 0 END) AS j8_14,
-    SUM(CASE WHEN ${age} > 14 AND ${age} <= 30 THEN 1 ELSE 0 END) AS j15_30,
-    SUM(CASE WHEN ${age} > 30 THEN 1 ELSE 0 END) AS j30p`;
+  const buckets = `SUM(CASE WHEN a.date_signalement >= @j7 THEN 1 ELSE 0 END) AS j0_7,
+    SUM(CASE WHEN a.date_signalement < @j7 AND a.date_signalement >= @j14 THEN 1 ELSE 0 END) AS j8_14,
+    SUM(CASE WHEN a.date_signalement < @j14 AND a.date_signalement >= @j30 THEN 1 ELSE 0 END) AS j15_30,
+    SUM(CASE WHEN a.date_signalement < @j30 THEN 1 ELSE 0 END) AS j30p`;
   const global = { total: 0, j0_7: 0, j8_14: 0, j15_30: 0, j30p: 0 };
   const parPriorite = rows(db, `SELECT a.priorite AS priorite, COUNT(*) AS total, ${buckets}
     FROM anomalies a ${clause} GROUP BY a.priorite`, values);

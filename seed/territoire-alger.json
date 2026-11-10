@@ -1,0 +1,87 @@
+[
+  { "name_fr": "Sidi M'Hamed", "name_ar": "سيدي امحمد", "communes": [
+    { "name_fr": "Sidi M'Hamed", "name_ar": "سيدي امحمد" },
+    { "name_fr": "El Madania", "name_ar": "المدنية" },
+    { "name_fr": "Alger-Centre", "name_ar": "الجزائر الوسطى" },
+    { "name_fr": "El Mouradia", "name_ar": "المرادية" }
+  ] },
+  { "name_fr": "Bab El Oued", "name_ar": "باب الوادي", "communes": [
+    { "name_fr": "Bab El Oued", "name_ar": "باب الوادي" },
+    { "name_fr": "Oued Koriche", "name_ar": "وادي قريش" },
+    { "name_fr": "Bologhine", "name_ar": "بولوغين" },
+    { "name_fr": "Raïs Hamidou", "name_ar": "رئيس حميدو" },
+    { "name_fr": "Casbah", "name_ar": "القصبة" }
+  ] },
+  { "name_fr": "Bouzareah", "name_ar": "بوزريعة", "communes": [
+    { "name_fr": "Bouzareah", "name_ar": "بوزريعة" },
+    { "name_fr": "Beni Messous", "name_ar": "بني مسوس" },
+    { "name_fr": "Ben Aknoun", "name_ar": "بن عكنون" },
+    { "name_fr": "El Biar", "name_ar": "الأبيار" }
+  ] },
+  { "name_fr": "Bir Mourad Raïs", "name_ar": "بئر مراد رايس", "communes": [
+    { "name_fr": "Bir Mourad Raïs", "name_ar": "بئر مراد رايس" },
+    { "name_fr": "Birkhadem", "name_ar": "بئر خادم" },
+    { "name_fr": "Djasr Kasentina", "name_ar": "جسر قسنطينة" },
+    { "name_fr": "Saoula", "name_ar": "سحاولة" },
+    { "name_fr": "Hydra", "name_ar": "حيدرة" }
+  ] },
+  { "name_fr": "El Harrach", "name_ar": "الحراش", "communes": [
+    { "name_fr": "El Harrach", "name_ar": "الحراش" },
+    { "name_fr": "Bourouba", "name_ar": "بوروبة" },
+    { "name_fr": "Oued Smar", "name_ar": "وادي السمار" },
+    { "name_fr": "Bach Djerrah", "name_ar": "باش جراح" },
+    { "name_fr": "Mohammadia", "name_ar": "المحمدية" }
+  ] },
+  { "name_fr": "Hussein Dey", "name_ar": "حسين داي", "communes": [
+    { "name_fr": "Hussein Dey", "name_ar": "حسين داي" },
+    { "name_fr": "Kouba", "name_ar": "القبة" },
+    { "name_fr": "El Magharia", "name_ar": "المغارية" },
+    { "name_fr": "Mohamed Belouizdad", "name_ar": "محمد بلوزداد" }
+  ] },
+  { "name_fr": "Draria", "name_ar": "الدرارية", "communes": [
+    { "name_fr": "Draria", "name_ar": "الدرارية" },
+    { "name_fr": "Douéra", "name_ar": "الدويرة" },
+    { "name_fr": "Khraissia", "name_ar": "خرايسية" },
+    { "name_fr": "Baba Hassen", "name_ar": "بابا حسن" },
+    { "name_fr": "El Achour", "name_ar": "العاشور" }
+  ] },
+  { "name_fr": "Birtouta", "name_ar": "بئر توتة", "communes": [
+    { "name_fr": "Birtouta", "name_ar": "بئر توتة" },
+    { "name_fr": "Ouled Chebel", "name_ar": "أولاد شبل" },
+    { "name_fr": "Tessala El Merdja", "name_ar": "تسالة المرجة" }
+  ] },
+  { "name_fr": "Zéralda", "name_ar": "زرالدة", "communes": [
+    { "name_fr": "Zéralda", "name_ar": "زرالدة" },
+    { "name_fr": "Staoueli", "name_ar": "سطاوالي" },
+    { "name_fr": "Souidania", "name_ar": "سويدانية" }
+  ] },
+  { "name_fr": "Sidi Abdallah", "name_ar": "سيدي عبد الله", "communes": [
+    { "name_fr": "Mahelma", "name_ar": "محالمة" },
+    { "name_fr": "Rahmania", "name_ar": "الرحمانية" }
+  ] },
+  { "name_fr": "Chéraga", "name_ar": "الشراقة", "communes": [
+    { "name_fr": "Chéraga", "name_ar": "الشراقة" },
+    { "name_fr": "Hammamet", "name_ar": "الحمامات" },
+    { "name_fr": "Aïn Benian", "name_ar": "عين بنيان" },
+    { "name_fr": "Ouled Fayet", "name_ar": "أولاد فايت" },
+    { "name_fr": "Dely Ibrahim", "name_ar": "دالي إبراهيم" }
+  ] },
+  { "name_fr": "Baraki", "name_ar": "براقي", "communes": [
+    { "name_fr": "Baraki", "name_ar": "براقي" },
+    { "name_fr": "Sidi Moussa", "name_ar": "سيدي موسى" },
+    { "name_fr": "Les Eucalyptus", "name_ar": "الكاليتوس" }
+  ] },
+  { "name_fr": "Dar El Beïda", "name_ar": "الدار البيضاء", "communes": [
+    { "name_fr": "Dar El Beïda", "name_ar": "الدار البيضاء" },
+    { "name_fr": "Bab Ezzouar", "name_ar": "باب الزوار" },
+    { "name_fr": "Bordj El Kiffan", "name_ar": "برج الكيفان" },
+    { "name_fr": "Bordj El Bahri", "name_ar": "برج البحري" }
+  ] },
+  { "name_fr": "Rouiba", "name_ar": "الرويبة", "communes": [
+    { "name_fr": "Rouiba", "name_ar": "الرويبة" },
+    { "name_fr": "Reghaïa", "name_ar": "رغاية" },
+    { "name_fr": "H'raoua", "name_ar": "هراوة" },
+    { "name_fr": "Aïn Taya", "name_ar": "عين طاية" },
+    { "name_fr": "El Marsa", "name_ar": "المرسى" }
+  ] }
+]

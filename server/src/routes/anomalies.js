@@ -3,7 +3,7 @@ import multer from 'multer';
 import {
   anomalieCreateSchema, anomaliePatchSchema, anomalieQuerySchema, statutChangeSchema,
   verificationChangeSchema, bulkStatutSchema, importCommitSchema, zodFields,
-  nearbyQuerySchema,
+  nearbyQuerySchema, duplicateAnomalyValues,
 } from '@anm/shared';
 import { getDb } from '../db/index.js';
 import { requireAuth, requireAdmin, requireWrite } from '../middleware/auth.js';
@@ -20,6 +20,8 @@ import {
 } from '../services/importAnomalies.js';
 import { savePiece } from '../services/attachments.js';
 import { nearbyAnomalies } from '../services/geoLocation.js';
+import { anomalyCounts } from '../services/anomalyCounts.js';
+import { anomalyMap } from '../services/anomalyMap.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
@@ -42,6 +44,14 @@ router.get('/', requireAuth, (req, res) => {
   }
   const result = isTrash ? listCorbeille(db, params) : listAnomalies(db, params);
   res.json(result);
+});
+
+router.get('/counts', requireAuth, (req, res) => {
+  res.json({ item: anomalyCounts(getDb(), parse(anomalieQuerySchema, req.query)) });
+});
+
+router.get('/map', requireAuth, (req, res) => {
+  res.json(anomalyMap(getDb(), parse(anomalieQuerySchema, req.query)));
 });
 
 router.get('/check-link', requireAuth, (req, res) => {
@@ -109,6 +119,15 @@ router.get('/:id', requireAuth, (req, res) => {
   const item = getAnomalie(getDb(), Number(req.params.id));
   if (!item) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Anomalie introuvable' } });
   res.json({ item });
+});
+
+router.post('/:id/dupliquer', requireWrite, (req, res) => {
+  const db = getDb(); const original = getAnomalie(db, Number(req.params.id));
+  if (!original) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Anomalie introuvable' } });
+  const data = parse(anomalieCreateSchema, { ...duplicateAnomalyValues(original), ...req.body, force_duplicate: true });
+  const item = createAnomalie(db, data, req.user.id, settings());
+  audit(req, 'ANOMALIE_CREATE', { entite: 'anomalies', entiteId: item.id, details: { reference: item.reference, duplique_de: original.id } });
+  res.status(201).json({ item });
 });
 
 router.get('/:id/historique', requireAuth, (req, res) => {

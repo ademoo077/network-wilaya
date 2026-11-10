@@ -14,7 +14,7 @@ export const STATUTS = ['non_traite', 'en_cours', 'traite'];
 export const VERIFICATIONS = ['a_verifier', 'confirmee', 'infirmee'];
 export const PRIORITES = ['normale', 'haute', 'urgente'];
 export const GPS_SOURCES = ['manuel', 'lien_carte', 'lien_court', 'legende', 'exif', 'appareil', 'carte', 'voisinage'];
-export const CONTENU_TYPES = ['reel', 'video', 'post', 'story', 'short', 'photo', 'autre'];
+export const CONTENU_TYPES = ['reel', 'video', 'post', 'story', 'short', 'photo', 'direct', 'autre'];
 
 export const REF_ENTITIES = ['domaines', 'types', 'dairas', 'communes', 'epics', 'agents'];
 
@@ -33,6 +33,8 @@ export const DEFAULT_PARAMS = {
   sla_normale_j: '10',
   delai_verification_cible_j: '2',
   enrichissement_en_ligne: '0',
+  resolution_liens: 'cartes',
+  enrichissement_metadonnees: '0',
   rapport_auto_fige: '1',
   https_actif: '0',
 };
@@ -40,7 +42,7 @@ export const DEFAULT_PARAMS = {
 export const PUBLIC_PARAMS = [
   'nom_cellule', 'week_start_day', 'tile_url', 'gps_bbox', 'delai_retard_jours',
   'rayon_doublon_m', 'objectif_taux_traitement', 'sla_urgente_j', 'sla_haute_j',
-  'sla_normale_j', 'delai_verification_cible_j', 'https_actif', 'enrichissement_en_ligne', 'enrichissement_metadonnees',
+  'sla_normale_j', 'delai_verification_cible_j', 'https_actif', 'enrichissement_en_ligne', 'enrichissement_metadonnees', 'resolution_liens',
 ];
 
 export const PAGE_SIZE_DEFAULT = 25;

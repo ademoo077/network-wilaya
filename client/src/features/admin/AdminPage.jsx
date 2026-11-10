@@ -8,14 +8,17 @@ import BackupsAdmin from './BackupsAdmin.jsx';
 import AuditAdmin from './AuditAdmin.jsx';
 import ImportExportAdmin from './ImportExportAdmin.jsx';
 import TrashAdmin from './TrashAdmin.jsx';
+import HealthAdmin from './HealthAdmin.jsx';
 
 const tabs = [
   ['referentiels', 'admin.references'], ['utilisateurs', 'admin.users'], ['parametres', 'admin.settings'],
   ['sauvegardes', 'admin.backups'], ['audit', 'admin.audit'], ['import-export', 'admin.importExport'], ['corbeille', 'admin.trash'],
+  ['sante', 'health.title'],
 ];
 const pages = {
   referentiels: ReferencesAdmin, utilisateurs: UsersAdmin, parametres: SettingsAdmin,
   sauvegardes: BackupsAdmin, audit: AuditAdmin, 'import-export': ImportExportAdmin, corbeille: TrashAdmin,
+  sante: HealthAdmin,
 };
 
 export default function AdminPage() {
