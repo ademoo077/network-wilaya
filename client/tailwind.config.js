@@ -32,6 +32,13 @@ export default {
         straite: 'var(--st-traite)',
         straitebg: 'var(--st-traite-bg)',
       },
+      textColor: {
+        brand: {
+          100: 'var(--brand-text-100)',
+          700: 'var(--brand-text-700)',
+          800: 'var(--brand-text-800)',
+        },
+      },
       borderRadius: {
         sm: 'var(--r-sm)', md: 'var(--r-md)', lg: 'var(--r-lg)', xl: 'var(--r-xl)',
       },

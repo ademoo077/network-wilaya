@@ -47,6 +47,7 @@
   "common.of": "sur",
   "common.display": "Affichage {from}–{to} sur {total}",
   "common.pageSize": "Lignes par page",
+  "nav.skipToContent": "Aller au contenu principal",
   "nav.dashboard": "Tableau de bord",
   "nav.anomalies": "Anomalies",
   "nav.map": "Carte",

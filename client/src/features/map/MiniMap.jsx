@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { DEFAULT_PARAMS } from '@anm/shared';
+import { DEFAULT_PARAMS, formatGps } from '@anm/shared';
 import { ErrorBoundary } from '../../components/ErrorBoundary.jsx';
 import { Alert } from '../../components/ui/index.js';
 import { useI18n } from '../../i18n/index.jsx';
@@ -42,17 +42,20 @@ function MiniMapContent({ value, onChange, nearby = [], focusGeometry = null, ti
     const map = mapRef.current;
     if (!map) return;
     if (!value) { markerRef.current?.remove(); markerRef.current = null; return; }
+    const label = `${t('field.gps')} : ${formatGps(value.lat, value.lng)}`;
     if (!markerRef.current) {
       const icon = L.divIcon({ html: '<span class="smart-map-marker"></span>', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
-      markerRef.current = L.marker([value.lat, value.lng], { icon, draggable: interactive }).addTo(map);
+      markerRef.current = L.marker([value.lat, value.lng], { icon, draggable: interactive, title: label }).addTo(map);
       markerRef.current.on('dragend', (event) => {
         const point = event.target.getLatLng();
         onChangeRef.current?.({ lat: Number(point.lat.toFixed(6)), lng: Number(point.lng.toFixed(6)) });
       });
     }
     else markerRef.current.setLatLng([value.lat, value.lng]);
+    markerRef.current.getElement()?.setAttribute('aria-label', label);
+    markerRef.current.getElement()?.setAttribute('title', label);
     map.setView([value.lat, value.lng], 16, { animate: false });
-  }, [value, interactive, tileUrl]);
+  }, [value, interactive, tileUrl, t]);
   useEffect(() => {
     const layer = nearbyLayerRef.current;
     if (!layer) return;

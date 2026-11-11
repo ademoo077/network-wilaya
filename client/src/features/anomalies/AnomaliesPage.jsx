@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, FilterX, ListX, Plus } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { anomalyAction } from '@anm/shared';
@@ -34,17 +34,17 @@ export default function AnomaliesPage() {
   const query = useApiQuery(`/anomalies${queryString({ ...filters, q })}`); const data = query.data;
   const [selected, setSelected] = useState([]); const [preview, setPreview] = useState(null); const [bulk, setBulk] = useState(null);
   const [action, setAction] = useState(null); const [exporting, setExporting] = useState(null);
-  const mutation = useAnomalyMutation(); const pending = usePendingAnomalies();
+  const { mutate } = useAnomalyMutation(); const pending = usePendingAnomalies();
   const writable = user.role !== 'lecteur';
   useEffect(() => { setSelected([]); }, [signature]);
-  const update = (changes) => {
+  const update = useCallback((changes) => {
     const next = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(changes)) {
       if (value === '' || value === null || value === undefined || value === false) next.delete(key);
       else next.set(key, String(value));
     }
     setSearchParams(next, { replace: true });
-  };
+  }, [searchParams, setSearchParams]);
   const setFilter = (key, value, extra = {}) => update({ [key]: value, ...extra, page: 1 });
   const applyFilters = (next) => {
     const params = new URLSearchParams();
@@ -52,13 +52,14 @@ export default function AnomaliesPage() {
     setSearchParams(params, { replace: true });
   };
   const sort = filters.sort || 'date_signalement'; const dir = filters.dir || 'desc';
-  const onAction = (item, field, value) => {
+  const onSort = useCallback((key) => update({ sort: key, dir: sort === key && dir === 'asc' ? 'desc' : 'asc', page: 1 }), [dir, sort, update]);
+  const onAction = useCallback((item, field, value) => {
     if (item[field] === value) return;
     const plan = anomalyAction(item, field, value);
     if (plan.blocked) { push(t(`action.${plan.blocked}`), 'warning'); return; }
     if (plan.needsInput) setAction({ item, field, value });
-    else mutation.mutate({ item, field, body: plan.body });
-  };
+    else mutate({ item, field, body: plan.body });
+  }, [mutate, push, t]);
   const exportFile = async (format) => {
     setExporting(format);
     try { await download(`/anomalies/export${queryString({ ...filters, page: undefined, pageSize: undefined, format })}`, `anomalies.${format}`); push(t('common.success')); }
@@ -79,8 +80,7 @@ export default function AnomaliesPage() {
     {query.isFetching && !query.isPending && <p role="status" className="mb-2 text-sm text-muted">{t('common.loading')}</p>}
     <Card className="overflow-hidden"><QueryContent query={query}>
       {data?.items?.length ? <><AnomalyTable rows={data.items} selected={selected} onSelect={setSelected} sort={sort} dir={dir}
-        onSort={(key) => update({ sort: key, dir: sort === key && dir === 'asc' ? 'desc' : 'asc', page: 1 })}
-        onPreview={setPreview} writable={writable} onAction={onAction} pending={pending} />
+        onSort={onSort} onPreview={setPreview} writable={writable} onAction={onAction} pending={pending} />
         <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onPage={(page) => update({ page })} onPageSize={(pageSize) => update({ pageSize, page: 1 })} /></>
         : <EmptyState icon={ListX} title={t('anomalies.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />}
     </QueryContent></Card>

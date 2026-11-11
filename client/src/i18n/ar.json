@@ -47,6 +47,7 @@
   "common.of": "من",
   "common.display": "عرض {from}–{to} من {total}",
   "common.pageSize": "عدد الأسطر",
+  "nav.skipToContent": "انتقل إلى المحتوى الرئيسي",
   "nav.dashboard": "لوحة القيادة",
   "nav.anomalies": "النقاط السوداء",
   "nav.map": "الخريطة",

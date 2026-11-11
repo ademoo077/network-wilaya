@@ -159,3 +159,26 @@ La matrice complète a révélé une seconde exception sur fiche et modification
 - `npm run test:e2e` : **11/11** scénarios API.
 - `npx playwright test` : **60/60** (dont 2 tests Santé et 2 tests formulaire mobile), après correction d'une course sur le jeton CSRF du scénario 51.
 - `npm run check:a11y` : vert (contrastes des tokens, clair et sombre).
+
+## 12. Lot local de 30 anomalies et recette du 10 novembre 2026
+
+### Données réellement ajoutées
+
+- **30 nouvelles fiches**, références `ANM-2026-00006` à `ANM-2026-00035`, identifiées par `[DEMO] TEST-LOCAL-30`. La base passe de 5 à 35 fiches, dont **1 à 31 actives** ; les 4 fiches déjà en corbeille sont conservées.
+- GPS simulé sur les centres de 15 communes d'Alger, 10 catégories/types, 30 agents existants, intervenants proposés par le workflow existant. Dix fiches par statut et par priorité. Dates, rattachements type/catégorie et commune/daïra validés par les services et règles partagées.
+- Une illustration PNG fictive par fiche ; GPS non certifié et liens `example.org` de simulation. Aucune photo du terrain, publication réelle ou vérification terrain n'est revendiquée.
+- Répétition sur copie avant application. Sauvegarde préalable : `backups/anomalies-20261110-155611-securite.db`. Comparaison après application : anciens enregistrements, référentiels, historique, audit, comptes, mots de passe et migrations inchangés ; intégrité `ok`, aucune violation de clé étrangère.
+- Reçu, données d'entrée et vérifications dans `data/imports/test-local-30-*.json` (hors Git). La prévisualisation après application trouve exactement 30 fiches du lot et **0 fiche à ajouter**.
+
+### Défauts mesurés et correction minimale
+
+- Axe sur la fiche détaillée a révélé `aria-command-name` sur le repère GPS Leaflet. `MiniMap.jsx` lui donne désormais un nom GPS FR/AR, actualisé avec les coordonnées, sans perdre le déplacement ou le retrait du repère.
+- Les données de la liste ont révélé des contrastes sombres de **1,52** (badges) et **2,88** (références). Les tokens `brand-text-*` séparent texte et fond, sans éclaircir les fonds des boutons ; les contrastes corrigés atteignent 8,30 et 11,59 sur les surfaces concernées. Les paires de `check:a11y` sont renforcées.
+- Quatre régressions ajoutées : `tests/e2e/mini-map-a11y.spec.js` et `tests/e2e/data-contrast.spec.js`. Preuves rouges conservées dans `C:\Users\pc\AppData\Local\Temp\opencode\mini-map-a11y-before-20261110` et `data-contrast-before-20261110`. Aucune règle axe exclue, aucun test ignoré.
+
+### Recette finale
+
+- `npm run qa` : build, lint, styles, **362/362 Vitest**, **11/11 E2E API**, **64/64 Playwright**, contrastes des tokens : tous verts.
+- Vérification supplémentaire sur une copie cohérente de la base **après ajout** : liste, carte et fiche × {390 FR clair, 768 FR sombre, 1024 AR clair, 1440 AR sombre}, soit **12 contrôles navigateur**. Trente résultats, trente points GPS, trente images PNG accessibles ; zéro fiche incomplète, zéro position absente, zéro débordement horizontal, zéro violation axe, aucune erreur JavaScript/console/réseau inattendue.
+- Captures et preuve détaillée : `C:\Users\pc\AppData\Local\Temp\opencode\test-local-30-live-A6ySRu\` ; copie de la preuve dans `data/imports/test-local-30-browser-evidence.json`.
+- La recette authentifiée utilise un lecteur temporaire **sur copie seulement**. Le serveur LAN existant répond toujours `200`, `ok:true`, `db:true` et sert le client mis à jour ; aucun compte réel réinitialisé ni serveur redémarré.

@@ -35,6 +35,8 @@
   .form-action-space { height: var(--form-action-height, 110px); }
   .form-page { padding-bottom: calc(var(--form-action-height, 110px) + env(safe-area-inset-bottom)); }
   [data-action-bar] { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .advanced-chevron { transition: transform 180ms ease; }
+  details[data-advanced][open] .advanced-chevron { transform: rotate(180deg); }
 }
 
 @media (max-width: 1023px) {

@@ -32,13 +32,16 @@ Fichier `.env` (optionnel, defaults fournis) :
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `3000` | Port HTTP |
+| `HOST` | `0.0.0.0` | Adresse d'écoute ; inclut les interfaces réseau locales |
 | `SESSION_SECRET` | `dev-insecure-secret-change-me` | Secret des cookies de session |
 | `DB_PATH` | `./data/anomalies.db` | Chemin de la base SQLite |
 | `BACKUP_DIR` | `./backups` | Répertoire des sauvegardes |
 | `WEEK_START_DAY` | `0` | Jour de début de semaine (0=dimanche) |
 | `ADMIN_USERNAME` | `admin` | Compte admin initial |
 | `ADMIN_PASSWORD` | _(vide → mot de passe aléatoire loggé)_ | Mot de passe admin initial |
-| `NODE_ENV` | `development` | `production` pour cookies sécurisés |
+| `NODE_ENV` | `development` | `production` pour le déploiement |
+| `HTTPS` | `false` | Activer HTTPS avec un certificat configuré |
+| `COOKIE_SECURE` | `false` | `true` uniquement avec HTTPS ; sinon les sessions ne fonctionnent pas sur une IP LAN en HTTP |
 
 ## Démarrage
 
@@ -51,6 +54,12 @@ $env:ADMIN_PASSWORD = 'Admin12345!'; npm run dev:server
 ```
 
 L'application est servie sur `http://localhost:3000` (client buildé + API).
+
+### Accès depuis le réseau local
+
+Sur le réseau **Ethernet 2 — `192.168.117.0/24`**, ouvrir **[http://192.168.117.163:3000](http://192.168.117.163:3000)** depuis un appareil du même réseau. Le serveur sert le client et l'API sur ce seul port ; le port Vite `5173` n'est pas nécessaire.
+
+La [configuration réseau locale](docs/RESEAU_LOCAL.md) détaille le démarrage, les contrôles, une règle de pare-feu limitée au sous-réseau et les précautions HTTP/HTTPS. Les comptes et la base existants sont conservés.
 
 ## Fonctionnalités
 
@@ -86,7 +95,7 @@ Format d'erreur : `{ error: { code, message, fields? } }`.
 ```bash
 npm test              # Vitest + Supertest (362 tests)
 npm run test:e2e      # 11 scénarios API de bout en bout
-npm run test:e2e:browser  # Playwright (60 scénarios, FR/AR, clair/sombre, 390–1440 px)
+npm run test:e2e:browser  # Playwright (64 scénarios, FR/AR, clair/sombre, 390–1440 px)
 npm run lint          # ESLint
 npm run check:styles  # Tokens et classes autorisées
 npm run check:a11y    # Contrastes des tokens (clair/sombre)
@@ -94,6 +103,14 @@ npm run qa            # Chaîne complète
 ```
 
 Les captures d'examen humain (FR clair, FR sombre, AR sombre · 1440 et 390 px) sont dans `docs/screens/` et se régénèrent avec `npm run screens`.
+
+### Lot local de 30 anomalies fictives
+
+Le lot demandé le 10 novembre 2026 est identifiable par la recherche **`TEST-LOCAL-30`** dans la liste ou la carte. Il contient 30 fiches avec GPS simulé, adresse, commune/daïra, catégorie/type, agent, intervenant, lien de simulation, légende, observations et dates cohérentes. Répartition : 10 non traitées, 10 en cours, 10 traitées ; 10 fiches par priorité.
+
+Chaque fiche contient une illustration PNG clairement marquée **« fictive »**, pas une photo du terrain. Les coordonnées ne sont pas certifiées et les liens `example.org` ne sont pas des publications réelles. Les dates d'intervention/traitement restent vides lorsqu'elles ne s'appliquent pas au statut.
+
+Les données et comptes préexistants sont conservés. L'entrée du lot, son reçu et la vérification sont archivés dans `data/imports/test-local-30-*.json` (hors Git). La sauvegarde préalable est `backups/anomalies-20261110-155611-securite.db`.
 
 ## Sauvegardes
 

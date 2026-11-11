@@ -7,6 +7,9 @@
   --brand-500: #12a66d;
   --brand-100: #d9f5e8;
   --brand-50: #effaf4;
+  --brand-text-100: #d9f5e8;
+  --brand-text-700: #0b7048;
+  --brand-text-800: #0a5a3a;
   --gold-500: #c9a227;
   --gold-100: #faf1cf;
   --bg: #f3f6f5;
@@ -50,6 +53,8 @@
   --muted: #a6bab0;
   --brand-50: #e8fff4;
   --brand-100: #103a2a;
+  --brand-text-700: #6ee7b7;
+  --brand-text-800: #6ee7b7;
   --st-non: #fca5a5;
   --st-non-bg: #3a1414;
   --st-cours: #fcd34d;
@@ -66,6 +71,8 @@
 }
 
 .report-paper {
+  --brand-text-700: #0b7048;
+  --brand-text-800: #0a5a3a;
   --bg: #f3f6f5;
   --surface: #ffffff;
   --surface-2: #f8faf9;

@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { CONTENU_TYPES, PLATEFORMES, PRIORITES, STATUTS, VERIFICATIONS, formNeedsReason, todayAlgiers } from '@anm/shared';
 import { Card, CardHeader, Combobox, Input, Select, SegmentedControl, Textarea, Alert, Button } from '../../components/ui/index.js';
 import { refLabel, useI18n } from '../../i18n/index.jsx';
@@ -56,8 +58,13 @@ export function ProcessingSection({ model, editing }) {
   const permitted = form.verification === 'confirmee' && form.agent_id && (form.epic_id || form.intervenant_autre.trim());
   const processing = form.statut !== 'non_traite';
   const agent = refs.agents.find((item) => String(item.id) === form.agent_id);
-  return <details data-card className="min-w-0 rounded-lg border border-border bg-surface shadow-1" open={editing || needsReason || undefined}>
-    <summary className="flex min-h-14 cursor-pointer items-center px-5 py-4 font-bold hover:bg-surface2">{t('form.advanced')}</summary>
+  const [open, setOpen] = useState(Boolean(editing) || needsReason);
+  useEffect(() => { if (editing || needsReason) setOpen(true); }, [editing, needsReason]);
+  return <details data-card data-advanced className="min-w-0 rounded-lg border border-border bg-surface shadow-1" open={open}
+    onToggle={(event) => setOpen(event.currentTarget.open)}>
+    <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-4 font-bold hover:bg-surface2">
+      <span>{t('form.advanced')}</span><ChevronDown className="advanced-chevron h-5 w-5 shrink-0" aria-hidden="true" />
+    </summary>
     <div className="grid items-start gap-4 border-t border-border p-5 sm:grid-cols-2">
       <Select id="verification" label={t('field.verification')} value={form.verification} error={errors.verification}
         options={VERIFICATIONS.map((value) => ({ value, label: t(`verification.${value}`), disabled: value === 'infirmee' && processing }))} onChange={(event) => set('verification', event.target.value)} />
