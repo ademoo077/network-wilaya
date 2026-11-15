@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Veille citoyenne — capture</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="head">
+      <div>
+        <h1>Veille citoyenne</h1>
+        <p class="muted">Capture assistée — action manuelle</p>
+      </div>
+      <a id="open-options" class="link" href="options.html" target="_blank" rel="noopener">Réglages</a>
+    </header>
+
+    <p id="notice" class="notice" role="status" hidden></p>
+
+    <section id="unconfigured" class="panel" hidden>
+      <p>Configurez l'adresse de la plateforme et votre jeton de capture avant la première utilisation.</p>
+      <button id="configure" type="button" class="primary">Configurer</button>
+    </section>
+
+    <section id="capture" hidden>
+      <button id="read-page" type="button" class="primary">Lire la page active</button>
+      <p class="hint">Seules la sélection visible, l'URL, le titre et les métadonnées publiques <code>og:*</code> sont lues. Aucun défilement, aucune autre page.</p>
+
+      <form id="form" hidden>
+        <label>URL publique
+          <input id="url" type="url" maxlength="2000" required>
+        </label>
+        <label>Page publique
+          <input id="page" type="text" maxlength="200" placeholder="Nom de la page">
+        </label>
+        <label>Date de publication <span class="muted">(facultative)</span>
+          <input id="date" type="text" maxlength="40" placeholder="AAAA-MM-JJ">
+        </label>
+        <label>Texte public <span class="required">*</span>
+          <textarea id="text" rows="6" maxlength="10000" required></textarea>
+        </label>
+        <p id="text-hint" class="hint" hidden>La page n'expose pas de texte public : sélectionnez le passage à signaler, puis recommencez.</p>
+        <div class="actions">
+          <button id="send" type="submit" class="primary">Envoyer à la veille</button>
+          <button id="reset" type="button" class="ghost">Réinitialiser</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="result" class="panel" hidden>
+      <p id="result-title" class="result-title"></p>
+      <p id="result-meta" class="muted"></p>
+      <ul id="suggestions" class="suggestions"></ul>
+      <a id="open-element" class="primary link-button" target="_blank" rel="noopener noreferrer">Ouvrir dans la plateforme</a>
+      <button id="another" type="button" class="ghost">Nouvelle capture</button>
+    </section>
+
+    <footer class="foot">
+      <p>Finalité : traiter les anomalies matérielles de l'espace public. Aucune surveillance d'individus, d'opinions ou de profils.</p>
+      <p>Aucune télémétrie. Aucun code distant.</p>
+    </footer>
+  </main>
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

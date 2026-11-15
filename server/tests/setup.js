@@ -19,6 +19,7 @@ process.env.COOKIE_SECURE = 'false';
 process.env.LOG_LEVEL = 'error';
 process.env.ADMIN_USERNAME = 'admin';
 process.env.ADMIN_PASSWORD = '';
+process.env.SECRETS_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 afterAll(async () => {
   const { cleanup } = await import('./helpers.js');

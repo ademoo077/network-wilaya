@@ -1,0 +1,842 @@
+[
+  {
+    "id": "V7-001",
+    "texte": "? Bab El Oued, on signale نفايات et القمامة. قمامة depuis plusieurs jours.",
+    "groupe": "Propreté et déchets",
+    "commune": "Bab El Oued",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-002",
+    "texte": "?? ???? ???? ?????? قمامة ?الأزبال. زبل ??? ????.",
+    "groupe": "Propreté et déchets",
+    "commune": "Hussein Dey",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-003",
+    "texte": "زبل fi El Harrach, زبلة bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Propreté et déchets",
+    "commune": "El Harrach",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-004",
+    "texte": "مفرغة عشوائية ?? ??? ???? ????? مفرغة depuis hier. رمي النفايات signal? par les riverains.",
+    "groupe": "Propreté et déchets",
+    "commune": "Bir Mourad Ra?s",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-005",
+    "texte": "Signalement ? Kouba : رمي النفايات, تراكم النفايات et حاوية القمامة. Merci d'intervenir rapidement.",
+    "groupe": "Propreté et déchets",
+    "commune": "Kouba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-006",
+    "texte": "? Dar El Be?da, on signale حاوية القمامة et حاويات. رفع النفايات depuis plusieurs jours.",
+    "groupe": "Propreté et déchets",
+    "commune": "Dar El Be?da",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-007",
+    "texte": "?? ??? ????? ?????? رفع النفايات ?شاحنة القمامة. كنس ??? ????.",
+    "groupe": "Propreté et déchets",
+    "commune": "Birkhadem",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-008",
+    "texte": "كنس fi El Biar, النظافة bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Propreté et déchets",
+    "commune": "El Biar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-009",
+    "texte": "روائح كريهة ?? ?????? ordures depuis hier. déchets signal? par les riverains.",
+    "groupe": "Propreté et déchets",
+    "commune": "Hydra",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-010",
+    "texte": "Signalement ? Mohammadia : déchets, décharge sauvage et dépôt sauvage. Merci d'intervenir rapidement.",
+    "groupe": "Propreté et déchets",
+    "commune": "Mohammadia",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-011",
+    "texte": "? Bordj El Kiffan, on signale dépôt sauvage et poubelle. bac à ordures depuis plusieurs jours.",
+    "groupe": "Propreté et déchets",
+    "commune": "Bordj El Kiffan",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-012",
+    "texte": "?? ???????? ?????? bac à ordures ?benne. ramassage des ordures ??? ????.",
+    "groupe": "Propreté et déchets",
+    "commune": "Rouiba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-013",
+    "texte": "? Kouba, on signale مياه الصرف الصحي et الصرف الصحي. المجاري depuis plusieurs jours.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Kouba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-014",
+    "texte": "?? ????? ???????? ?????? المجاري ?مجاري. بالوعة ??? ????.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Dar El Be?da",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-015",
+    "texte": "بالوعة fi Birkhadem, البالوعات bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Birkhadem",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-016",
+    "texte": "قناة الصرف ?? ???????? الواد الحار depuis hier. مياه قذرة signal? par les riverains.",
+    "groupe": "Assainissement et eaux",
+    "commune": "El Biar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-017",
+    "texte": "Signalement ? Hydra : مياه قذرة, تسرب المياه et تسرب مياه. Merci d'intervenir rapidement.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Hydra",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-018",
+    "texte": "? Mohammadia, on signale تسرب مياه et انفجار أنبوب. أنبوب المياه depuis plusieurs jours.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Mohammadia",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-019",
+    "texte": "?? ??? ???????? ?????? أنبوب المياه ?ماء الشرب. ركود المياه ??? ????.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Bordj El Kiffan",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-020",
+    "texte": "ركود المياه fi Rouiba, مياه راكدة bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Rouiba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-021",
+    "texte": "انسداد ?? ?????? فيضان depuis hier. مياه الأمطار signal? par les riverains.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Baraki",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-022",
+    "texte": "Signalement ? Sidi M'Hamed : مياه الأمطار, خزان المياه et égout. Merci d'intervenir rapidement.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Sidi M'Hamed",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-023",
+    "texte": "? A?n Benian, on signale égout et égouts. assainissement depuis plusieurs jours.",
+    "groupe": "Assainissement et eaux",
+    "commune": "A?n Benian",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-024",
+    "texte": "?? ???????? ?????? assainissement ?eaux usées. bouche d'égout ??? ????.",
+    "groupe": "Assainissement et eaux",
+    "commune": "Ch?raga",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-025",
+    "texte": "? Hydra, on signale حفرة et حفر. الحفر depuis plusieurs jours.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Hydra",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-026",
+    "texte": "?? ????????? ?????? الحفر ?طريق مهترئ. الطريق مهترئ ??? ????.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Mohammadia",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-027",
+    "texte": "الطريق مهترئ fi Bordj El Kiffan, تشققات bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Bordj El Kiffan",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-028",
+    "texte": "الرصيف ?? ???????? أرصفة depuis hier. رصيف محطم signal? par les riverains.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Rouiba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-029",
+    "texte": "Signalement ? Baraki : رصيف محطم, ممهل et إشارة مرور. Merci d'intervenir rapidement.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Baraki",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-030",
+    "texte": "? Sidi M'Hamed, on signale إشارة مرور et علامات التشوير. التشوير depuis plusieurs jours.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Sidi M'Hamed",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-031",
+    "texte": "?? ??? ???????? ?????? التشوير ?جسر المشاة. حواجز ??? ????.",
+    "groupe": "Voirie et signalisation",
+    "commune": "A?n Benian",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-032",
+    "texte": "حواجز fi Ch?raga, أشغال bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Ch?raga",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-033",
+    "texte": "ورشة ?? ??????? انهيار الطريق depuis hier. nid de poule signal? par les riverains.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Draria",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-034",
+    "texte": "Signalement ? Bachdjerrah : nid de poule, nids de poule et trou dans la chaussée. Merci d'intervenir rapidement.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Bachdjerrah",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-035",
+    "texte": "? Oued Smar, on signale trou dans la chaussée et chaussée dégradée. route défoncée depuis plusieurs jours.",
+    "groupe": "Voirie et signalisation",
+    "commune": "Oued Smar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-036",
+    "texte": "?? ???? ???????? ?????? route défoncée ?route dégradée. trottoir ??? ????.",
+    "groupe": "Voirie et signalisation",
+    "commune": "D?ly Ibrahim",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-037",
+    "texte": "? Baraki, on signale الإنارة العمومية et إنارة. عمود كهربائي depuis plusieurs jours.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Baraki",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-038",
+    "texte": "?? ???? ?????? ?????? عمود كهربائي ?عمود إنارة. مصباح ??? ????.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Sidi M'Hamed",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-039",
+    "texte": "مصباح fi A?n Benian, مصابيح معطلة bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "A?n Benian",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-040",
+    "texte": "ظلام ?? ???????? أسلاك مكشوفة depuis hier. أسلاك كهربائية signal? par les riverains.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Ch?raga",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-041",
+    "texte": "Signalement ? Draria : أسلاك كهربائية, سلك كهربائي et الأسلاك. Merci d'intervenir rapidement.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Draria",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-042",
+    "texte": "? Bachdjerrah, on signale الأسلاك et خطر الصعق. éclairage public depuis plusieurs jours.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Bachdjerrah",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-043",
+    "texte": "?? ???? ??????? ?????? éclairage public ?lampadaire. lampadaires ??? ????.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Oued Smar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-044",
+    "texte": "lampadaires fi D?ly Ibrahim, poteau électrique bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "D?ly Ibrahim",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-045",
+    "texte": "câbles dénudés ?? ??? ??????? fils électriques depuis hier. obscurité signal? par les riverains.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Bab El Oued",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-046",
+    "texte": "Signalement ? Hussein Dey : obscurité, panne d'éclairage et ampoule grillée. Merci d'intervenir rapidement.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Hussein Dey",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-047",
+    "texte": "? El Harrach, on signale ampoule grillée et armoire électrique. câble téléphonique depuis plusieurs jours.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "El Harrach",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-048",
+    "texte": "?? ??? ???? ????? ?????? câble téléphonique ?الإنارة العمومية. إنارة ??? ????.",
+    "groupe": "Éclairage et réseaux",
+    "commune": "Bir Mourad Ra?s",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-049",
+    "texte": "? Draria, on signale المساحات الخضراء et مساحة خضراء. حشائش ضارة depuis plusieurs jours.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Draria",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-050",
+    "texte": "?? ??? ????? ?????? حشائش ضارة ?أعشاب ضارة. تقليم الأشجار ??? ????.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Bachdjerrah",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-051",
+    "texte": "تقليم الأشجار fi Oued Smar, شجرة آيلة للسقوط bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Oued Smar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-052",
+    "texte": "شجرة ساقطة ?? ???? ???????? الأشجار depuis hier. كلاب ضالة signal? par les riverains.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "D?ly Ibrahim",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-053",
+    "texte": "Signalement ? Bab El Oued : كلاب ضالة, حيوانات ضالة et قطط ضالة. Merci d'intervenir rapidement.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Bab El Oued",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-054",
+    "texte": "? Hussein Dey, on signale قطط ضالة et خنازير. تلوث depuis plusieurs jours.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Hussein Dey",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-055",
+    "texte": "?? ??????? ?????? تلوث ?حرق النفايات. دخان ??? ????.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "El Harrach",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-056",
+    "texte": "دخان fi Bir Mourad Ra?s, espace vert bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Bir Mourad Ra?s",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-057",
+    "texte": "espaces verts ?? ?????? mauvaises herbes depuis hier. élagage signal? par les riverains.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Kouba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-058",
+    "texte": "Signalement ? Dar El Be?da : élagage, arbre dangereux et arbre tombé. Merci d'intervenir rapidement.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Dar El Be?da",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-059",
+    "texte": "? Birkhadem, on signale arbre tombé et chiens errants. animaux errants depuis plusieurs jours.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "Birkhadem",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-060",
+    "texte": "?? ???????? ?????? animaux errants ?pollution. brûlage de déchets ??? ????.",
+    "groupe": "Espaces verts et environnement",
+    "commune": "El Biar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-061",
+    "texte": "? Bab El Oued, on signale بناية آيلة للسقوط et جدار آيل للسقوط. شرفة آيلة للسقوط depuis plusieurs jours.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Bab El Oued",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-062",
+    "texte": "?? ???? ???? ?????? شرفة آيلة للسقوط ?واجهة مهترئة. واجهات المباني ??? ????.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Hussein Dey",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-063",
+    "texte": "واجهات المباني fi El Harrach, بيوت قصديرية bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "El Harrach",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-064",
+    "texte": "سكن هش ?? ??? ???? ????? مصعد معطل depuis hier. السلالم signal? par les riverains.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Bir Mourad Ra?s",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-065",
+    "texte": "Signalement ? Kouba : السلالم, انهيار بناية et immeuble menaçant ruine. Merci d'intervenir rapidement.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Kouba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-066",
+    "texte": "? Dar El Be?da, on signale immeuble menaçant ruine et bâtiment menaçant ruine. mur qui menace de s'effondrer depuis plusieurs jours.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Dar El Be?da",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-067",
+    "texte": "?? ??? ????? ?????? mur qui menace de s'effondrer ?balcon dangereux. façade dégradée ??? ????.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Birkhadem",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-068",
+    "texte": "façade dégradée fi El Biar, bidonville bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "El Biar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-069",
+    "texte": "habitat précaire ?? ?????? ascenseur en panne depuis hier. escalier dégradé signal? par les riverains.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Hydra",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-070",
+    "texte": "Signalement ? Mohammadia : escalier dégradé, effondrement et بناية آيلة للسقوط. Merci d'intervenir rapidement.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Mohammadia",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-071",
+    "texte": "? Bordj El Kiffan, on signale بناية آيلة للسقوط et جدار آيل للسقوط. شرفة آيلة للسقوط depuis plusieurs jours.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Bordj El Kiffan",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-072",
+    "texte": "?? ???????? ?????? شرفة آيلة للسقوط ?واجهة مهترئة. واجهات المباني ??? ????.",
+    "groupe": "Bâtiments et habitat",
+    "commune": "Rouiba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-073",
+    "texte": "? Kouba, on signale مقاعد عمومية et نافورة. نافورة معطلة depuis plusieurs jours.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Kouba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-074",
+    "texte": "?? ????? ???????? ?????? نافورة معطلة ?الساعة العمومية. ملعب جواري ??? ????.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Dar El Be?da",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-075",
+    "texte": "ملعب جواري fi Birkhadem, ألعاب الأطفال bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Birkhadem",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-076",
+    "texte": "مرحاض عمومي ?? ???????? دورات المياه depuis hier. الراية الوطنية signal? par les riverains.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "El Biar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-077",
+    "texte": "Signalement ? Hydra : الراية الوطنية, نصب تذكاري et المقبرة. Merci d'intervenir rapidement.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Hydra",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-078",
+    "texte": "? Mohammadia, on signale المقبرة et قبر محطم. لافتة depuis plusieurs jours.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Mohammadia",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-079",
+    "texte": "?? ??? ???????? ?????? لافتة ?لوحة إشهارية. طفاية الحريق ??? ????.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Bordj El Kiffan",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-080",
+    "texte": "طفاية الحريق fi Rouiba, banc public bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Rouiba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-081",
+    "texte": "fontaine ?? ?????? fontaine en panne depuis hier. horloge publique signal? par les riverains.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Baraki",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-082",
+    "texte": "Signalement ? Sidi M'Hamed : horloge publique, terrain de proximité et aire de jeux. Merci d'intervenir rapidement.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Sidi M'Hamed",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-083",
+    "texte": "? A?n Benian, on signale aire de jeux et jeux d'enfants. toilettes publiques depuis plusieurs jours.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "A?n Benian",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-084",
+    "texte": "?? ???????? ?????? toilettes publiques ?drapeau national. monument ??? ????.",
+    "groupe": "Équipements et mobilier urbain",
+    "commune": "Ch?raga",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-085",
+    "texte": "? Hydra, on signale احتلال الرصيف et احتلال الطريق العام. الاستغلال غير القانوني depuis plusieurs jours.",
+    "groupe": "Occupation illégale",
+    "commune": "Hydra",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-086",
+    "texte": "?? ????????? ?????? الاستغلال غير القانوني ?بيع فوضوي. تجارة فوضوية ??? ????.",
+    "groupe": "Occupation illégale",
+    "commune": "Mohammadia",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-087",
+    "texte": "تجارة فوضوية fi Bordj El Kiffan, الباعة المتجولون bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Occupation illégale",
+    "commune": "Bordj El Kiffan",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-088",
+    "texte": "احتلال الشاطئ ?? ???????? مظلات الشاطئ depuis hier. مواقف السيارات الفوضوية signal? par les riverains.",
+    "groupe": "Occupation illégale",
+    "commune": "Rouiba",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-089",
+    "texte": "Signalement ? Baraki : مواقف السيارات الفوضوية, قوارب الصيد et occupation illégale. Merci d'intervenir rapidement.",
+    "groupe": "Occupation illégale",
+    "commune": "Baraki",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-090",
+    "texte": "? Sidi M'Hamed, on signale occupation illégale et occupation du trottoir. commerce informel depuis plusieurs jours.",
+    "groupe": "Occupation illégale",
+    "commune": "Sidi M'Hamed",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-091",
+    "texte": "?? ??? ???????? ?????? commerce informel ?vente à la sauvette. étals ??? ????.",
+    "groupe": "Occupation illégale",
+    "commune": "A?n Benian",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-092",
+    "texte": "étals fi Ch?raga, parking sauvage bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Occupation illégale",
+    "commune": "Ch?raga",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-093",
+    "texte": "occupation illégale de la plage ?? ??????? parasols depuis hier. احتلال الرصيف signal? par les riverains.",
+    "groupe": "Occupation illégale",
+    "commune": "Draria",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-094",
+    "texte": "Signalement ? Bachdjerrah : احتلال الرصيف, احتلال الطريق العام et الاستغلال غير القانوني. Merci d'intervenir rapidement.",
+    "groupe": "Occupation illégale",
+    "commune": "Bachdjerrah",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-095",
+    "texte": "? Oued Smar, on signale الاستغلال غير القانوني et بيع فوضوي. تجارة فوضوية depuis plusieurs jours.",
+    "groupe": "Occupation illégale",
+    "commune": "Oued Smar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-096",
+    "texte": "?? ???? ???????? ?????? تجارة فوضوية ?الباعة المتجولون. احتلال الشاطئ ??? ????.",
+    "groupe": "Occupation illégale",
+    "commune": "D?ly Ibrahim",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-097",
+    "texte": "? Baraki, on signale انهيار صخري et انهيار أرضي. انجراف التربة depuis plusieurs jours.",
+    "groupe": "Risques naturels",
+    "commune": "Baraki",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-098",
+    "texte": "?? ???? ?????? ?????? انجراف التربة ?زحف الرمال. انزلاق التربة ??? ????.",
+    "groupe": "Risques naturels",
+    "commune": "Sidi M'Hamed",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-099",
+    "texte": "انزلاق التربة fi A?n Benian, تساقط الصخور bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Risques naturels",
+    "commune": "A?n Benian",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-100",
+    "texte": "فيضانات ?? ???????? سيول depuis hier. éboulement signal? par les riverains.",
+    "groupe": "Risques naturels",
+    "commune": "Ch?raga",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-101",
+    "texte": "Signalement ? Draria : éboulement, glissement de terrain et érosion. Merci d'intervenir rapidement.",
+    "groupe": "Risques naturels",
+    "commune": "Draria",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-102",
+    "texte": "? Bachdjerrah, on signale érosion et ensablement. chute de pierres depuis plusieurs jours.",
+    "groupe": "Risques naturels",
+    "commune": "Bachdjerrah",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-103",
+    "texte": "?? ???? ??????? ?????? chute de pierres ?crue. inondations ??? ????.",
+    "groupe": "Risques naturels",
+    "commune": "Oued Smar",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-104",
+    "texte": "inondations fi D?ly Ibrahim, انهيار صخري bezzaf. Les habitants demandent une intervention.",
+    "groupe": "Risques naturels",
+    "commune": "D?ly Ibrahim",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-105",
+    "texte": "انهيار أرضي ?? ??? ??????? انجراف التربة depuis hier. زحف الرمال signal? par les riverains.",
+    "groupe": "Risques naturels",
+    "commune": "Bab El Oued",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-106",
+    "texte": "Signalement ? Hussein Dey : زحف الرمال, انزلاق التربة et تساقط الصخور. Merci d'intervenir rapidement.",
+    "groupe": "Risques naturels",
+    "commune": "Hussein Dey",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-107",
+    "texte": "? El Harrach, on signale تساقط الصخور et فيضانات. سيول depuis plusieurs jours.",
+    "groupe": "Risques naturels",
+    "commune": "El Harrach",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-108",
+    "texte": "?? ??? ???? ????? ?????? سيول ?éboulement. glissement de terrain ??? ????.",
+    "groupe": "Risques naturels",
+    "commune": "Bir Mourad Ra?s",
+    "priorite": "normale"
+  },
+  {
+    "id": "V7-109",
+    "texte": "? Alger, للبيع عرض خاص. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-110",
+    "texte": "? Alger, للإيجار تخفيضات. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-111",
+    "texte": "? Alger, إعلان وظيفة. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-112",
+    "texte": "? Alger, عرض خاص توظيف. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-113",
+    "texte": "? Alger, تخفيضات à vendre. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-114",
+    "texte": "? Alger, وظيفة à louer. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-115",
+    "texte": "? Alger, توظيف promotion. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-116",
+    "texte": "? Alger, à vendre promo. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-117",
+    "texte": "? Alger, à louer offre d'emploi. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-118",
+    "texte": "? Alger, promotion recrutement. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-119",
+    "texte": "? Alger, promo sponsorisé. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  },
+  {
+    "id": "V7-120",
+    "texte": "? Alger, offre d'emploi للبيع. Contactez-nous pour plus d'informations.",
+    "groupe": null,
+    "commune": null,
+    "priorite": null
+  }
+]

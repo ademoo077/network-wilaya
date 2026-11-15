@@ -6,6 +6,7 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./veille": "./src/veille/index.js",
     "./*": "./src/*.js"
   },
   "dependencies": {

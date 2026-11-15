@@ -1,0 +1,271 @@
+groupe_fr,domaine_ar,terme,langue,role,poids
+Propreté et déchets,,نفايات,ar,theme,3
+Propreté et déchets,,القمامة,ar,theme,3
+Propreté et déchets,,قمامة,ar,theme,3
+Propreté et déchets,,الأزبال,ar,theme,3
+Propreté et déchets,,زبل,ar,theme,2
+Propreté et déchets,,زبلة,ar,theme,3
+Propreté et déchets,,مفرغة عشوائية,ar,theme,5
+Propreté et déchets,,مفرغة,ar,theme,3
+Propreté et déchets,,رمي النفايات,ar,theme,4
+Propreté et déchets,,تراكم النفايات,ar,theme,4
+Propreté et déchets,حاويات القمامة,حاوية القمامة,ar,theme,4
+Propreté et déchets,حاويات القمامة,حاويات,ar,theme,2
+Propreté et déchets,,رفع النفايات,ar,theme,4
+Propreté et déchets,,شاحنة القمامة,ar,theme,3
+Propreté et déchets,,كنس,ar,theme,2
+Propreté et déchets,,النظافة,ar,theme,2
+Propreté et déchets,,روائح كريهة,ar,theme,2
+Propreté et déchets,,ordures,fr,theme,3
+Propreté et déchets,,déchets,fr,theme,3
+Propreté et déchets,,décharge sauvage,fr,theme,5
+Propreté et déchets,,dépôt sauvage,fr,theme,5
+Propreté et déchets,,poubelle,fr,theme,2
+Propreté et déchets,,bac à ordures,fr,theme,4
+Propreté et déchets,,benne,fr,theme,2
+Propreté et déchets,,ramassage des ordures,fr,theme,4
+Propreté et déchets,,collecte des déchets,fr,theme,4
+Propreté et déchets,,balayage,fr,theme,2
+Propreté et déchets,,propreté,fr,theme,2
+Propreté et déchets,,insalubrité,fr,theme,3
+Propreté et déchets,,amas de déchets,fr,theme,4
+Propreté et déchets,,zbel,dz,theme,3
+Propreté et déchets,,zebla,dz,theme,3
+Propreté et déchets,,dechets,dz,theme,2
+Propreté et déchets,,ordure,dz,theme,2
+Assainissement et eaux,,مياه الصرف الصحي,ar,theme,5
+Assainissement et eaux,,الصرف الصحي,ar,theme,4
+Assainissement et eaux,,المجاري,ar,theme,4
+Assainissement et eaux,,مجاري,ar,theme,3
+Assainissement et eaux,البالوعات,بالوعة,ar,theme,4
+Assainissement et eaux,البالوعات,البالوعات,ar,theme,4
+Assainissement et eaux,,قناة الصرف,ar,theme,3
+Assainissement et eaux,,الواد الحار,ar,theme,4
+Assainissement et eaux,,مياه قذرة,ar,theme,3
+Assainissement et eaux,,تسرب المياه,ar,theme,5
+Assainissement et eaux,,تسرب مياه,ar,theme,5
+Assainissement et eaux,,انفجار أنبوب,ar,theme,5
+Assainissement et eaux,,أنبوب المياه,ar,theme,3
+Assainissement et eaux,,ماء الشرب,ar,theme,2
+Assainissement et eaux,,ركود المياه,ar,theme,4
+Assainissement et eaux,,مياه راكدة,ar,theme,4
+Assainissement et eaux,,انسداد,ar,theme,3
+Assainissement et eaux,,فيضان,ar,theme,3
+Assainissement et eaux,,مياه الأمطار,ar,theme,3
+Assainissement et eaux,,خزان المياه,ar,theme,3
+Assainissement et eaux,,égout,fr,theme,4
+Assainissement et eaux,,égouts,fr,theme,4
+Assainissement et eaux,,assainissement,fr,theme,4
+Assainissement et eaux,,eaux usées,fr,theme,5
+Assainissement et eaux,,bouche d'égout,fr,theme,5
+Assainissement et eaux,,regard d'égout,fr,theme,4
+Assainissement et eaux,,avaloir,fr,theme,3
+Assainissement et eaux,,canalisation bouchée,fr,theme,5
+Assainissement et eaux,,fuite d'eau,fr,theme,5
+Assainissement et eaux,,fuite,fr,theme,2
+Assainissement et eaux,,conduite d'eau,fr,theme,3
+Assainissement et eaux,,rupture de canalisation,fr,theme,5
+Assainissement et eaux,,eau potable,fr,theme,2
+Assainissement et eaux,,eau stagnante,fr,theme,4
+Assainissement et eaux,,inondation,fr,theme,3
+Assainissement et eaux,,débordement,fr,theme,3
+Assainissement et eaux,,caniveau,fr,theme,3
+Assainissement et eaux,,château d'eau,fr,theme,2
+Voirie et signalisation,,حفرة,ar,theme,4
+Voirie et signalisation,,حفر,ar,theme,3
+Voirie et signalisation,,الحفر,ar,theme,3
+Voirie et signalisation,,طريق مهترئ,ar,theme,4
+Voirie et signalisation,,الطريق مهترئ,ar,theme,4
+Voirie et signalisation,,تشققات,ar,theme,3
+Voirie et signalisation,,الرصيف,ar,theme,3
+Voirie et signalisation,,أرصفة,ar,theme,3
+Voirie et signalisation,,رصيف محطم,ar,theme,4
+Voirie et signalisation,ممهلات,ممهل,ar,theme,3
+Voirie et signalisation,,إشارة مرور,ar,theme,3
+Voirie et signalisation,,علامات التشوير,ar,theme,4
+Voirie et signalisation,,التشوير,ar,theme,3
+Voirie et signalisation,جسر المشاة,جسر المشاة,ar,theme,4
+Voirie et signalisation,,حواجز,ar,theme,2
+Voirie et signalisation,,أشغال,ar,theme,2
+Voirie et signalisation,,ورشة,ar,theme,2
+Voirie et signalisation,,انهيار الطريق,ar,theme,4
+Voirie et signalisation,,nid de poule,fr,theme,5
+Voirie et signalisation,,nids de poule,fr,theme,5
+Voirie et signalisation,,trou dans la chaussée,fr,theme,5
+Voirie et signalisation,,chaussée dégradée,fr,theme,5
+Voirie et signalisation,,route défoncée,fr,theme,5
+Voirie et signalisation,,route dégradée,fr,theme,4
+Voirie et signalisation,,trottoir,fr,theme,3
+Voirie et signalisation,,trottoir dégradé,fr,theme,4
+Voirie et signalisation,,ralentisseur,fr,theme,3
+Voirie et signalisation,,dos d'âne,fr,theme,3
+Voirie et signalisation,,signalisation,fr,theme,3
+Voirie et signalisation,,panneau,fr,theme,2
+Voirie et signalisation,,passerelle piétonne,fr,theme,4
+Voirie et signalisation,,glissière,fr,theme,3
+Voirie et signalisation,,travaux inachevés,fr,theme,4
+Voirie et signalisation,,chantier,fr,theme,2
+Voirie et signalisation,,affaissement,fr,theme,4
+Voirie et signalisation,,bitume,fr,theme,2
+Voirie et signalisation,,revêtement,fr,theme,2
+Éclairage et réseaux,الإنارة العمومية,الإنارة العمومية,ar,theme,5
+Éclairage et réseaux,,إنارة,ar,theme,3
+Éclairage et réseaux,,عمود كهربائي,ar,theme,4
+Éclairage et réseaux,الإنارة العمومية,عمود إنارة,ar,theme,5
+Éclairage et réseaux,,مصباح,ar,theme,2
+Éclairage et réseaux,الإنارة العمومية,مصابيح معطلة,ar,theme,5
+Éclairage et réseaux,,ظلام,ar,theme,3
+Éclairage et réseaux,,أسلاك مكشوفة,ar,theme,5
+Éclairage et réseaux,,أسلاك كهربائية,ar,theme,3
+Éclairage et réseaux,,سلك كهربائي,ar,theme,3
+Éclairage et réseaux,,الأسلاك,ar,theme,2
+Éclairage et réseaux,,خطر الصعق,ar,theme,4
+Éclairage et réseaux,,éclairage public,fr,theme,5
+Éclairage et réseaux,,lampadaire,fr,theme,5
+Éclairage et réseaux,,lampadaires,fr,theme,5
+Éclairage et réseaux,,poteau électrique,fr,theme,4
+Éclairage et réseaux,,câbles dénudés,fr,theme,5
+Éclairage et réseaux,,fils électriques,fr,theme,4
+Éclairage et réseaux,,obscurité,fr,theme,3
+Éclairage et réseaux,,panne d'éclairage,fr,theme,5
+Éclairage et réseaux,,ampoule grillée,fr,theme,3
+Éclairage et réseaux,,armoire électrique,fr,theme,3
+Éclairage et réseaux,,câble téléphonique,fr,theme,3
+Espaces verts et environnement,,المساحات الخضراء,ar,theme,4
+Espaces verts et environnement,,مساحة خضراء,ar,theme,4
+Espaces verts et environnement,حشائش ضارة,حشائش ضارة,ar,theme,5
+Espaces verts et environnement,حشائش ضارة,أعشاب ضارة,ar,theme,5
+Espaces verts et environnement,العناية بالأشجار,تقليم الأشجار,ar,theme,5
+Espaces verts et environnement,العناية بالأشجار,شجرة آيلة للسقوط,ar,theme,5
+Espaces verts et environnement,العناية بالأشجار,شجرة ساقطة,ar,theme,4
+Espaces verts et environnement,,الأشجار,ar,theme,2
+Espaces verts et environnement,حيونات ظالة,كلاب ضالة,ar,theme,5
+Espaces verts et environnement,حيونات ظالة,حيوانات ضالة,ar,theme,5
+Espaces verts et environnement,حيونات ظالة,قطط ضالة,ar,theme,4
+Espaces verts et environnement,,خنازير,ar,theme,3
+Espaces verts et environnement,,تلوث,ar,theme,3
+Espaces verts et environnement,,حرق النفايات,ar,theme,5
+Espaces verts et environnement,,دخان,ar,theme,2
+Espaces verts et environnement,,espace vert,fr,theme,4
+Espaces verts et environnement,,espaces verts,fr,theme,4
+Espaces verts et environnement,,mauvaises herbes,fr,theme,5
+Espaces verts et environnement,,élagage,fr,theme,5
+Espaces verts et environnement,,arbre dangereux,fr,theme,5
+Espaces verts et environnement,,arbre tombé,fr,theme,4
+Espaces verts et environnement,,chiens errants,fr,theme,5
+Espaces verts et environnement,,animaux errants,fr,theme,5
+Espaces verts et environnement,,pollution,fr,theme,3
+Espaces verts et environnement,,brûlage de déchets,fr,theme,5
+Espaces verts et environnement,,fumée,fr,theme,2
+Espaces verts et environnement,,nuisibles,fr,theme,3
+Espaces verts et environnement,,moustiques,fr,theme,3
+Espaces verts et environnement,,rats,fr,theme,3
+Bâtiments et habitat,,بناية آيلة للسقوط,ar,theme,5
+Bâtiments et habitat,,جدار آيل للسقوط,ar,theme,5
+Bâtiments et habitat,,شرفة آيلة للسقوط,ar,theme,5
+Bâtiments et habitat,,واجهة مهترئة,ar,theme,4
+Bâtiments et habitat,,واجهات المباني,ar,theme,3
+Bâtiments et habitat,بيوت قصديرية,بيوت قصديرية,ar,theme,5
+Bâtiments et habitat,,سكن هش,ar,theme,4
+Bâtiments et habitat,حالة المصاعد,مصعد معطل,ar,theme,4
+Bâtiments et habitat,,السلالم,ar,theme,2
+Bâtiments et habitat,,انهيار بناية,ar,theme,5
+Bâtiments et habitat,,immeuble menaçant ruine,fr,theme,5
+Bâtiments et habitat,,bâtiment menaçant ruine,fr,theme,5
+Bâtiments et habitat,,mur qui menace de s'effondrer,fr,theme,5
+Bâtiments et habitat,,balcon dangereux,fr,theme,4
+Bâtiments et habitat,,façade dégradée,fr,theme,4
+Bâtiments et habitat,,bidonville,fr,theme,4
+Bâtiments et habitat,,habitat précaire,fr,theme,4
+Bâtiments et habitat,,ascenseur en panne,fr,theme,4
+Bâtiments et habitat,,escalier dégradé,fr,theme,3
+Bâtiments et habitat,,effondrement,fr,theme,4
+Équipements et mobilier urbain,مقاعد عمومية,مقاعد عمومية,ar,theme,3
+Équipements et mobilier urbain,نافورات المياه,نافورة,ar,theme,3
+Équipements et mobilier urbain,نافورات المياه,نافورة معطلة,ar,theme,4
+Équipements et mobilier urbain,,الساعة العمومية,ar,theme,3
+Équipements et mobilier urbain,,ملعب جواري,ar,theme,3
+Équipements et mobilier urbain,,ألعاب الأطفال,ar,theme,3
+Équipements et mobilier urbain,,مرحاض عمومي,ar,theme,3
+Équipements et mobilier urbain,,دورات المياه,ar,theme,2
+Équipements et mobilier urbain,,الراية الوطنية,ar,theme,3
+Équipements et mobilier urbain,,نصب تذكاري,ar,theme,3
+Équipements et mobilier urbain,,المقبرة,ar,theme,2
+Équipements et mobilier urbain,وضعية القبور,قبر محطم,ar,theme,4
+Équipements et mobilier urbain,,لافتة,ar,theme,2
+Équipements et mobilier urbain,,لوحة إشهارية,ar,theme,3
+Équipements et mobilier urbain,,طفاية الحريق,ar,theme,3
+Équipements et mobilier urbain,,banc public,fr,theme,3
+Équipements et mobilier urbain,,fontaine,fr,theme,3
+Équipements et mobilier urbain,,fontaine en panne,fr,theme,4
+Équipements et mobilier urbain,,horloge publique,fr,theme,3
+Équipements et mobilier urbain,,terrain de proximité,fr,theme,3
+Équipements et mobilier urbain,,aire de jeux,fr,theme,3
+Équipements et mobilier urbain,,jeux d'enfants,fr,theme,3
+Équipements et mobilier urbain,,toilettes publiques,fr,theme,3
+Équipements et mobilier urbain,,drapeau national,fr,theme,3
+Équipements et mobilier urbain,,monument,fr,theme,2
+Équipements et mobilier urbain,,cimetière,fr,theme,2
+Équipements et mobilier urbain,,tombe,fr,theme,2
+Équipements et mobilier urbain,,panneau publicitaire,fr,theme,3
+Équipements et mobilier urbain,,extincteur,fr,theme,3
+Occupation illégale,,احتلال الرصيف,ar,theme,5
+Occupation illégale,الإستغلال الغير قانوني للطريق العام,احتلال الطريق العام,ar,theme,5
+Occupation illégale,,الاستغلال غير القانوني,ar,theme,5
+Occupation illégale,,بيع فوضوي,ar,theme,4
+Occupation illégale,,تجارة فوضوية,ar,theme,4
+Occupation illégale,,الباعة المتجولون,ar,theme,3
+Occupation illégale,الإستغلال الغير قانوني للشواطئ,احتلال الشاطئ,ar,theme,5
+Occupation illégale,الإستغلال الغير قانوني للشواطئ,مظلات الشاطئ,ar,theme,4
+Occupation illégale,,مواقف السيارات الفوضوية,ar,theme,4
+Occupation illégale,قوارب الصيد,قوارب الصيد,ar,theme,2
+Occupation illégale,,occupation illégale,fr,theme,5
+Occupation illégale,,occupation du trottoir,fr,theme,5
+Occupation illégale,,commerce informel,fr,theme,4
+Occupation illégale,,vente à la sauvette,fr,theme,4
+Occupation illégale,,étals,fr,theme,3
+Occupation illégale,,parking sauvage,fr,theme,4
+Occupation illégale,,occupation illégale de la plage,fr,theme,5
+Occupation illégale,,parasols,fr,theme,3
+Risques naturels,إنهيار صخري,انهيار صخري,ar,theme,5
+Risques naturels,,انهيار أرضي,ar,theme,5
+Risques naturels,إنجراف التربة,انجراف التربة,ar,theme,5
+Risques naturels,زحف الرمال,زحف الرمال,ar,theme,5
+Risques naturels,,انزلاق التربة,ar,theme,5
+Risques naturels,إنهيار صخري,تساقط الصخور,ar,theme,5
+Risques naturels,,فيضانات,ar,theme,4
+Risques naturels,,سيول,ar,theme,3
+Risques naturels,,éboulement,fr,theme,5
+Risques naturels,,glissement de terrain,fr,theme,5
+Risques naturels,,érosion,fr,theme,4
+Risques naturels,,ensablement,fr,theme,4
+Risques naturels,,chute de pierres,fr,theme,5
+Risques naturels,,crue,fr,theme,3
+Risques naturels,,inondations,fr,theme,4
+*,,خطر,ar,urgence,3
+*,,عاجل,ar,urgence,3
+*,,كارثة,ar,urgence,3
+*,,خطير,ar,urgence,3
+*,,حادث,ar,urgence,2
+*,,استغاثة,ar,urgence,3
+*,,danger,fr,urgence,3
+*,,dangereux,fr,urgence,3
+*,,urgent,fr,urgence,3
+*,,urgence,fr,urgence,3
+*,,accident,fr,urgence,2
+*,,catastrophe,fr,urgence,3
+*,,SOS,fr,urgence,3
+*,,للبيع,ar,exclusion,-3
+*,,للإيجار,ar,exclusion,-3
+*,,إعلان,ar,exclusion,-2
+*,,عرض خاص,ar,exclusion,-3
+*,,تخفيضات,ar,exclusion,-3
+*,,وظيفة,ar,exclusion,-2
+*,,توظيف,ar,exclusion,-2
+*,,à vendre,fr,exclusion,-3
+*,,à louer,fr,exclusion,-3
+*,,promotion,fr,exclusion,-3
+*,,promo,fr,exclusion,-3
+*,,offre d'emploi,fr,exclusion,-3
+*,,recrutement,fr,exclusion,-2
+*,,sponsorisé,fr,exclusion,-2

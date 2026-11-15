@@ -7,6 +7,7 @@ if (!process.env.ANM_TEST_ROOT) throw new Error('ANM_TEST_ROOT obligatoire pour 
 const root = process.env.ANM_TEST_ROOT;
 Object.assign(process.env, { NODE_ENV: 'test', TZ: 'Africa/Algiers', HTTPS: 'false', HOST: '127.0.0.1',
   COOKIE_SECURE: 'false', ADMIN_USERNAME: 'admin', ADMIN_PASSWORD: 'E2E-Alger-2026', LOG_LEVEL: 'error',
+  SECRETS_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
   DB_PATH: path.join(root, 'anomalies.db'), UPLOAD_DIR: path.join(root, 'uploads'),
   BACKUP_DIR: path.join(root, 'backups'), LOG_DIR: path.join(root, 'logs'), TMP_DIR: path.join(root, 'tmp') });
 const { prepareDatabase } = await import('../../server/src/bootstrap.js');

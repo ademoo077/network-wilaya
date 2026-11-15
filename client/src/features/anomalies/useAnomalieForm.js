@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { formReducer, initialFormState, validateForm } from '@anm/shared';
+import { formReducer, formatGps, initialFormState, validateForm } from '@anm/shared';
 import { api, queryString } from '../../api/client.js';
 import { useRefs } from '../../context/RefsContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -15,13 +16,30 @@ import { useFormSubmit } from './useFormSubmit.js';
 import { useFormDraft } from './useFormDraft.js';
 import { useFormFiles } from './useFormFiles.js';
 
+const VEILLE_ID_FIELDS = ['domaine_id', 'type_id', 'daira_id', 'commune_id'];
+function valuesFromVeille(item) {
+  const values = {
+    plateforme: item.plateforme || 'autre', lien_url: item.lien_url || '', contenu_type: item.contenu_type || null,
+    date_publication: String(item.date_publication || '').slice(0, 10), adresse_texte: item.adresse_texte || '',
+    lieu_dit: item.lieu_dit || '', gps: item.gps || null, priorite: item.priorite || 'normale',
+    legende: item.legende || '', observations: item.observations || '', veille_element_id: item.veille_element_id || null,
+    gps_text: item.gps?.lat !== undefined ? formatGps(item.gps.lat, item.gps.lng) : '',
+  };
+  for (const key of VEILLE_ID_FIELDS) values[key] = item[key] ? String(item[key]) : '';
+  return values;
+}
+
 export function useAnomalieForm(id) {
   const { refs, setup } = useRefs(); const { user } = useAuth(); const { t, lang } = useI18n(); const { push } = useToast();
-  const draftKey = `anm-draft:${user.id}:${id || 'new'}`;
+  const location = useLocation();
+  const requestedVeille = !id ? new URLSearchParams(location.search).get('veille') : null;
+  const veilleId = /^[1-9]\d*$/.test(requestedVeille || '') ? requestedVeille : null;
+  const draftKey = `anm-draft:${user.id}:${id || (veilleId ? `veille-${veilleId}` : 'new')}`;
   const [state, dispatch] = useReducer(formReducer, null, () => ({ ...initialFormState(), draft: readDraft(draftKey), recentTypes: readRecentTypes(user.id) }));
   const current = useRef(state); current.current = state;
   const tasks = useFormTasks(dispatch); const lastToast = useRef(null); const initialized = useRef(null); const scope = useRef(draftKey);
   const query = useQuery({ queryKey: ['anomaly', id], enabled: Boolean(id), queryFn: ({ signal }) => api(`/anomalies/${id}`, { signal }) });
+  const prefillQuery = useQuery({ queryKey: ['veille-prefill', veilleId], enabled: Boolean(veilleId), queryFn: ({ signal }) => api(`/veille/prefill/${veilleId}`, { signal }) });
   useEffect(() => {
     if (scope.current !== draftKey) {
       scope.current = draftKey; initialized.current = null; tasks.cancelAll();
@@ -32,7 +50,12 @@ export function useAnomalieForm(id) {
       dispatch({ type: 'INIT', values: formFromItem(query.data.item), editing: true, version: query.data.item.version,
         context: { draft: readDraft(draftKey), piecesCount: query.data.item.pieces_count || 0 } });
     }
-  }, [draftKey, id, query.data, tasks, user.id]);
+    if (veilleId && prefillQuery.data?.item && initialized.current !== `veille-${veilleId}`) {
+      initialized.current = `veille-${veilleId}`;
+      dispatch({ type: 'INIT', values: valuesFromVeille(prefillQuery.data.item), editing: false,
+        context: { draft: readDraft(draftKey) } });
+    }
+  }, [draftKey, id, query.data, prefillQuery.data, tasks, user.id, veilleId]);
   const undo = useCallback((id) => { tasks.cancelAll(); dispatch({ type: 'UNDO', id }); }, [tasks]);
   useEffect(() => {
     const entry = state.undo.at(-1);
@@ -124,6 +147,7 @@ export function useAnomalieForm(id) {
   const errors = useMemo(() => Object.fromEntries(Object.entries(state.errors).map(([key, value]) => [key, t(value)])), [state.errors, t]);
   const matches = (state.tasks.duplicates.data?.item?.matches || []).filter((m) => String(m.id) !== String(id));
   return { state, set, ui, blur, autofill, paste, save, undo, resume, restart, handleFiles, chooseType, locateDevice, errors, refs, setup, user, lang,
-    matches, nearby: state.tasks.nearby.data?.items || [], geometry: geometry.data?.item, loading: Boolean(id && query.isPending), loadError: query.error,
-    missing: Boolean(id && query.isSuccess && !query.data?.item), reload };
+    matches, nearby: state.tasks.nearby.data?.items || [], geometry: geometry.data?.item,
+    loading: Boolean((id && query.isPending) || (veilleId && !id && prefillQuery.isPending)),
+    loadError: query.error || prefillQuery.error, missing: Boolean((id && query.isSuccess && !query.data?.item) || (veilleId && prefillQuery.isSuccess && !prefillQuery.data?.item)), reload };
 }

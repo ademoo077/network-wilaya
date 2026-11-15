@@ -23,6 +23,7 @@
     "test:unit": "vitest run",
     "test:e2e": "node scripts/e2e.js",
     "test:e2e:browser": "playwright test",
+    "veille:eval": "node scripts/veille-eval.js",
     "qa": "npm run build && npm run lint && npm run check:styles && npm run test && npm run test:e2e && npm run test:e2e:browser && npm run check:a11y",
     "lint": "eslint .",
     "check:styles": "node scripts/check-styles.js",

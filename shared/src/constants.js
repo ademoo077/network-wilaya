@@ -37,12 +37,21 @@ export const DEFAULT_PARAMS = {
   enrichissement_metadonnees: '0',
   rapport_auto_fige: '1',
   https_actif: '0',
+  veille_activee: '0',
+  veille_conservation_jours: '90',
+  veille_seuil_suggestion: '4',
+  veille_seuil_pertinent: '2',
+  veille_filtre_geo: 'source_ou_lieu',
+  veille_pseudonymiser_auteurs: '1',
+  veille_stocker_auteur: '0',
+  veille_fenetre_doublon_h: '72',
 };
 
 export const PUBLIC_PARAMS = [
   'nom_cellule', 'week_start_day', 'tile_url', 'gps_bbox', 'delai_retard_jours',
   'rayon_doublon_m', 'objectif_taux_traitement', 'sla_urgente_j', 'sla_haute_j',
   'sla_normale_j', 'delai_verification_cible_j', 'https_actif', 'enrichissement_en_ligne', 'enrichissement_metadonnees', 'resolution_liens',
+  'veille_activee', 'veille_conservation_jours',
 ];
 
 export const PAGE_SIZE_DEFAULT = 25;
@@ -82,6 +91,11 @@ export const AUDIT_ACTIONS = [
   'PARAM_UPDATE', 'BACKUP_CREATE', 'BACKUP_RESTORE', 'BACKUP_DELETE',
   'REPORT_SNAPSHOT',
   'LIMITES_IMPORT',
+  'VEILLE_SOURCE_CREATE', 'VEILLE_SOURCE_UPDATE', 'VEILLE_SOURCE_DELETE', 'VEILLE_SOURCE_TEST',
+  'VEILLE_COLLECTE', 'VEILLE_CAPTURE', 'VEILLE_RETENU', 'VEILLE_REJETE', 'VEILLE_ANNULE',
+  'VEILLE_LEXIQUE_CREATE', 'VEILLE_LEXIQUE_UPDATE', 'VEILLE_LEXIQUE_DELETE',
+  'VEILLE_ALIAS_UPDATE', 'VEILLE_APPRENTISSAGE', 'VEILLE_PURGE', 'VEILLE_EFFACEMENT',
+  'VEILLE_JETON_CREATE', 'VEILLE_JETON_REVOKE', 'VEILLE_WEBHOOK',
 ];
 
 export const AUDIT_ACTION_KEYS = Object.fromEntries(

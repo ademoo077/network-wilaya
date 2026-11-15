@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Réglages — Veille citoyenne</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="app">
+    <header class="head">
+      <h1>Réglages de la capture assistée</h1>
+      <p class="muted">Extension Manifest V3 — Veille citoyenne, Wilaya d'Alger</p>
+    </header>
+
+    <section class="panel">
+      <form id="form">
+        <label>Adresse de la plateforme
+          <input id="platform" type="url" maxlength="500" placeholder="http://192.168.117.163:3000" required>
+        </label>
+        <p class="hint">Adresse de base de l'application, sans <code>/api</code>. HTTP en réseau local, HTTPS recommandé.</p>
+
+        <label>Jeton personnel de capture
+          <input id="token" type="password" maxlength="400" autocomplete="off" spellcheck="false" required>
+        </label>
+        <div class="token-row">
+          <button id="toggle-token" type="button" class="ghost">Afficher</button>
+          <span class="hint">Généré dans <strong>Profil → Capture assistée</strong>. Révoquez-le en cas de perte.</span>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="primary">Enregistrer</button>
+          <button id="clear" type="button" class="ghost">Effacer</button>
+        </div>
+      </form>
+      <p id="notice" class="notice" role="status" hidden></p>
+    </section>
+
+    <section class="panel">
+      <h2>Ce que fait l'extension</h2>
+      <ul>
+        <li>Lit uniquement l'onglet actif, après votre clic : URL, titre, sélection et métadonnées publiques <code>og:*</code>.</li>
+        <li>N'accède à aucun autre onglet, ne défile pas, ne collecte pas en masse.</li>
+        <li>N'envoie rien sans votre validation du formulaire d'aperçu.</li>
+        <li>Ne communique qu'avec l'adresse de plateforme configurée.</li>
+        <li>Aucune télémétrie, aucun code distant, aucun script de contenu permanent.</li>
+      </ul>
+      <p class="hint">Finalité unique : traiter les anomalies matérielles de l'espace public. Pas de surveillance d'individus, d'opinions ou de profils.</p>
+    </section>
+  </main>
+  <script src="shared.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

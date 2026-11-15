@@ -36,6 +36,8 @@ export const config = {
   clientDist: path.join(PROJECT_ROOT, 'client', 'dist'),
   seedCsv: path.join(PROJECT_ROOT, 'seed', 'taxonomie_anomalies.csv'),
   groupsCsv: path.join(PROJECT_ROOT, 'seed', 'groupes_domaines.csv'),
+  veilleLexiqueCsv: path.join(PROJECT_ROOT, 'seed', 'lexique_initial_veille.csv'),
+  secretsKey: process.env.SECRETS_KEY || '',
   cookieSecure: bool(process.env.COOKIE_SECURE, false),
   https: bool(process.env.HTTPS, false),
   httpsCert: abs(process.env.HTTPS_CERT, './data/certs/server-cert.pem'),

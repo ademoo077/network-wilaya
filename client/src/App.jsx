@@ -8,7 +8,8 @@ import { useAuth } from './context/AuthContext.jsx';
 import { useRefs } from './context/RefsContext.jsx';
 import { useI18n } from './i18n/index.jsx';
 import { LoginPage, ProfilePage, SetupPage, DashboardPage, AnomaliesPage, AnomalyFormPage,
-  AnomalyDetailPage, MapPage, ReportPage, WorkPage, AdminPage, NotFoundPage } from './routePages.js';
+  AnomalyDetailPage, MapPage, ReportPage, WorkPage, AdminPage, NotFoundPage,
+  VeillePage, VeilleDashboardPage, VeilleCompliancePage, VeilleDetailPage, VeilleSettingsPage } from './routePages.js';
 
 export function BootScreen() {
   const { t } = useI18n();
@@ -53,6 +54,10 @@ function Application() {
       <Route path="anomalies/:id/modifier" element={page(AnomalyFormPage)} />
       <Route path="carte" element={page(MapPage)} />
       <Route path="a-faire" element={page(WorkPage)} />
+      <Route path="veille" element={page(VeillePage)} />
+      <Route path="veille/tableau" element={page(VeilleDashboardPage)} />
+      <Route path="veille/elements/:id" element={page(VeilleDetailPage)} />
+      <Route element={<AdminOnly />}><Route path="veille/reglages" element={page(VeilleSettingsPage)} /><Route path="veille/conformite" element={page(VeilleCompliancePage)} /></Route>
       <Route path="rapport" element={page(ReportPage)} />
       <Route path="profil" element={page(ProfilePage)} />
       <Route element={<AdminOnly />}><Route path="assistant" element={page(SetupPage)} /><Route path="admin/:onglet" element={page(AdminPage)} /></Route>

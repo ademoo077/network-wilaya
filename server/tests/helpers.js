@@ -4,6 +4,7 @@ import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { closeDb, getDb } from '../src/db/index.js';
 import { runMigrations, ensureTaxonomy, ensureDomainGroups } from '../src/db/migrate.js';
+import { ensureVeilleLexicon } from '../src/veille/seed.js';
 import { config } from '../src/config/index.js';
 
 export const TEST_PASSWORD = 'Password123!';
@@ -30,6 +31,7 @@ export function freshDatabase() {
   runMigrations(db, { logger: { info() {} } });
   ensureTaxonomy(db, config.seedCsv, { logger: { info() {} } });
   ensureDomainGroups(db, config.groupsCsv, { logger: { info() {} } });
+  ensureVeilleLexicon(db, config.veilleLexiqueCsv, { logger: { info() {} } });
   const hash = bcrypt.hashSync(TEST_PASSWORD, 4);
   const insertUser = db.prepare(`INSERT INTO users(username, full_name, password_hash, role, actif, must_change_password)
                                  VALUES (?, ?, ?, ?, 1, 0)`);

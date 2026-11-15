@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Veille citoyenne — Wilaya d'Alger",
+  "version": "1.0.0",
+  "description": "Capture assistée d'une publication publique vers la plateforme de veille. Action manuelle de l'agent uniquement.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "action": {
+    "default_title": "Capturer cette publication",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "minimum_chrome_version": "102"
+}

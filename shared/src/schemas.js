@@ -77,6 +77,7 @@ const baseAnomalie = {
   intervenant_autre: z.string().max(200).nullable().optional(),
   date_intervention: optionalDate,
   date_traitement: optionalDate,
+  veille_element_id: optionalId,
 };
 
 export const anomalieCreateSchema = z.object({
@@ -209,6 +210,14 @@ export const settingsSchema = z.object({
   enrichissement_metadonnees: z.coerce.number().int().min(0).max(1).optional(),
   rapport_auto_fige: z.coerce.number().int().min(0).max(1).optional(),
   https_actif: z.coerce.number().int().min(0).max(1).optional(),
+  veille_activee: z.coerce.number().int().min(0).max(1).optional(),
+  veille_conservation_jours: z.coerce.number().int().min(1).max(3650).optional(),
+  veille_seuil_suggestion: z.coerce.number().int().min(1).max(100).optional(),
+  veille_seuil_pertinent: z.coerce.number().int().min(1).max(100).optional(),
+  veille_filtre_geo: z.enum(['strict', 'source_ou_lieu', 'aucun']).optional(),
+  veille_pseudonymiser_auteurs: z.coerce.number().int().min(0).max(1).optional(),
+  veille_stocker_auteur: z.coerce.number().int().min(0).max(1).optional(),
+  veille_fenetre_doublon_h: z.coerce.number().int().min(1).max(720).optional(),
 });
 
 export const userCreateSchema = z.object({

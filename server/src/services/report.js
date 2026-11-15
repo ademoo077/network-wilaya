@@ -6,6 +6,7 @@ import { buildFilters } from './anomalyQuery.js';
 import { getParams } from './settings.js';
 import { DIMENSIONS } from './stats.js';
 import { detailStats } from './statsDetail.js';
+import { veilleWeekly } from '../veille/stats.js';
 import { neutralizeFormula } from './export.js';
 
 const STATUS_CASE = (alias = 'a') => `CASE
@@ -171,12 +172,15 @@ export function buildWeeklyReport(db, options = {}) {
   const top = groupes.domaine.slice(0, 3).map((g) => `${g.label_fr || g.label_ar} (${g.total})`).join(', ');
   const arrow = kpis.evolution_stock > 0 ? '▲' : kpis.evolution_stock < 0 ? '▼' : '=';
   const detail = detailStats(db, { ...options.filters, from: S, to: E });
+  const veille = veilleWeekly(db, { start: S, end: E });
+  const reaction = veille.qualite.delai_median_heures;
   const resume = [
     `Synthèse hebdomadaire — ${nom}, Wilaya d'Alger`,
     `Semaine du ${formatDate(S)} au ${formatDate(E)}`,
     `Anomalies reçues : ${kpis.recues} — Traitées : ${kpis.traite} (${percent(kpis.traite, kpis.recues) ?? '—'} %) — En cours : ${kpis.en_cours} (${percent(kpis.en_cours, kpis.recues) ?? '—'} %) — Non traitées : ${kpis.non_traite} (${percent(kpis.non_traite, kpis.recues) ?? '—'} %)`,
     `Traitées durant la semaine (toutes dates de réception) : ${kpis.traitees_semaine} · Stock ouvert : ${kpis.stock_fin} (${arrow} ${Math.abs(kpis.evolution_stock)})`,
     `Top catégories : ${top || '—'} · Urgentes ouvertes : ${kpis.urgentes_ouvertes} · En retard (> ${retardDays} j) : ${kpis.en_retard}`,
+    `Veille : ${veille.totaux.collectes} collectées — ${veille.totaux.pertinents} pertinentes — ${veille.totaux.retenus} retenues — délai médian de réaction : ${reaction === null ? '—' : `${reaction} h`} — ${veille.evenements.length} événement(s) multi-sources`,
   ].join('\n');
   return {
     semaine: { debut: S, fin: E, label: `${formatDate(S)} → ${formatDate(E)}` },
@@ -187,6 +191,7 @@ export function buildWeeklyReport(db, options = {}) {
     serie_8_semaines: serie(db, base, S, 8),
     detail,
     faits: detail.faits,
+    veille,
     resume,
     meta: {
       genere_le: new Date().toISOString(),
@@ -270,6 +275,24 @@ export async function exportWeeklyXlsx(report) {
     ['Urgentes ouvertes', k.urgentes_ouvertes],
     ['En retard', k.en_retard],
   ], [36, 26]);
+  if (report.veille) {
+    const v = report.veille;
+    addSheet('Veille', ['Indicateur', 'Valeur'], [
+      ['Publications collectées', v.totaux.collectes],
+      ['Pertinentes', v.totaux.pertinents],
+      ['Retenues', v.totaux.retenus],
+      ['Rejetées', v.totaux.rejetes],
+      ['Ignorées', v.totaux.ignores],
+      ['Converties en fiches', v.totaux.convertis],
+      ['Précision estimée', v.qualite.precision_estimee === null ? '—' : `${Math.round(v.qualite.precision_estimee * 1000) / 10} %`],
+      ['Rappel estimé', v.qualite.rappel_estime === null ? '—' : `${Math.round(v.qualite.rappel_estime * 1000) / 10} %`],
+      ['Délai médian de réaction', v.qualite.delai_median_heures === null ? '—' : `${v.qualite.delai_median_heures} h`],
+      ['Événements multi-sources', v.evenements.length],
+    ], [36, 26]);
+    addSheet('Veille — groupes', ['Groupe', 'Collectées', 'Retenues'], v.groupes.map((g) => [g.name_fr || g.name_ar, g.total, g.retenus]), [30, 12, 12]);
+    addSheet('Veille — communes', ['Commune', 'Collectées', 'Retenues'], v.communes.map((c) => [c.name_fr || c.name_ar, c.total, c.retenus]), [30, 12, 12]);
+    addSheet('Veille — événements', ['Groupe', 'Commune', 'Éléments', 'Sources', 'Début', 'Fin'], v.evenements.map((ev) => [ev.groupe_fr || ev.groupe_ar || '—', ev.commune_fr || ev.commune_ar || '—', ev.nb_elements, ev.nb_sources, ev.debut, ev.fin]), [26, 26, 10, 10, 22, 22]);
+  }
   for (const [key, label] of [['domaine', 'Catégories'], ['type', 'Types'], ['daira', 'Daïras'], ['commune', 'Communes'], ['epic', 'EPIC']]) {
     const rows = (report.groupes[key] || []).map((g) => [g.label_fr || g.label_ar, g.total, g.non_traite, g.en_cours, g.traite, g.pct_traite ?? 0, g.taux_traitement === null ? '—' : Math.round(g.taux_traitement * 1000) / 10]);
     addSheet(label, ['Libellé', 'Total', 'Non traitées', 'En cours', 'Traitées', '% traitées', 'Taux'], rows, [30, 10, 14, 12, 12, 12, 12]);

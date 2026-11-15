@@ -15,13 +15,41 @@ const navItems = [
   { to: '/a-faire', key: 'nav.work', icon: ListTodo },
   { to: '/rapport', key: 'nav.report', icon: FileBarChart },
 ];
+const adminNavItems = [
+  { to: '/admin/referentiels', key: 'nav.admin', icon: Settings },
+];
+const SIDEBAR_VISIBILITY_KEY = 'anm-sidebar-items';
 function storedCollapse() { try { return localStorage.getItem('anm-sidebar') === 'collapsed'; } catch { return false; } }
+function defaultVisibility() {
+  const out = {};
+  for (const item of [...navItems, ...adminNavItems]) out[item.key] = true;
+  return out;
+}
+function storedVisibility() {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_VISIBILITY_KEY);
+    if (!raw) return defaultVisibility();
+    return { ...defaultVisibility(), ...JSON.parse(raw) };
+  } catch { return defaultVisibility(); }
+}
 export function Sidebar({ mobileOpen, onMobileClose }) {
   const { t, dir } = useI18n(); const { user } = useAuth(); const desktop = useMediaQuery('(min-width: 1024px)');
   const [collapsed, setCollapsed] = useState(storedCollapse); const compact = collapsed && desktop;
+  const [visibility, setVisibility] = useState(storedVisibility);
   useEffect(() => { try { localStorage.setItem('anm-sidebar', collapsed ? 'collapsed' : 'open'); } catch { /* stockage indisponible */ } }, [collapsed]);
+  useEffect(() => { try { localStorage.setItem(SIDEBAR_VISIBILITY_KEY, JSON.stringify(visibility)); } catch { /* stockage indisponible */ } }, [visibility]);
+  useEffect(() => {
+    const onStorage = (event) => {
+      if (event.key === SIDEBAR_VISIBILITY_KEY) {
+        try { setVisibility({ ...defaultVisibility(), ...JSON.parse(event.newValue || '{}') }); } catch { /* ignore */ }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
   useEffect(() => { if (desktop && mobileOpen) onMobileClose(); }, [desktop, mobileOpen, onMobileClose]);
-  const items = user?.role === 'admin' ? [...navItems, { to: '/admin/referentiels', key: 'nav.admin', icon: Settings }] : navItems;
+  const allItems = user?.role === 'admin' ? [...navItems, ...adminNavItems] : navItems;
+  const items = allItems.filter((item) => visibility[item.key] !== false);
   const content = <div className="relative z-10 flex h-full flex-col">
     <div className="flex h-20 shrink-0 items-center border-b border-brand-700 px-4"><Logo compact={compact} /></div>
     {user?.role !== 'lecteur' && <div className="px-3 pt-5"><Button as={NavLink} to="/anomalies/nouvelle" className="w-full" aria-label={t('nav.new')}

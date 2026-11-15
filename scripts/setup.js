@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const envPath = path.join(root, '.env');
@@ -22,6 +23,7 @@ HTTPS=false
 HTTPS_CERT=./data/certs/server-cert.pem
 HTTPS_KEY=./data/certs/server-key.pem
 SESSION_TTL_HOURS=8
+SECRETS_KEY=${randomBytes(32).toString('hex')}
 LOG_LEVEL=info
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=

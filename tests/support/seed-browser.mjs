@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { todayAlgiers } from '@anm/shared';
 import { createAnomalie, updateAnomalie } from '../../server/src/services/anomalies.js';
+import { veilleContext } from '../../server/src/veille/context.js';
+import { createVeilleElement } from '../../server/src/veille/ingest.js';
 
 export function seedBrowser(db, dataset) {
   const password = 'E2E-Alger-2026';
@@ -31,5 +33,17 @@ export function seedBrowser(db, dataset) {
     ids.push(item.id);
   }
   updateAnomalie(db, ids[0], { version: 1, priorite: 'haute', adresse_texte: '[DEMO] Rue', lieu_dit: '[DEMO] Place' }, user.id);
-  return { ids, daira, commune, secondDaira, secondCommune, epic, agent, type: type.id, domaine: type.domaine_id };
+  const veilleSource = Number(db.prepare(`INSERT INTO veille_sources(type, nom, actif, frequence_min)
+    VALUES ('capture_assistee', '[DEMO] Source Veille', 1, 60)`).run().lastInsertRowid);
+  db.prepare(`INSERT OR IGNORE INTO veille_jobs(source_id, statut, prochaine_execution)
+    VALUES (?, 'idle', strftime('%Y-%m-%dT%H:%M:%fZ','now'))`).run(veilleSource);
+  const veille = createVeilleElement(db, veilleSource, {
+    id_externe: 'demo-veille-1',
+    texte: 'Nid de poule important signalé à [DEMO] Commune, chaussée très dégradée.',
+    url: 'https://facebook.com/posts/veille-demo-1',
+    page_nom: '[DEMO] Page Veille',
+    date_publication: todayAlgiers(),
+  }, { context: veilleContext(db) });
+  return { ids, daira, commune, secondDaira, secondCommune, epic, agent, type: type.id, domaine: type.domaine_id,
+    veilleSourceId: veilleSource, veilleElementId: veille.element.id };
 }

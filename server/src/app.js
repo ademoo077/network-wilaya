@@ -10,6 +10,7 @@ import { getParams } from './services/settings.js';
 import { securityHeaders } from './middleware/security.js';
 import { attachUser } from './middleware/auth.js';
 import { csrfProtection } from './middleware/csrf.js';
+import { extensionCors } from './middleware/extensionCors.js';
 import { maintenanceMode } from './middleware/maintenance.js';
 import { errorHandler, notFoundApi } from './middleware/errors.js';
 import authRoutes from './routes/auth.js';
@@ -27,6 +28,8 @@ import errorsRoutes from './routes/errors.js';
 import adminLimitsRoutes from './routes/adminLimits.js';
 import viewsRoutes from './routes/views.js';
 import workRoutes from './routes/work.js';
+import veilleRoutes from './routes/veille.js';
+import synthesesRoutes from './routes/syntheses.js';
 import { setupStatus } from './services/refs.js';
 
 const distDir = config.clientDist;
@@ -94,6 +97,7 @@ export function createApp() {
   app.use(securityHeaders());
   app.use(express.json({ limit: '256kb' }));
   app.use(express.urlencoded({ extended: false, limit: '256kb' }));
+  app.use('/api/veille/import', express.text({ type: ['text/*', 'application/octet-stream'], limit: '5mb' }));
   app.use(cookieParser());
 
   app.get('/api/health', health);
@@ -117,6 +121,9 @@ export function createApp() {
   app.use('/api/admin/limites', adminLimitsRoutes);
   app.use('/api/views', viewsRoutes);
   app.use('/api/work', workRoutes);
+  app.use('/api/veille/capture', extensionCors);
+  app.use('/api/veille', veilleRoutes);
+  app.use('/api/syntheses', synthesesRoutes);
   app.use('/api/admin', adminRoutes);
   app.get('/api/setup/status', (_req, res) => res.json(setupStatus(getDb())));
 

@@ -53,6 +53,7 @@
   "nav.map": "Carte",
   "nav.report": "Rapport hebdomadaire",
   "nav.admin": "Administration",
+  "nav.adminParametres": "Paramètres d'administration",
   "nav.profile": "Profil",
   "nav.new": "Nouvelle anomalie",
   "nav.collapse": "Replier le menu",

@@ -146,7 +146,7 @@ export function createAnomalie(db, input, userId, settings = {}) {
       'date_signalement', 'domaine_id', 'type_id', 'daira_id', 'commune_id', 'adresse_texte',
       'lieu_dit', 'gps_lat', 'gps_lng', 'verification', 'agent_id', 'date_verification',
       'statut', 'epic_id', 'intervenant_autre', 'date_intervention', 'date_traitement',
-      'priorite', 'observations', 'search_norm', 'saisi_par'];
+      'priorite', 'observations', 'search_norm', 'saisi_par', 'veille_element_id'];
     columns.splice(columns.length - 2, 0, 'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id',
       'contenu_type', 'date_publication_estimee', 'legende', 'auteur_publication');
     const values = columns.map((c) => row[c] === undefined ? null : row[c]);

@@ -10,11 +10,18 @@ export const AnomalyDetailPage = lazyWithRetry(() => import('./features/anomalie
 export const MapPage = lazyWithRetry(() => import('./features/map/MapPage.jsx'));
 export const ReportPage = lazyWithRetry(() => import('./features/report/ReportPage.jsx'));
 export const WorkPage = lazyWithRetry(() => import('./features/work/WorkPage.jsx'));
+export const VeillePage = lazyWithRetry(() => import('./features/veille/VeillePage.jsx'));
+export const VeilleDashboardPage = lazyWithRetry(() => import('./features/veille/VeilleDashboardPage.jsx'));
+export const VeilleCompliancePage = lazyWithRetry(() => import('./features/veille/VeilleCompliancePage.jsx'));
+export const VeilleDetailPage = lazyWithRetry(() => import('./features/veille/VeilleDetailPage.jsx'));
+export const VeilleSettingsPage = lazyWithRetry(() => import('./features/veille/VeilleSettingsPage.jsx'));
 export const AdminPage = lazyWithRetry(() => import('./features/admin/AdminPage.jsx'));
 export const NotFoundPage = lazyWithRetry(() => import('./features/NotFoundPage.jsx'));
 
 export function preloadRoute(path) {
   const pages = { '/': DashboardPage, '/anomalies': AnomaliesPage, '/anomalies/nouvelle': AnomalyFormPage,
-    '/carte': MapPage, '/rapport': ReportPage, '/a-faire': WorkPage, '/profil': ProfilePage, '/admin/referentiels': AdminPage };
+    '/carte': MapPage, '/rapport': ReportPage, '/a-faire': WorkPage, '/profil': ProfilePage, '/admin/referentiels': AdminPage,
+    '/veille': VeillePage, '/veille/tableau': VeilleDashboardPage, '/veille/conformite': VeilleCompliancePage,
+    '/veille/reglages': VeilleSettingsPage };
   pages[path]?.preload();
 }

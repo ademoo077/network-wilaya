@@ -25,4 +25,12 @@ export default [
       'react-hooks/exhaustive-deps': 'warn',
     },
   },
+  {
+    files: ['extension/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'script',
+      globals: { ...globals.node, ...globals.browser, chrome: 'readonly' },
+    },
+  },
 ];

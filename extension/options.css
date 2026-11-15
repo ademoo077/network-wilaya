@@ -1,0 +1,108 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f5f7f6;
+  --border: #c8d1cc;
+  --ink: #15231c;
+  --muted: #55655c;
+  --brand: #0b5d3b;
+  --brand-ink: #ffffff;
+  --danger: #a11c1c;
+  --ok: #0b5d3b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101613;
+    --surface: #18211c;
+    --border: #34453b;
+    --ink: #edf4ef;
+    --muted: #a9b8b0;
+    --brand: #4fc38b;
+    --brand-ink: #082216;
+    --danger: #ff9b9b;
+    --ok: #6fe0aa;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.app { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; }
+
+.head h1 { margin: 0 0 4px; font-size: 22px; }
+.muted { color: var(--muted); font-size: 13px; margin: 0; }
+
+.panel {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+h2 { margin: 0 0 8px; font-size: 16px; }
+ul { margin: 0 0 8px; padding-inline-start: 20px; }
+li { margin: 0 0 6px; }
+
+form { display: grid; gap: 12px; }
+label { display: grid; gap: 5px; font-size: 13px; font-weight: 700; }
+
+input {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+input:focus-visible, button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.hint { margin: 0; color: var(--muted); font-size: 12px; }
+code { font-size: 12px; }
+
+.token-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.token-row .hint { flex: 1 1 220px; }
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary { background: var(--brand); color: var(--brand-ink); }
+.primary:hover, .primary:focus-visible { filter: brightness(1.08); }
+.ghost { background: transparent; color: var(--ink); border-color: var(--border); }
+.ghost:hover, .ghost:focus-visible { background: var(--bg); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.notice {
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 13px;
+}
+.notice.error { border-color: var(--danger); color: var(--danger); }
+.notice.ok { border-color: var(--ok); color: var(--ok); }

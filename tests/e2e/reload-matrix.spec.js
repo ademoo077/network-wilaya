@@ -2,8 +2,14 @@ import { test, expect } from './fixture.js';
 import { authenticate, collectErrors, expectNotBlank } from './helpers.js';
 import { routeCases } from './route-cases.js';
 import fs from 'node:fs';
-const fr = JSON.parse(fs.readFileSync(new URL('../../client/src/i18n/fr.json', import.meta.url)));
-const ar = JSON.parse(fs.readFileSync(new URL('../../client/src/i18n/ar.json', import.meta.url)));
+function loadDict(lang) {
+  return ['', '-v5', '-v6', '-v7'].reduce((merged, suffix) => ({
+    ...merged,
+    ...JSON.parse(fs.readFileSync(new URL(`../../client/src/i18n/${lang}${suffix}.json`, import.meta.url))),
+  }), {});
+}
+const fr = loadDict('fr');
+const ar = loadDict('ar');
 
 for (const dataset of ['demo', 'empty']) for (const lang of ['fr', 'ar']) for (const theme of ['light', 'dark']) {
   test(`33 — chaque route / ${dataset} / ${lang} / ${theme}`, async ({ page, testServer, emptyServer }, info) => {
@@ -14,11 +20,15 @@ for (const dataset of ['demo', 'empty']) for (const lang of ['fr', 'ar']) for (c
     const errors = collectErrors(page);
     const dict = lang === 'fr' ? fr : ar;
     for (const [pattern, key] of routeCases) {
-      const route = pattern.replace(':id', dataset === 'demo' ? String(testServer.refs.ids[0]) : 'absente');
+      const isVeilleElement = pattern.startsWith('/veille/elements/');
+      const route = pattern.replace(':id', isVeilleElement
+        ? (dataset === 'demo' ? String(testServer.refs.veilleElementId) : 'absente')
+        : (dataset === 'demo' ? String(testServer.refs.ids[0]) : 'absente'));
       let title = dict[key];
       if (key === 'dashboard.hello') title = title.replace('{name}', session.user.full_name);
       if (pattern.includes(':id') && dataset === 'empty') title = dict['notFound.title'];
       if (key === 'reference' && dataset === 'demo') title = new RegExp('^ANM-');
+      if (key === 'veille.detail.title' && dataset === 'demo') title = new RegExp('^\\[DEMO\\] Page Veille');
       await test.step(route, async () => {
         await page.goto(`${base}/#${route}`);
         for (let reload = 0; reload < 3; reload += 1) {

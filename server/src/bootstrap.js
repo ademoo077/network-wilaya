@@ -2,6 +2,10 @@ import { getDb } from './db/index.js';
 import { runMigrations, ensureTaxonomy, ensureDomainGroups } from './db/migrate.js';
 import { ensureAdmin } from './db/admin.js';
 import { ensureDailyBackup, applyRetention } from './services/backups.js';
+import { ensureVeilleLexicon } from './veille/seed.js';
+import { startVeilleScheduler, ensureVeilleJobs } from './veille/scheduler.js';
+import { collectSource } from './veille/collect.js';
+import { maybePurge } from './veille/compliance.js';
 import { config, ensureDirs } from './config/index.js';
 import { logger } from './utils/logger.js';
 
@@ -10,6 +14,8 @@ export async function prepareDatabase({ db = getDb(), seed = true, backup = true
   runMigrations(db, { logger: log });
   const taxonomy = seed ? ensureTaxonomy(db, config.seedCsv, { logger: log }) : null;
   const groups = seed ? ensureDomainGroups(db, config.groupsCsv, { logger: log }) : null;
+  const veilleLexicon = seed ? ensureVeilleLexicon(db, config.veilleLexiqueCsv, { logger: log }) : null;
+  if (seed) ensureVeilleJobs(db);
   db.prepare(`INSERT INTO parametres(cle,valeur) VALUES ('https_actif',?)
               ON CONFLICT(cle) DO UPDATE SET valeur=excluded.valeur`).run(config.https ? '1' : '0');
   // Corrige l'ancien fond OSM bloqué par la politique d'utilisation des tuiles.
@@ -32,7 +38,8 @@ export async function prepareDatabase({ db = getDb(), seed = true, backup = true
       log.warn?.(`Sauvegarde automatique impossible : ${error.message}`);
     }
   }
-  return { taxonomy, groups, admin };
+  if (seed) maybePurge(db, { logger: log });
+  return { taxonomy, groups, admin, veilleLexicon };
 }
 
 export function startBackgroundJobs(db = getDb(), log = logger) {
@@ -54,5 +61,8 @@ export function startBackgroundJobs(db = getDb(), log = logger) {
       log.warn?.(`Sauvegarde quotidienne : ${error.message}`);
     }
   }, 6 * 60 * 60 * 1000);
-  return () => { clearInterval(sessionTimer); clearInterval(dailyTimer); };
+  const stopVeille = startVeilleScheduler({ db, logger: log, collect: (job) => collectSource(db, job) });
+  const purgeTimer = setInterval(() => maybePurge(db, { logger: log }), 6 * 60 * 60 * 1000);
+  purgeTimer.unref?.();
+  return () => { clearInterval(sessionTimer); clearInterval(dailyTimer); clearInterval(purgeTimer); stopVeille(); };
 }

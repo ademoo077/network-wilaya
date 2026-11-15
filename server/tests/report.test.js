@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { todayAlgiers, weekStart, weekEnd, addDays } from '@anm/shared';
+import ExcelJS from 'exceljs';
 import { createApp } from '../src/app.js';
 import { freshDatabase, login, write, anomalyPayload } from './helpers.js';
 
 let app;
+let db;
 let refs;
 let agent;
 let csrf;
@@ -18,7 +20,7 @@ async function create(overrides) {
 }
 
 beforeAll(async () => {
-  ({ refs } = freshDatabase());
+  ({ db, refs } = freshDatabase());
   app = createApp();
   ({ agent, csrf } = await login(app, 'admin'));
   await create({ lien_url: 'https://facebook.com/r/1', date_signalement: today });
@@ -32,6 +34,19 @@ beforeAll(async () => {
     verification: 'confirmee', agent_id: refs.agentId, statut: 'traite',
     epic_id: refs.epicId, date_intervention: today, date_traitement: today,
   });
+
+  const sourceId = Number(db.prepare("INSERT INTO veille_sources(type, nom, actif, frequence_min) VALUES ('rss', 'Flux de test', 1, 30)").run().lastInsertRowid);
+  const groupId = Number(db.prepare('SELECT id FROM groupes_domaines ORDER BY id LIMIT 1').get().id);
+  const insertVeille = db.prepare(`INSERT INTO veille_elements(source_id, id_externe, texte, texte_norm, date_publication, collecte_le, score, statut, traite_le)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const retainedId = Number(insertVeille.run(sourceId, 'v1', 'Nid de poule', 'nid de poule', today, `${today}T10:00:00.000Z`, 5, 'retenu', `${today}T12:00:00.000Z`).lastInsertRowid);
+  insertVeille.run(sourceId, 'v2', 'Publicité', 'publicite', today, `${today}T10:00:00.000Z`, 1, 'rejete', null);
+  insertVeille.run(sourceId, 'v3', 'À qualifier', 'a qualifier', today, `${today}T10:00:00.000Z`, 3, 'ignore', null);
+  insertVeille.run(sourceId, 'v4', 'Signalement', 'signalement', today, `${today}T10:00:00.000Z`, 0, 'a_qualifier', null);
+  db.prepare('INSERT INTO veille_suggestions(element_id, rang, groupe_id, score, commune_id, daira_id, priorite, source_geo) VALUES (?, 1, ?, ?, ?, ?, ?, ?)')
+    .run(retainedId, groupId, 5, refs.communeId, refs.communeId, 'normale', 'commune');
+  db.prepare(`INSERT INTO veille_evenements(groupe_id, commune_id, debut, fin, nb_elements, nb_sources, score)
+    VALUES (?, ?, ?, ?, 2, 2, 8)`).run(groupId, refs.communeId, `${S}T08:00:00.000Z`, `${E}T18:00:00.000Z`);
 });
 
 describe('Rapport hebdomadaire', () => {
@@ -49,6 +64,32 @@ describe('Rapport hebdomadaire', () => {
     expect(report.kpis.taux_traitement).toBeCloseTo(1 / 3, 4);
     expect(report.resume).toContain('Synthèse hebdomadaire');
     expect(report.serie_8_semaines).toHaveLength(8);
+  });
+
+  it('ajoute une section Veille à la synthèse hebdomadaire', async () => {
+    const res = await agent.get('/api/reports/weekly').query({ semaine: S });
+    expect(res.status).toBe(200);
+    const report = res.body.item;
+    expect(report.veille).toMatchObject({
+      totaux: {
+        collectes: 4,
+        pertinents: 2,
+        retenus: 1,
+        rejetes: 1,
+        ignores: 1,
+        a_qualifier: 1,
+        convertis: 0,
+      },
+      qualite: {
+        precision_estimee: 0.5,
+        rappel_estime: 0.5,
+        delai_median_heures: 12,
+      },
+      groupes: [{ id: expect.any(Number), total: 1, retenus: 1 }],
+      communes: [{ id: expect.any(Number), total: 1, retenus: 1 }],
+      evenements: [{ id: expect.any(Number), nb_elements: 2, nb_sources: 2 }],
+    });
+    expect(report.resume).toContain('Veille');
   });
 
   it('propose le même effectif que le tableau de bord pour la même cohorte', async () => {
@@ -94,6 +135,15 @@ describe('Rapport hebdomadaire', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('spreadsheetml');
     expect(res.body.length).toBeGreaterThan(1000);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(res.body);
+    expect(workbook.getWorksheet('Veille')).toBeTruthy();
+    const sheet = workbook.getWorksheet('Veille');
+    expect(sheet.getRow(1).values.slice(1)).toEqual(['Indicateur', 'Valeur']);
+    expect(sheet.getRow(2).values.slice(1)).toEqual(['Publications collectées', 4]);
+    expect(workbook.getWorksheet('Veille — groupes')).toBeTruthy();
+    expect(workbook.getWorksheet('Veille — communes')).toBeTruthy();
+    expect(workbook.getWorksheet('Veille — événements')).toBeTruthy();
   });
 
   it('rejette une semaine invalide', async () => {
