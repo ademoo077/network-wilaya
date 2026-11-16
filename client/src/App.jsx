@@ -9,7 +9,8 @@ import { useRefs } from './context/RefsContext.jsx';
 import { useI18n } from './i18n/index.jsx';
 import { LoginPage, ProfilePage, SetupPage, DashboardPage, AnomaliesPage, AnomalyFormPage,
   AnomalyDetailPage, MapPage, ReportPage, WorkPage, LaboratoirePage, AdminPage, NotFoundPage,
-  VeillePage, VeilleDashboardPage, VeilleCompliancePage, VeilleDetailPage, VeilleSettingsPage } from './routePages.js';
+  VeillePage, VeilleDashboardPage, VeilleCompliancePage, VeilleDetailPage, VeilleSettingsPage,
+  SynthesesPage, SynthesePage } from './routePages.js';
 
 export function BootScreen() {
   const { t } = useI18n();
@@ -60,6 +61,8 @@ function Application() {
       <Route path="veille/elements/:id" element={page(VeilleDetailPage)} />
       <Route element={<AdminOnly />}><Route path="veille/reglages" element={page(VeilleSettingsPage)} /><Route path="veille/conformite" element={page(VeilleCompliancePage)} /></Route>
       <Route path="rapport" element={page(ReportPage)} />
+      <Route path="syntheses" element={page(SynthesesPage)} />
+      <Route path="syntheses/:id" element={page(SynthesePage)} />
       <Route path="profil" element={page(ProfilePage)} />
       <Route element={<AdminOnly />}><Route path="assistant" element={page(SetupPage)} /><Route path="admin/:onglet" element={page(AdminPage)} /></Route>
       <Route path="*" element={page(NotFoundPage)} />

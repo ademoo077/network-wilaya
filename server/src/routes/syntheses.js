@@ -4,12 +4,15 @@ import {
 } from '@anm/shared';
 import { getDb } from '../db/index.js';
 import { requireAuth, requireWrite } from '../middleware/auth.js';
-import { badRequest } from '../utils/errors.js';
+import { asyncHandler, badRequest } from '../utils/errors.js';
 import { audit } from '../services/audit.js';
 import {
   archiveModele, cataloguePayload, createModele, duplicateModele, evaluerRequetes,
-  getModele, listModeles, normaliserRequete, updateModele,
+  getModele, listModeles, normaliserRequete, personnaliserModele, reinitialiserModele, updateModele,
 } from '../services/syntheses.js';
+import {
+  createEdition, editionWorkbook, freezeEdition, getEdition, listEditions,
+} from '../services/synthesesEditions.js';
 
 const router = Router();
 
@@ -32,6 +35,13 @@ function duplicationPayload(req) {
     clean.portee = body.portee;
   }
   return clean;
+}
+
+function cleanBody(raw, allowed) {
+  const body = raw && typeof raw === 'object' ? raw : {};
+  const unknown = Object.keys(body).filter((key) => !allowed.includes(key));
+  if (unknown.length) throw badRequest('Champ inconnu', { [unknown[0]]: 'Champ inconnu' });
+  return body;
 }
 
 router.get('/catalogue', requireAuth, (_req, res) => {
@@ -86,5 +96,70 @@ router.post('/modeles/:id/dupliquer', requireWrite, (req, res) => {
   });
   res.status(201).json({ item: result.item });
 });
+
+router.post('/modeles/:id/personnaliser', requireWrite, (req, res) => {
+  const result = personnaliserModele(getDb(), req.user, req.params.id);
+  audit(req, 'SYNTHESE_MODELE_PERSONNALISATION', {
+    entite: 'synthese_modele',
+    entiteId: result.item.id,
+    details: { source_id: result.source, cree: result.created },
+  });
+  res.status(result.created ? 201 : 200).json({ item: result.item, created: result.created, source: result.source });
+});
+
+router.post('/modeles/:id/reinitialiser', requireWrite, (req, res) => {
+  const body = cleanBody(req.body, ['source_id']);
+  const result = reinitialiserModele(getDb(), req.user, req.params.id, body.source_id ?? null);
+  audit(req, 'SYNTHESE_MODELE_REINITIALISATION', {
+    entite: 'synthese_modele',
+    entiteId: result.item.id,
+    details: { source_id: result.source, version: result.item.version },
+  });
+  res.json({ item: result.item, source: result.source });
+});
+
+router.get('/editions', requireAuth, (req, res) => {
+  const modeleId = req.query.modele_id ? Number(req.query.modele_id) : null;
+  res.json({ items: listEditions(getDb(), req.user, { modeleId }) });
+});
+
+router.post('/editions', requireWrite, (req, res) => {
+  const body = cleanBody(req.body, ['modele_id', 'periode', 'filtres']);
+  const item = createEdition(getDb(), req.user, body);
+  audit(req, 'SYNTHESE_EDITION_CREATION', {
+    entite: 'synthese_edition',
+    entiteId: item.id,
+    details: { modele_id: item.modele_id, periode: item.periode, version: item.version },
+  });
+  res.status(201).json({ item });
+});
+
+router.get('/editions/:id', requireAuth, (req, res) => {
+  res.json({ item: getEdition(getDb(), req.user, req.params.id) });
+});
+
+router.post('/editions/:id/figer', requireWrite, (req, res) => {
+  const item = freezeEdition(getDb(), req.user, req.params.id);
+  audit(req, 'SYNTHESE_FIGEE', {
+    entite: 'synthese_edition',
+    entiteId: item.id,
+    details: { version: item.version, periode: item.periode },
+  });
+  res.json({ item });
+});
+
+router.get('/editions/:id/export.xlsx', requireAuth, asyncHandler(async (req, res) => {
+  const edition = getEdition(getDb(), req.user, req.params.id);
+  const buffer = await editionWorkbook(edition);
+  const filename = `synthese-${edition.modele_id}-${edition.periode.debut}-v${edition.version}.xlsx`;
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buffer);
+  audit(req, 'SYNTHESE_EDITION_EXPORT', {
+    entite: 'synthese_edition',
+    entiteId: edition.id,
+    details: { format: 'xlsx', version: edition.version },
+  });
+}));
 
 export default router;

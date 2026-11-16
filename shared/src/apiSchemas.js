@@ -74,6 +74,19 @@ export const syntheseResultSchema = z.object({
   meta: z.object({}).passthrough(),
 }).passthrough();
 export const syntheseBatchSchema = z.object({ items: z.array(syntheseResultSchema) }).passthrough();
+export const syntheseEditionSchema = z.object({
+  id: z.number(), modele_id: z.number(), modele_nom: z.string().nullable().optional(),
+  periode: z.object({ debut: z.string(), fin: z.string() }).passthrough(),
+  parametres: z.object({}).passthrough(),
+  version: z.number(), statut: z.enum(['brouillon', 'relu', 'valide', 'fige']),
+  figee_le: z.string().nullable().optional(),
+  catalogue_version: z.string().nullable().optional(),
+  data_version: z.number().nullable().optional(),
+  genere_par: z.number().nullable().optional(),
+  created_at: z.string(), updated_at: z.string(),
+  a_snapshot: z.boolean(), snapshot: z.object({}).passthrough().nullable(),
+}).passthrough();
+export const syntheseEditionListSchema = z.object({ items: z.array(syntheseEditionSchema) }).passthrough();
 
 export function responseContract(path) {
   const route = path.split('?')[0];
@@ -89,6 +102,8 @@ export function responseContract(path) {
   if (route === '/syntheses/catalogue') return [syntheseCatalogueSchema, emptySyntheseCatalogue];
   if (route === '/syntheses/modeles') return [syntheseModelListSchema, { items: [] }];
   if (/^\/syntheses\/modeles\/\d+$/.test(route)) return [z.object({ item: syntheseModelSchema }), { item: null }];
+  if (route === '/syntheses/editions') return [syntheseEditionListSchema, { items: [] }];
+  if (/^\/syntheses\/editions\/\d+$/.test(route)) return [z.object({ item: syntheseEditionSchema }), { item: null }];
   if (route === '/views') return [items, { items: [] }];
   if (route === '/work') return [z.object({ item: z.object({ total: z.number().nonnegative(), items: z.array(z.object({}).passthrough()).default([]), alertes: z.object({}).passthrough().default({}) }).passthrough() }), { item: { total: 0, items: [], alertes: {} } }];
   if (/^\/anomalies\/\d+$/.test(route)) return [z.object({ item: anomalyResponseSchema }), { item: null }];

@@ -96,6 +96,9 @@ export async function stubTiles(page) {
 export async function authenticate(page, base, role = 'admin') {
   const session = await loginAs(base, role);
   await page.context().addCookies([{ name: 'sid', value: session.token, url: base }]);
+  // Le client envoie X-CSRF-Token pour toute écriture ; le harness fournit le
+  // jeton obtenu au login (le vrai client le reçoit via la réponse /auth/me).
+  await page.addInitScript((token) => { window.__ANM_CSRF__ = token || null; }, session.csrf);
   return session;
 }
 

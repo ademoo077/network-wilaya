@@ -180,7 +180,7 @@ export const requeteSchemaStrict = requeteSchema.superRefine((spec, ctx) => {
   }
 });
 
-const BLOC_TYPES = [
+export const BLOC_TYPES = [
   'kpi', 'tableau', 'barres', 'lignes', 'anneau', 'courbe', 'aire', 'pareto',
   'histogramme', 'cascade', 'carte_thermique', 'radar', 'nuage', 'treemap',
   'entonnoir', 'texte', 'liste_fiches', 'classement', 'chronologie',
@@ -226,6 +226,7 @@ export const syntheseModelePayloadSchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(),
   portee: z.enum(['prive', 'equipe']).optional(),
   definition: syntheseDefinitionSchema,
+  version: z.number().int().min(1).optional(),
 }).strict();
 
 /** Valide et normalise une requête ; lève une Error lisible en cas de refus. */

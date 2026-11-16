@@ -11,6 +11,8 @@ export const MapPage = lazyWithRetry(() => import('./features/map/MapPage.jsx'))
 export const ReportPage = lazyWithRetry(() => import('./features/report/ReportPage.jsx'));
 export const WorkPage = lazyWithRetry(() => import('./features/work/WorkPage.jsx'));
 export const LaboratoirePage = lazyWithRetry(() => import('./features/syntheses/LaboratoirePage.jsx'));
+export const SynthesesPage = lazyWithRetry(() => import('./features/syntheses/SynthesesPage.jsx'));
+export const SynthesePage = lazyWithRetry(() => import('./features/syntheses/SynthesePage.jsx'));
 export const VeillePage = lazyWithRetry(() => import('./features/veille/VeillePage.jsx'));
 export const VeilleDashboardPage = lazyWithRetry(() => import('./features/veille/VeilleDashboardPage.jsx'));
 export const VeilleCompliancePage = lazyWithRetry(() => import('./features/veille/VeilleCompliancePage.jsx'));
@@ -24,6 +26,6 @@ export function preloadRoute(path) {
     '/carte': MapPage, '/rapport': ReportPage, '/a-faire': WorkPage, '/profil': ProfilePage, '/admin/referentiels': AdminPage,
     '/laboratoire': LaboratoirePage,
     '/veille': VeillePage, '/veille/tableau': VeilleDashboardPage, '/veille/conformite': VeilleCompliancePage,
-    '/veille/reglages': VeilleSettingsPage };
-  pages[path]?.preload();
+    '/veille/reglages': VeilleSettingsPage, '/syntheses': SynthesesPage };
+    pages[path]?.preload();
 }

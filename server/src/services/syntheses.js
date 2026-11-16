@@ -5,7 +5,7 @@
  * Les modèles système sont en lecture seule : seule la duplication est permise.
  */
 import { CATALOGUE, todayAlgiers, validerRequete } from '@anm/shared';
-import { badRequest, forbidden, notFound } from '../utils/errors.js';
+import { badRequest, conflict, forbidden, notFound } from '../utils/errors.js';
 import { evaluateSynthese } from '../synthese/engine.js';
 
 const MAX_REQUETES = 20;
@@ -136,6 +136,9 @@ export function updateModele(db, user, id, payload) {
     throw forbidden('Un modèle système se duplique, il ne se modifie pas');
   }
   if (row.proprietaire_id !== user.id && user.role !== 'admin') throw notFound('Modèle de synthèse introuvable');
+  if (payload.version !== undefined && Number(payload.version) !== row.version) {
+    throw conflict('SYNTHESE_VERSION_CONFLIT', 'Le modèle a été modifié entre-temps', { version: row.version });
+  }
   const nom = String(payload.nom || '').trim().slice(0, MAX_NOM);
   if (!nom) throw badRequest('Nom obligatoire', { nom: 'Nom requis' });
   const portee = payload.portee || row.portee;
@@ -171,4 +174,45 @@ export function duplicateModele(db, user, id, payload = {}) {
     VALUES (?, ?, ?, ?, ?, ?, 1)`)
     .run(base, row.description, user.id, portee, row.definition_json, row.schema_version).lastInsertRowid;
   return { item: getModele(db, newId, user), source: row.id };
+}
+
+/** Copy-on-write : crée (ou retrouve) la copie personnelle d'un modèle. */
+export function personnaliserModele(db, user, id) {
+  if (user.role === 'lecteur') throw forbidden('Votre rôle ne permet pas de personnaliser une synthèse');
+  const row = findVisibleRow(db, id, user);
+  if (!row) throw notFound('Modèle de synthèse introuvable');
+  const systeme = row.portee === 'systeme' || Boolean(row.cle_systeme);
+  if (!systeme && row.proprietaire_id === user.id) {
+    return { item: shapeModele(row, user), created: false, source: row.id };
+  }
+  const nom = systeme && row.cle_systeme === 'hebdomadaire'
+    ? 'Ma synthèse hebdomadaire'
+    : `Ma synthèse — ${row.nom}`;
+  const existing = db.prepare(`SELECT * FROM syntheses_modeles
+    WHERE proprietaire_id = ? AND archive = 0 AND nom = ?`).get(user.id, nom);
+  if (existing) return { item: shapeModele(existing, user), created: false, source: row.id };
+  const newId = db.prepare(`INSERT INTO syntheses_modeles
+    (nom, description, proprietaire_id, portee, definition_json, schema_version, version)
+    VALUES (?, ?, ?, 'prive', ?, ?, 1)`)
+    .run(nom, row.description, user.id, row.definition_json, row.schema_version).lastInsertRowid;
+  return { item: getModele(db, newId, user), created: true, source: row.id };
+}
+
+/** Réinitialise une copie personnelle depuis un modèle standard, sans toucher aux éditions. */
+export function reinitialiserModele(db, user, id, sourceId = null) {
+  const row = findVisibleRow(db, id, user);
+  if (!row) throw notFound('Modèle de synthèse introuvable');
+  if (row.portee === 'systeme' || row.cle_systeme) {
+    throw forbidden('Le modèle standard ne se réinitialise pas');
+  }
+  if (row.proprietaire_id !== user.id && user.role !== 'admin') throw notFound('Modèle de synthèse introuvable');
+  const source = sourceId
+    ? db.prepare(`SELECT * FROM syntheses_modeles WHERE id = ? AND archive = 0 AND portee = 'systeme'`).get(Number(sourceId))
+    : db.prepare(`SELECT * FROM syntheses_modeles WHERE archive = 0 AND cle_systeme = 'hebdomadaire'`).get();
+  if (!source) throw notFound('Modèle standard introuvable');
+  db.prepare(`UPDATE syntheses_modeles
+    SET definition_json = ?, schema_version = ?, version = version + 1,
+        updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+    WHERE id = ?`).run(source.definition_json, source.schema_version, row.id);
+  return { item: getModele(db, row.id, user), source: source.id };
 }

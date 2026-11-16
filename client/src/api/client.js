@@ -3,6 +3,14 @@ export { anomalyListSchema, emptyAnomalyList } from '@anm/shared';
 
 let csrfToken = null;
 
+/** Jeton CSRF : défini par le client après login (production), ou injecté
+ *  par le harness de tests via window.__ANM_CSRF__ (E2E uniquement). */
+function csrfValue() {
+  if (csrfToken) return csrfToken;
+  if (typeof window !== 'undefined' && window.__ANM_CSRF__) return window.__ANM_CSRF__;
+  return null;
+}
+
 export class ApiError extends Error {
   constructor(status, payload) {
     super(payload?.error?.message || `HTTP ${status}`);
@@ -23,7 +31,8 @@ export async function api(path, options = {}) {
   const bodyIsForm = options.body instanceof FormData;
   if (options.body && !bodyIsForm && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   const method = String(options.method || 'GET').toUpperCase();
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && csrfToken) headers.set('X-CSRF-Token', csrfToken);
+  const token = csrfValue();
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && token) headers.set('X-CSRF-Token', token);
   let response;
   try {
     response = await fetch(`/api${path}`, {

@@ -1,0 +1,253 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { api } from '../../api/client.js';
+import { useToast } from '../../components/ui/index.js';
+import { blocPositions, cloneDefinition, evaluerSpecs, specsOf } from './editorData.js';
+import { personalizeModel } from './syntheseActions.js';
+export { evaluerSpecs, flattenBlocs, specsOf } from './editorData.js';
+
+const AUTO_SAVE_MS = 800;
+const MAX_HISTORY = 60;
+export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {}) {
+  const { push } = useToast();
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [results, setResults] = useState({});
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluationError, setEvaluationError] = useState(null);
+  const [editions, setEditions] = useState([]);
+  const [editionsLoading, setEditionsLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [hIndex, setHIndex] = useState(-1);
+  const saveTimer = useRef(null);
+  const savingRef = useRef(false);
+  const evaluationRevision = useRef(0);
+  const initializedId = useRef(null);
+  const modeleRef = useRef(null);
+  const periodeRef = useRef(periode);
+  periodeRef.current = periode;
+  const periodeKey = JSON.stringify(periode);
+
+  const definition = useMemo(() => modele?.definition || { schema_version: 1, sections: [] }, [modele]);
+  const currentDefinition = useMemo(() => history[hIndex] || definition, [history, hIndex, definition]);
+  const canUndo = hIndex > 0;
+  const canRedo = hIndex >= 0 && hIndex < history.length - 1;
+
+  const evaluate = useCallback(async (def, { silent = false } = {}) => {
+    const revision = ++evaluationRevision.current;
+    const specs = specsOf(def);
+    setEvaluationError(null);
+    if (!specs.length) {
+      setResults({});
+      setEvaluating(false);
+      return {};
+    }
+    setEvaluating(true);
+    try {
+      const next = await evaluerSpecs(specs, { periode: periodeRef.current });
+      if (revision === evaluationRevision.current) setResults(next);
+      return next;
+    } catch (error) {
+      if (revision === evaluationRevision.current && !silent) setEvaluationError(error);
+      return null;
+    } finally {
+      if (revision === evaluationRevision.current) setEvaluating(false);
+    }
+  }, []);
+
+  const replaceDefinition = useCallback((nextDefinition) => {
+    const next = cloneDefinition(nextDefinition || { schema_version: 1, sections: [] });
+    setHistory([next]);
+    setHIndex(0);
+    setDirty(false);
+    setLastSavedAt(null);
+    setResults({});
+    void evaluate(next);
+  }, [evaluate]);
+
+  useEffect(() => {
+    if (!modele) return;
+    const current = modeleRef.current;
+    if (!current || current.id !== modele.id || Number(modele.version) >= Number(current.version)) {
+      modeleRef.current = modele;
+    }
+    if (initializedId.current === modele.id) return;
+    initializedId.current = modele.id;
+    setEditions([]);
+    replaceDefinition(modele.definition);
+  }, [modele, replaceDefinition]);
+
+  useEffect(() => {
+    if (initializedId.current && history.length) void evaluate(currentDefinition);
+    // La période seule déclenche ce recalcul ; la définition est évaluée par ses actions dédiées.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodeKey, evaluate]);
+
+  useEffect(() => () => {
+    evaluationRevision.current += 1;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+  }, []);
+
+  const pushHistory = useCallback((next) => {
+    const updated = history.slice(0, hIndex + 1);
+    updated.push(next);
+    if (updated.length > MAX_HISTORY) updated.shift();
+    setHistory(updated);
+    setHIndex(updated.length - 1);
+  }, [history, hIndex]);
+
+  const goToHistory = useCallback((nextIndex) => {
+    const next = history[nextIndex];
+    if (!next) return;
+    setHIndex(nextIndex);
+    setDirty(true);
+    void evaluate(next, { silent: true });
+  }, [history, evaluate]);
+
+  const undo = useCallback(() => { if (canUndo) goToHistory(hIndex - 1); }, [canUndo, goToHistory, hIndex]);
+  const redo = useCallback(() => { if (canRedo) goToHistory(hIndex + 1); }, [canRedo, goToHistory, hIndex]);
+
+  const save = useCallback(async (def = currentDefinition) => {
+    const currentModele = modeleRef.current || modele;
+    if (!currentModele || savingRef.current) return null;
+    if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const updated = await api(`/syntheses/modeles/${currentModele.id}`, {
+        method: 'PUT',
+        body: { nom: currentModele.nom, definition: def, version: currentModele.version },
+      });
+      const next = updated.item || updated;
+      modeleRef.current = next;
+      setDirty(false);
+      setLastSavedAt(Date.now());
+      onModeleChange?.(next);
+      return next;
+    } catch (error) {
+      push(error.message || String(error), 'danger');
+      throw error;
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }, [modele, currentDefinition, onModeleChange, push]);
+
+  useEffect(() => {
+    if (!dirty || !modeleRef.current || saving || evaluating) return undefined;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => { void save(currentDefinition).catch(() => {}); }, AUTO_SAVE_MS);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [dirty, saving, evaluating, currentDefinition, save]);
+
+  const setBloc = useCallback((id, patch) => {
+    const next = cloneDefinition(currentDefinition);
+    let changed = false;
+    for (const section of next.sections) {
+      for (const colonne of section.colonnes) {
+        const index = colonne.findIndex((bloc) => bloc.id === id);
+        if (index < 0) continue;
+        colonne[index] = { ...colonne[index], ...patch };
+        changed = true;
+        break;
+      }
+      if (changed) break;
+    }
+    if (!changed) return;
+    pushHistory(next);
+    setDirty(true);
+  }, [currentDefinition, pushHistory]);
+
+  const addBloc = useCallback((sectionId, bloc) => {
+    const next = cloneDefinition(currentDefinition);
+    const section = next.sections.find((entry) => entry.id === sectionId);
+    if (!section) return;
+    const colonne = section.colonnes[0] || (section.colonnes[0] = []);
+    colonne.push(bloc);
+    pushHistory(next);
+    setDirty(true);
+    void evaluate(next);
+  }, [currentDefinition, pushHistory, evaluate]);
+
+  const removeBloc = useCallback((id) => {
+    const next = cloneDefinition(currentDefinition);
+    for (const section of next.sections) {
+      section.colonnes = section.colonnes.map((colonne) => colonne.filter((bloc) => bloc.id !== id));
+    }
+    pushHistory(next);
+    setDirty(true);
+    void evaluate(next);
+  }, [currentDefinition, pushHistory, evaluate]);
+
+  const moveBloc = useCallback((id, delta) => {
+    const next = cloneDefinition(currentDefinition);
+    const positions = blocPositions(next);
+    const index = positions.findIndex((position) => position.colonne[position.index]?.id === id);
+    const target = index + delta;
+    if (index < 0 || target < 0 || target >= positions.length) return;
+    const from = positions[index];
+    const to = positions[target];
+    [from.colonne[from.index], to.colonne[to.index]] = [to.colonne[to.index], from.colonne[from.index]];
+    pushHistory(next);
+    setDirty(true);
+  }, [currentDefinition, pushHistory]);
+
+  const personnaliser = useCallback((source) => personalizeModel(source), []);
+
+  const reinitialiser = useCallback(async (modeleId, source) => {
+    const reset = await api(`/syntheses/modeles/${modeleId}/reinitialiser`, {
+      method: 'POST', body: { source_id: source },
+    });
+    const next = reset.item || reset;
+    modeleRef.current = next;
+    onModeleChange?.(next);
+    replaceDefinition(next.definition);
+    return next;
+  }, [onModeleChange, replaceDefinition]);
+
+  const loadEditions = useCallback(async () => {
+    const currentModele = modeleRef.current || modele;
+    if (!currentModele) return [];
+    setEditionsLoading(true);
+    try {
+      const { items } = await api(`/syntheses/editions?modele_id=${currentModele.id}`);
+      setEditions(items || []);
+      return items || [];
+    } finally { setEditionsLoading(false); }
+  }, [modele]);
+
+  const createEdition = useCallback(async (periode, filtres) => {
+    const currentModele = modeleRef.current || modele;
+    if (!currentModele) return null;
+    const created = await api('/syntheses/editions', {
+      method: 'POST', body: { modele_id: currentModele.id, periode, filtres },
+    });
+    const item = created.item || created;
+    await loadEditions();
+    return item;
+  }, [modele, loadEditions]);
+
+  const figereEdition = useCallback(async (editionId) => {
+    const figee = await api(`/syntheses/editions/${editionId}/figer`, { method: 'POST' });
+    const item = figee.item || figee;
+    await loadEditions();
+    return item;
+  }, [loadEditions]);
+
+  const getEdition = useCallback(async (editionId) => {
+    const response = await api(`/syntheses/editions/${editionId}`);
+    return response.item || response;
+  }, []);
+
+  const cancelSave = useCallback(() => {
+    if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+  }, []);
+
+  return {
+    modele, definition, currentDefinition, dirty, saving, lastSavedAt, evaluating, evaluationError,
+    results, editions, editionsLoading,
+    canUndo, canRedo, undo, redo, save, setBloc, addBloc, removeBloc, moveBloc,
+    personnaliser, reinitialiser, loadEditions, createEdition, figereEdition, getEdition,
+    cancelSave, setDirty, evaluate,
+  };
+}

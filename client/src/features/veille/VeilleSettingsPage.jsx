@@ -23,8 +23,7 @@ const SIDEBAR_ITEMS = [
   { key: 'nav.anomalies', label: 'nav.anomalies' },
   { key: 'nav.map', label: 'nav.map' },
   { key: 'nav.work', label: 'nav.work' },
-  { key: 'nav.lab', label: 'nav.lab' },
-  { key: 'nav.report', label: 'nav.report' },
+  { key: 'nav.syntheses', label: 'nav.syntheses' },
   { key: 'nav.admin', label: 'nav.admin', admin: true },
 ];
 

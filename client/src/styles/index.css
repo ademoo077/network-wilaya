@@ -62,5 +62,17 @@
   .report-paper table { page-break-inside: auto; }
   .report-paper thead { display: table-header-group; }
   .report-paper tr { page-break-inside: avoid; }
+  [data-print-document] { width: auto; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
+  [data-print-document].print-portrait { page: synthesis-portrait; }
+  [data-print-document].print-landscape { page: synthesis-landscape; }
+  [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6mm !important; }
+  [data-print-document].print-landscape [data-synthese-grid] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  [data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section { break-inside: avoid; page-break-inside: avoid; }
+  [data-print-document] .official-print-header { margin-bottom: 8mm; }
+  [data-print-document] .official-print-footer { margin-top: 10mm; }
+  [data-print-document] .recharts-responsive-container { max-height: 65mm; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
+
+@page synthesis-portrait { size: A4 portrait; margin: 12mm; }
+@page synthesis-landscape { size: A4 landscape; margin: 10mm; }
