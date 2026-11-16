@@ -187,13 +187,27 @@ const BLOC_TYPES = [
   'separateur', 'signature', 'legende', 'annexe',
 ];
 
+/** Blocs de mise en page : ils n’exécutent aucune requête. */
+export const BLOCS_SANS_REQUETE = ['texte', 'separateur', 'signature', 'legende', 'annexe'];
+
 export const syntheseBlocSchema = z.object({
   id: z.string().regex(/^[a-z0-9_-]{1,64}$/, 'Identifiant de bloc invalide'),
   type: z.enum(BLOC_TYPES),
   titre: z.string().max(200).optional(),
-  requete: requeteSchemaStrict,
+  requete: requeteSchemaStrict.optional(),
   options: z.record(z.any()).optional(),
-}).strict();
+}).strict().superRefine((bloc, ctx) => {
+  if (!BLOCS_SANS_REQUETE.includes(bloc.type) && !bloc.requete) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['requete'],
+      message: `Le bloc « ${bloc.type} » exige une requête`,
+    });
+  }
+});
+
+/** Alias V8.2 : un « widget » de synthèse est exactement un bloc V8. */
+export const syntheseWidgetSchema = syntheseBlocSchema;
 
 export const syntheseSectionSchema = z.object({
   id: z.string().regex(/^[a-z0-9_-]{1,64}$/, 'Identifiant de section invalide'),

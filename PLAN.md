@@ -114,3 +114,39 @@ Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées
 - 2026-11-08 — Phase 3 : parse/locate/nearby, polygones + voisinage, import GeoJSON audité, GPS V5 et répétitions ; garde SSRF testée ; 22 fichiers/230 tests verts.
 - 2026-11-08 — Phase 4 : SmartPasteZone, mini-carte déplaçable/géométrie/proches, EXIF navigateur, badge/source GPS, suggestion/doublon géographique, lien répété, HTTPS expliqué, admin limites (aperçu/import), `/geo/limit/:communeId`, script `scripts/e2e.js` ; build, 22 fichiers/230 tests, lint, styles, a11y tokens et E2E verts.
 - 2026-11-09 — Phase 5 : `GET /api/stats/detail` (entonnoir, délais, SLA, ancienneté, tendance 12 semaines/MM4, objectif, 8 ventilations, jour/heure, récurrence, qualité, 10 faits), rapport hebdomadaire enrichi ; index partiels de performance (migration 003), 50 000 lignes en 213 ms ; 23 fichiers/245 tests, build, lint, styles, a11y et 11 scénarios E2E verts.
+
+---
+
+# PLAN V8.2 — Widgets statistiques et tableaux au choix, dans la synthèse
+
+Référence : prompt V8.2 + `docs/SPEC_V8.md` + `AUDIT_V8.md`. Le tableau de bord n’est **pas** modifié. `#/rapport?semaine=` reste fonctionnel.
+
+## Phase 1 — Socle widgets, narration et audit
+- [x] Vérifier catalogue (38 mesures / 30 dimensions / 30 filtres), moteur whitelisté, cache et évaluation par lot
+- [x] Audit de la page Synthèse (`AUDIT_V8.md`, constats R1–R7 avec causes)
+- [x] Schémas zod `syntheseSectionSchema` + `syntheseWidgetSchema` (alias de bloc) ; blocs texte sans requête
+- [x] `shared/src/describe.js` : `describeRequete` / `describeFiltres` / `describeFiltre` FR + AR, 5 tests
+- [x] 8 modèles système validés et semés idempotemment (prod + navigateur), 4 tests, copies préservées
+- [ ] Visuel recommandé + `POST /widgets/apercu` (phase 3)
+
+## Phase 2 — Mode Personnaliser
+- [ ] Sections/colonnes (3·4·6·8·9·12), DnD souris + clavier, inspecteur, copy-on-write, autosave 800 ms, annuler/rétablir ≥ 50, pagination visible
+
+## Phase 3 — Assistant et galerie
+- [ ] Assistant 3 étapes avec aperçu réel, visuel recommandé, phrase `decrire()` ; galerie ≥ 35 widgets validés
+
+## Phase 4 — Widgets tableau
+- [ ] Tableau agrégé (totaux/« Autres » dédiés) + liste de fiches (colonnes, tri, 200 lignes) ; impression paginée avec en-têtes répétés
+
+## Phase 5 — Filtres et transparence
+- [ ] Filtres globaux/propres, badge, légende imprimée, ⓘ, annexe méthodologique, « Voir les fiches »
+
+## Phase 6 — Éditions et exports
+- [ ] Générer/figer (immuable, versionnée), PDF A4/A3, Excel multi-feuilles, CSV, bibliothèque de widgets favoris
+
+## Phase 7 — Recette
+- [ ] Scénarios 85–96, régression 1–84, captures FR/AR × clair/sombre, README, QA verte
+
+## Journal V8.2
+- 2026-11-16 — Phase 1 : audit R1–R7, `describe.js` (5 tests), schémas widget/section, 8 modèles système idempotents (4 tests). Vitest ciblé vert. Suite : mode Personnaliser.
+

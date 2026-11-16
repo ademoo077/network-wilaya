@@ -23,6 +23,7 @@ const SIDEBAR_ITEMS = [
   { key: 'nav.anomalies', label: 'nav.anomalies' },
   { key: 'nav.map', label: 'nav.map' },
   { key: 'nav.work', label: 'nav.work' },
+  { key: 'nav.lab', label: 'nav.lab' },
   { key: 'nav.report', label: 'nav.report' },
   { key: 'nav.admin', label: 'nav.admin', admin: true },
 ];
@@ -90,7 +91,7 @@ function ParamsPanel() {
         <div className="mt-2 grid gap-1 sm:grid-cols-2">
           {SIDEBAR_ITEMS.filter((item) => !item.admin || user?.role === 'admin').map(({ key, label }) => (
             <div key={key} className="rounded-md border border-border p-2">
-              <Checkbox checked={sidebarItem(key)} onChange={(event) => saveSidebarVisibility({ [key]: event.target.checked })}>{t(label)}</Checkbox>
+              <Checkbox label={t(label)} checked={sidebarItem(key)} onChange={(event) => saveSidebarVisibility({ [key]: event.target.checked })} />
             </div>
           ))}
         </div>

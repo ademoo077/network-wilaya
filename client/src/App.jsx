@@ -8,7 +8,7 @@ import { useAuth } from './context/AuthContext.jsx';
 import { useRefs } from './context/RefsContext.jsx';
 import { useI18n } from './i18n/index.jsx';
 import { LoginPage, ProfilePage, SetupPage, DashboardPage, AnomaliesPage, AnomalyFormPage,
-  AnomalyDetailPage, MapPage, ReportPage, WorkPage, AdminPage, NotFoundPage,
+  AnomalyDetailPage, MapPage, ReportPage, WorkPage, LaboratoirePage, AdminPage, NotFoundPage,
   VeillePage, VeilleDashboardPage, VeilleCompliancePage, VeilleDetailPage, VeilleSettingsPage } from './routePages.js';
 
 export function BootScreen() {
@@ -54,6 +54,7 @@ function Application() {
       <Route path="anomalies/:id/modifier" element={page(AnomalyFormPage)} />
       <Route path="carte" element={page(MapPage)} />
       <Route path="a-faire" element={page(WorkPage)} />
+      <Route path="laboratoire" element={page(LaboratoirePage)} />
       <Route path="veille" element={page(VeillePage)} />
       <Route path="veille/tableau" element={page(VeilleDashboardPage)} />
       <Route path="veille/elements/:id" element={page(VeilleDetailPage)} />

@@ -10,6 +10,7 @@ export const AnomalyDetailPage = lazyWithRetry(() => import('./features/anomalie
 export const MapPage = lazyWithRetry(() => import('./features/map/MapPage.jsx'));
 export const ReportPage = lazyWithRetry(() => import('./features/report/ReportPage.jsx'));
 export const WorkPage = lazyWithRetry(() => import('./features/work/WorkPage.jsx'));
+export const LaboratoirePage = lazyWithRetry(() => import('./features/syntheses/LaboratoirePage.jsx'));
 export const VeillePage = lazyWithRetry(() => import('./features/veille/VeillePage.jsx'));
 export const VeilleDashboardPage = lazyWithRetry(() => import('./features/veille/VeilleDashboardPage.jsx'));
 export const VeilleCompliancePage = lazyWithRetry(() => import('./features/veille/VeilleCompliancePage.jsx'));
@@ -21,6 +22,7 @@ export const NotFoundPage = lazyWithRetry(() => import('./features/NotFoundPage.
 export function preloadRoute(path) {
   const pages = { '/': DashboardPage, '/anomalies': AnomaliesPage, '/anomalies/nouvelle': AnomalyFormPage,
     '/carte': MapPage, '/rapport': ReportPage, '/a-faire': WorkPage, '/profil': ProfilePage, '/admin/referentiels': AdminPage,
+    '/laboratoire': LaboratoirePage,
     '/veille': VeillePage, '/veille/tableau': VeilleDashboardPage, '/veille/conformite': VeilleCompliancePage,
     '/veille/reglages': VeilleSettingsPage };
   pages[path]?.preload();

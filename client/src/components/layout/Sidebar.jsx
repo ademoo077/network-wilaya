@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BarChart3, ChevronLeft, ChevronRight, FileBarChart, ListTodo, Map, PanelLeftClose, Plus, Settings } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, FileBarChart, FlaskConical, ListTodo, Map, PanelLeftClose, Plus, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { Avatar, Button, Drawer, IconButton } from '../ui/index.js';
 import { useI18n } from '../../i18n/index.jsx';
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/anomalies', key: 'nav.anomalies', icon: PanelLeftClose },
   { to: '/carte', key: 'nav.map', icon: Map },
   { to: '/a-faire', key: 'nav.work', icon: ListTodo },
+  { to: '/laboratoire', key: 'nav.lab', icon: FlaskConical },
   { to: '/rapport', key: 'nav.report', icon: FileBarChart },
 ];
 const adminNavItems = [

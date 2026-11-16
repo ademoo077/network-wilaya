@@ -3,6 +3,7 @@ import { runMigrations, ensureTaxonomy, ensureDomainGroups } from './db/migrate.
 import { ensureAdmin } from './db/admin.js';
 import { ensureDailyBackup, applyRetention } from './services/backups.js';
 import { ensureVeilleLexicon } from './veille/seed.js';
+import { ensureSystemModels } from './synthese/systemModels.js';
 import { startVeilleScheduler, ensureVeilleJobs } from './veille/scheduler.js';
 import { collectSource } from './veille/collect.js';
 import { maybePurge } from './veille/compliance.js';
@@ -15,6 +16,7 @@ export async function prepareDatabase({ db = getDb(), seed = true, backup = true
   const taxonomy = seed ? ensureTaxonomy(db, config.seedCsv, { logger: log }) : null;
   const groups = seed ? ensureDomainGroups(db, config.groupsCsv, { logger: log }) : null;
   const veilleLexicon = seed ? ensureVeilleLexicon(db, config.veilleLexiqueCsv, { logger: log }) : null;
+  if (seed) ensureSystemModels(db);
   if (seed) ensureVeilleJobs(db);
   db.prepare(`INSERT INTO parametres(cle,valeur) VALUES ('https_actif',?)
               ON CONFLICT(cle) DO UPDATE SET valeur=excluded.valeur`).run(config.https ? '1' : '0');

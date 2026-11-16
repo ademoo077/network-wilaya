@@ -102,6 +102,6 @@ export function Combobox({ label, error, hint, required, options = [], value, on
   );
 }
 
-export function Checkbox({ label, className = '', ...props }) {
-  return <label className={`inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-ink ${className}`}><input type="checkbox" className="h-4 w-4 accent-brand-700" {...props} /><span>{label}</span></label>;
+export function Checkbox({ label, children, className = '', ...props }) {
+  return <label className={`inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm text-ink ${className}`}><input type="checkbox" className="h-4 w-4 accent-brand-700" {...props} /><span>{children ?? label}</span></label>;
 }
