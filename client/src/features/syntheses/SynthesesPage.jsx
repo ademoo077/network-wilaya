@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { PageHeader } from '../../components/layout/PageHeader.jsx';
 import { Button, Card, CardHeader, EmptyState, ErrorState, Skeleton, useToast } from '../../components/ui/index.js';
 import { Chip } from '../../components/ui/Chip.jsx';
-import { personalizeModel } from './syntheseActions.js';
+import { personalizeModel, rememberModel } from './syntheseActions.js';
 
 const VIDE = { schema_version: 1, sections: [{ id: 'section-1', colonnes: [[]] }] };
 
@@ -55,7 +55,7 @@ export default function SynthesesPage({ embedded = false, modeleHref = null } = 
       const cree = await api('/syntheses/modeles', {
         method: 'POST', body: { nom: `Nouvelle synthèse — ${new Date().toLocaleDateString()}`, definition: VIDE, portee: 'prive' },
       });
-      const item = cree.item || cree;
+      const item = await rememberModel(cree.item || cree);
       navigate(hrefForModele(item.id, { personnaliser: true }));
     } catch (error) { push(error.message || t('common.error'), 'danger'); } finally { setCreating(false); }
   }, [canWrite, hrefForModele, navigate, push, t]);

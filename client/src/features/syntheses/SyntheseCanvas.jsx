@@ -46,6 +46,9 @@ export default function SyntheseCanvas({
     {editor.evaluationError && <Alert variant="danger" title={t('synthese.erreurCalcul')} className="mb-4">
       {editor.evaluationError.message || t('common.error')}
     </Alert>}
+    {editor.saveError && <Alert variant="danger" title={t('synthese.erreurEnregistrement')} className="mb-4 no-print">
+      {editor.saveError.message || t('common.error')}
+    </Alert>}
 
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-synthese-grid>
       {editor.evaluating && <div className="col-span-full"><Card className="p-8"><Skeleton className="h-24 w-full" /></Card></div>}

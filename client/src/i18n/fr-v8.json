@@ -249,5 +249,6 @@
   "synthese.widget.heightTall": "Grande",
   "synthese.widget.printVisibility": "Impression",
   "synthese.widget.printVisible": "Inclure dans le rapport",
-  "synthese.widget.printHidden": "Masquer à l’impression"
+  "synthese.widget.printHidden": "Masquer à l’impression",
+  "synthese.erreurEnregistrement": "Échec de l’enregistrement — nouvelle tentative après votre prochaine modification"
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useToast } from '../../components/ui/index.js';
 import { blocPositions, cloneDefinition, evaluerSpecs, specsOf } from './editorData.js';
-import { personalizeModel } from './syntheseActions.js';
+import { personalizeModel, rememberModel, updateModel } from './syntheseActions.js';
 export { evaluerSpecs, flattenBlocs, specsOf } from './editorData.js';
 
 const AUTO_SAVE_MS = 800;
@@ -11,6 +11,8 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const { push } = useToast();
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [autosaveBlocked, setAutosaveBlocked] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [results, setResults] = useState({});
   const [evaluating, setEvaluating] = useState(false);
@@ -22,6 +24,8 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const saveTimer = useRef(null);
   const savingRef = useRef(false);
   const evaluationRevision = useRef(0);
+  const editRevision = useRef(0);
+  const documentRevision = useRef(0);
   const initializedId = useRef(null);
   const modeleRef = useRef(null);
   const periodeRef = useRef(periode);
@@ -32,6 +36,12 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const currentDefinition = useMemo(() => history[hIndex] || definition, [history, hIndex, definition]);
   const canUndo = hIndex > 0;
   const canRedo = hIndex >= 0 && hIndex < history.length - 1;
+  const markDirty = useCallback(() => {
+    editRevision.current += 1;
+    setDirty(true);
+    setSaveError(null);
+    setAutosaveBlocked(false);
+  }, []);
 
   const evaluate = useCallback(async (def, { silent = false } = {}) => {
     const revision = ++evaluationRevision.current;
@@ -56,17 +66,24 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   }, []);
 
   const replaceDefinition = useCallback((nextDefinition) => {
+    documentRevision.current += 1;
     const next = cloneDefinition(nextDefinition || { schema_version: 1, sections: [] });
     setHistory([next]);
     setHIndex(0);
     setDirty(false);
+    setSaveError(null);
+    setAutosaveBlocked(false);
     setLastSavedAt(null);
     setResults({});
     void evaluate(next);
   }, [evaluate]);
 
   useEffect(() => {
-    if (!modele) return;
+    if (!modele) {
+      modeleRef.current = null;
+      initializedId.current = null;
+      return;
+    }
     const current = modeleRef.current;
     if (!current || current.id !== modele.id || Number(modele.version) >= Number(current.version)) {
       modeleRef.current = modele;
@@ -85,6 +102,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
 
   useEffect(() => () => {
     evaluationRevision.current += 1;
+    documentRevision.current += 1;
     if (saveTimer.current) clearTimeout(saveTimer.current);
   }, []);
 
@@ -100,9 +118,9 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     const next = history[nextIndex];
     if (!next) return;
     setHIndex(nextIndex);
-    setDirty(true);
+    markDirty();
     void evaluate(next, { silent: true });
-  }, [history, evaluate]);
+  }, [history, evaluate, markDirty]);
 
   const undo = useCallback(() => { if (canUndo) goToHistory(hIndex - 1); }, [canUndo, goToHistory, hIndex]);
   const redo = useCallback(() => { if (canRedo) goToHistory(hIndex + 1); }, [canRedo, goToHistory, hIndex]);
@@ -110,22 +128,29 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const save = useCallback(async (def = currentDefinition) => {
     const currentModele = modeleRef.current || modele;
     if (!currentModele || savingRef.current) return null;
+    const revision = editRevision.current;
+    const scope = documentRevision.current;
     if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
     savingRef.current = true;
     setSaving(true);
+    setSaveError(null);
     try {
-      const updated = await api(`/syntheses/modeles/${currentModele.id}`, {
-        method: 'PUT',
-        body: { nom: currentModele.nom, definition: def, version: currentModele.version },
-      });
+      const updated = await updateModel(currentModele, def);
       const next = updated.item || updated;
+      if (scope !== documentRevision.current || modeleRef.current?.id !== currentModele.id) return next;
       modeleRef.current = next;
-      setDirty(false);
+      // Les modifications faites pendant le PUT restent à enregistrer avec la nouvelle version.
+      setDirty(revision !== editRevision.current);
+      setAutosaveBlocked(false);
       setLastSavedAt(Date.now());
       onModeleChange?.(next);
       return next;
     } catch (error) {
-      push(error.message || String(error), 'danger');
+      if (scope === documentRevision.current && modeleRef.current?.id === currentModele.id) {
+        setSaveError(error);
+        setAutosaveBlocked(true);
+        push(error.message || String(error), 'danger');
+      }
       throw error;
     } finally {
       savingRef.current = false;
@@ -134,11 +159,11 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   }, [modele, currentDefinition, onModeleChange, push]);
 
   useEffect(() => {
-    if (!dirty || !modeleRef.current || saving || evaluating) return undefined;
+    if (!dirty || autosaveBlocked || !modeleRef.current || saving || evaluating) return undefined;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => { void save(currentDefinition).catch(() => {}); }, AUTO_SAVE_MS);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [dirty, saving, evaluating, currentDefinition, save]);
+  }, [dirty, autosaveBlocked, saving, evaluating, currentDefinition, save]);
 
   const setBloc = useCallback((id, patch) => {
     const next = cloneDefinition(currentDefinition);
@@ -155,8 +180,8 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     }
     if (!changed) return;
     pushHistory(next);
-    setDirty(true);
-  }, [currentDefinition, pushHistory]);
+    markDirty();
+  }, [currentDefinition, pushHistory, markDirty]);
 
   const addBloc = useCallback((sectionId, bloc) => {
     const next = cloneDefinition(currentDefinition);
@@ -165,9 +190,9 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     const colonne = section.colonnes[0] || (section.colonnes[0] = []);
     colonne.push(bloc);
     pushHistory(next);
-    setDirty(true);
+    markDirty();
     void evaluate(next);
-  }, [currentDefinition, pushHistory, evaluate]);
+  }, [currentDefinition, pushHistory, evaluate, markDirty]);
 
   const removeBloc = useCallback((id) => {
     const next = cloneDefinition(currentDefinition);
@@ -175,9 +200,9 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
       section.colonnes = section.colonnes.map((colonne) => colonne.filter((bloc) => bloc.id !== id));
     }
     pushHistory(next);
-    setDirty(true);
+    markDirty();
     void evaluate(next);
-  }, [currentDefinition, pushHistory, evaluate]);
+  }, [currentDefinition, pushHistory, evaluate, markDirty]);
 
   const moveBloc = useCallback((id, delta) => {
     const next = cloneDefinition(currentDefinition);
@@ -189,8 +214,8 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     const to = positions[target];
     [from.colonne[from.index], to.colonne[to.index]] = [to.colonne[to.index], from.colonne[from.index]];
     pushHistory(next);
-    setDirty(true);
-  }, [currentDefinition, pushHistory]);
+    markDirty();
+  }, [currentDefinition, pushHistory, markDirty]);
 
   const personnaliser = useCallback((source) => personalizeModel(source), []);
 
@@ -198,7 +223,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     const reset = await api(`/syntheses/modeles/${modeleId}/reinitialiser`, {
       method: 'POST', body: { source_id: source },
     });
-    const next = reset.item || reset;
+    const next = await rememberModel(reset.item || reset);
     modeleRef.current = next;
     onModeleChange?.(next);
     replaceDefinition(next.definition);
@@ -244,7 +269,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   }, []);
 
   return {
-    modele, definition, currentDefinition, dirty, saving, lastSavedAt, evaluating, evaluationError,
+    modele, definition, currentDefinition, dirty, saving, saveError, lastSavedAt, evaluating, evaluationError,
     results, editions, editionsLoading,
     canUndo, canRedo, undo, redo, save, setBloc, addBloc, removeBloc, moveBloc,
     personnaliser, reinitialiser, loadEditions, createEdition, figereEdition, getEdition,

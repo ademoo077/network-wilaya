@@ -249,5 +249,6 @@
   "synthese.widget.heightTall": "كبير",
   "synthese.widget.printVisibility": "الطباعة",
   "synthese.widget.printVisible": "إدراجه في التقرير",
-  "synthese.widget.printHidden": "إخفاؤه عند الطباعة"
+  "synthese.widget.printHidden": "إخفاؤه عند الطباعة",
+  "synthese.erreurEnregistrement": "تعذر الحفظ — ستتم المحاولة مجددًا بعد التعديل التالي"
 }
