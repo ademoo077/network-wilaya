@@ -159,6 +159,7 @@ test('113 — Studio : grille 12 colonnes, KPI lisibles, anneau entier et tablea
       labels: [...document.querySelectorAll('[data-kpi-label]')].map((el) => ({ text: el.textContent, scroll: el.scrollWidth, client: el.clientWidth })),
       values: [...document.querySelectorAll('[data-kpi-value]')].map((el) => ({ height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) })),
       ring: box(ring), ringCard: box(ring?.closest('[data-widget-card]')), svg: box(ring?.querySelector('svg')), legend: box(document.querySelector('[data-anneau-legend]')),
+      cards: [...document.querySelectorAll('[data-card]')].map((card) => ({ scroll: card.scrollWidth, client: card.clientWidth })),
       table: tableRegion && { scroll: tableRegion.scrollWidth, client: tableRegion.clientWidth },
     };
   });
@@ -174,6 +175,7 @@ test('113 — Studio : grille 12 colonnes, KPI lisibles, anneau entier et tablea
   expect(geometry.svg.bottom).toBeLessThanOrEqual(geometry.ring.bottom + 1);
   expect(geometry.ring.bottom).toBeLessThanOrEqual(geometry.ringCard.bottom + 1);
   expect(geometry.legend.top).toBeGreaterThanOrEqual(geometry.ring.bottom - 1);
+  expect(geometry.cards.every((card) => card.scroll <= card.client + 1), 'Contenu de widget comprimé ou débordant').toBe(true);
   expect(geometry.table.scroll).toBeLessThanOrEqual(geometry.table.client + 1);
   await expect(page.getByText(/Page\s+\d+\s*\/\s*\d+/)).toHaveCount(0);
 

@@ -10,7 +10,7 @@ export function CardHeader({ title, description, action, className = '', childre
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
         {children}
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="min-w-0 max-w-full">{action}</div>}
     </div>
   );
 }
