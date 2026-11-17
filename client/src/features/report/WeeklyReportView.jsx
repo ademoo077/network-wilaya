@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Clipboard, FileDown, LockKeyhole, Printer } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
 import { addDays, formatDate, formatDateTime, todayAlgiers, weekStart } from '@anm/shared';
 import { api, download, queryString } from '../../api/client.js';
@@ -11,29 +9,19 @@ import { useRefs } from '../../context/RefsContext.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
 import { useI18n } from '../../i18n/index.jsx';
 
-export default function WeeklyReportView() {
+export default function WeeklyReportView({ week, version = null, onWeek, onVersion } = {}) {
   const { t, lang, dir } = useI18n();
   const { user } = useAuth();
   const { refs } = useRefs();
   const { push } = useToast();
-  const [params, setParams] = useSearchParams();
-  const paramsKey = params.toString();
-  const initial = params.get('semaine') || weekStart(todayAlgiers(), Number(refs.parametres.week_start_day) || 0);
-  const [week, setWeek] = useState(initial);
-  const [snapshot, setSnapshot] = useState(params.get('source') === 'snapshot' ? Number(params.get('version')) : null);
-  const signature = queryString({ semaine: week, source: snapshot ? 'snapshot' : 'live', version: snapshot || undefined });
+  const snapshot = version;
+  const snapshotVersion = snapshot || undefined;
+  const signature = queryString({ semaine: week, source: snapshot ? 'snapshot' : 'live', version: snapshotVersion });
   const { data: report, loading, error, reload } = useFetch(() => api(`/reports/weekly${signature}`).then((result) => result.item), [signature]);
   const { data: history, reload: reloadHistory } = useFetch(() => api(`/reports/weekly/history?semaine=${week}`).then((result) => result.items), [week]);
-  useEffect(() => {
-    const next = new URLSearchParams(paramsKey);
-    next.set('semaine', week);
-    if (snapshot) { next.set('source', 'snapshot'); next.set('version', String(snapshot)); }
-    else { next.delete('source'); next.delete('version'); }
-    if (next.toString() !== paramsKey) setParams(next, { replace: true });
-  }, [paramsKey, setParams, snapshot, week]);
-  const move = (days) => { setWeek(addDays(week, days)); setSnapshot(null); };
+  const move = (days) => onWeek(addDays(week, days));
   const freeze = async () => {
-    try { const result = await api('/reports/weekly/snapshot', { method: 'POST', body: { semaine: week } }); setSnapshot(result.version); await reloadHistory(); push(t('common.success')); } catch (requestError) { push(requestError.message, 'danger'); }
+    try { const result = await api('/reports/weekly/snapshot', { method: 'POST', body: { semaine: week } }); onVersion(result.version); await reloadHistory(); push(t('common.success')); } catch (requestError) { push(requestError.message, 'danger'); }
   };
   const copy = async () => { await navigator.clipboard.writeText(report.resume); push(t('common.copied')); };
   if (loading) return <div className="page-container"><LoadingBlock /></div>;
@@ -62,10 +50,10 @@ export default function WeeklyReportView() {
 <IconButton aria-label={t('common.previous')} onClick={() => move(-7)}>{dir === 'rtl' ? <ChevronRight /> : <ChevronLeft />}</IconButton>
 <div className="min-w-52 text-center">
 <p className="font-bold">{formatDate(report.semaine.debut)} → {formatDate(report.semaine.fin)}</p>
-<button className="text-xs font-semibold text-brand-700" onClick={() => { setWeek(weekStart(todayAlgiers(), Number(refs.parametres.week_start_day) || 0)); setSnapshot(null); }}>{t('report.thisWeek')}</button>
+<button className="text-xs font-semibold text-brand-700" onClick={() => onWeek(weekStart(todayAlgiers(), Number(refs.parametres.week_start_day) || 0))}>{t('report.thisWeek')}</button>
 </div>
 <IconButton aria-label={t('common.next')} onClick={() => move(7)}>{dir === 'rtl' ? <ChevronLeft /> : <ChevronRight />}</IconButton>
-</div>{history?.length > 0 && <select aria-label={t('report.history')} className="h-11 rounded-md border border-border bg-surface px-3 text-sm" value={snapshot || ''} onChange={(event) => setSnapshot(event.target.value ? Number(event.target.value) : null)}>
+</div>{history?.length > 0 && <select aria-label={t('report.history')} className="h-11 rounded-md border border-border bg-surface px-3 text-sm" value={snapshot || ''} onChange={(event) => onVersion(event.target.value ? Number(event.target.value) : null)}>
 <option value="">{t('common.refresh')}</option>{history.map((entry) => <option key={entry.version} value={entry.version}>v{entry.version} · {formatDateTime(entry.created_at)}</option>)}</select>}</Card>{snapshot && <Alert variant="info" className="mb-5">{t('report.frozen', { date: formatDateTime(report.snapshot?.created_at) })}</Alert>}</div>
 <article className="report-paper mx-auto max-w-[210mm] rounded-sm bg-surface p-6 text-ink shadow-3 sm:p-10">
 <header className="border-b-2 border-brand-700 pb-5 text-center">

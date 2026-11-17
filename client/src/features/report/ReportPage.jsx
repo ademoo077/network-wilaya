@@ -39,6 +39,8 @@ export default function ReportPage() {
   const requestedExists = validRequestedModel && models.some((item) => item.id === requestedModel);
   const modeleId = requestedExists ? requestedModel : weeklyModel?.id;
   const period = useMemo(() => ({ mode: 'plage', debut: week, fin: addDays(week, 6) }), [week]);
+  const legacySnapshot = params.get('source') === 'snapshot';
+  const snapshotVersion = Number(params.get('version')) || null;
 
   const updateParams = useCallback((updates, { replace = false } = {}) => {
     const next = new URLSearchParams(params);
@@ -59,7 +61,14 @@ export default function ReportPage() {
     }
   }, [modelsQuery.isSuccess, requestedExists, updateParams, validRequestedModel, weeklyModel]);
 
-  const moveWeek = (days) => updateParams({ semaine: addDays(week, days), source: null, version: null });
+  useEffect(() => {
+    if (!legacySnapshot) return;
+    const next = new URLSearchParams(params);
+    next.delete('source');
+    setParams(next, { replace: true });
+  }, [legacySnapshot, params, setParams]);
+
+  const moveWeek = (days) => updateParams({ semaine: addDays(week, days), version: null });
   const hrefForModele = useCallback((id, options = {}) => {
     const next = new URLSearchParams(params);
     next.set('semaine', week);
@@ -85,7 +94,7 @@ export default function ReportPage() {
           <div className="flex items-center gap-1 rounded-lg border border-border bg-surface2 p-1">
             <Button size="sm" variant="ghost" aria-label={t('common.previous')} onClick={() => moveWeek(-7)}>{dir === 'rtl' ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}</Button>
             <label className="sr-only" htmlFor="report-studio-week">{t('report.studio.week')}</label>
-            <input id="report-studio-week" type="date" value={week} onChange={(event) => updateParams({ semaine: weekStart(event.target.value, weekStartDay), source: null, version: null })} className="h-11 min-w-36 rounded-md border border-border bg-surface px-3 text-sm font-bold text-ink" />
+            <input id="report-studio-week" type="date" value={week} onChange={(event) => updateParams({ semaine: weekStart(event.target.value, weekStartDay), version: null })} className="h-11 min-w-36 rounded-md border border-border bg-surface px-3 text-sm font-bold text-ink" />
             <Button size="sm" variant="ghost" aria-label={t('common.next')} onClick={() => moveWeek(7)}>{dir === 'rtl' ? <ChevronLeft aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}</Button>
           </div>
           <nav aria-label={t('report.studio.tools')} className="flex gap-2 overflow-x-auto pb-1 lg:justify-end">
@@ -99,8 +108,10 @@ export default function ReportPage() {
 
     <Suspense fallback={contentFallback()}>
       {tool === 'modeles' && <SynthesesPage embedded modeleHref={hrefForModele} />}
-      {tool === 'laboratoire' && <LaboratoirePage />}
-      {tool === 'officiel' && <WeeklyReportView />}
+      {tool === 'laboratoire' && <LaboratoirePage embedded week={week} />}
+      {tool === 'officiel' && <WeeklyReportView week={week} version={snapshotVersion}
+        onWeek={(nextWeek) => updateParams({ semaine: nextWeek, version: null })}
+        onVersion={(nextVersion) => updateParams({ version: nextVersion ?? null })} />}
       {tool === 'composition' && modelsQuery.isPending && contentFallback()}
       {tool === 'composition' && modelsQuery.isError && <div className="page-container"><ErrorState message={modelsQuery.error?.message || t('error.load')} onRetry={() => modelsQuery.refetch()} /></div>}
       {tool === 'composition' && modelsQuery.isSuccess && !modeleId && <div className="page-container"><EmptyState title={t('report.studio.noWeekly')} description={t('report.studio.noWeeklyHelp')} /></div>}

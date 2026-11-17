@@ -219,6 +219,8 @@
   "report.studio.tools": "Outils du studio",
   "report.studio.noWeekly": "Modèle hebdomadaire absent",
   "report.studio.noWeeklyHelp": "Redémarrez le serveur pour installer les modèles système, puis réessayez.",
+  "report.studio.labWeek": "Semaine du rapport : {debut} → {fin}",
+  "report.studio.labHelp": "Le laboratoire travaille sur la semaine du rapport. Ajustez la période si besoin, testez une requête, puis enregistrez un modèle à composer.",
   "synthese.print.title": "Préparer le rapport officiel",
   "synthese.print.defaultSubtitle": "Rapport de synthèse et d’aide à la décision",
   "synthese.print.defaultDepartment": "Cellule technique de numérisation",

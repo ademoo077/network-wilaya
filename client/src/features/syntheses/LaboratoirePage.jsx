@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { addDays, formatDate } from '@anm/shared';
 import { Copy, FolderOpen, Play, RefreshCw, RotateCcw, Save } from 'lucide-react';
 import { syntheseBatchSchema, syntheseModelSchema } from '@anm/shared';
 import { api } from '../../api/client.js';
@@ -55,7 +56,7 @@ function LabModelsCard({
   </Card>;
 }
 
-export default function LaboratoirePage() {
+export default function LaboratoirePage({ embedded = false, week = null } = {}) {
   const { t, lang, dir } = useI18n();
   const { user } = useAuth();
   const { refs } = useRefs();
@@ -63,8 +64,9 @@ export default function LaboratoirePage() {
   const catalogueQuery = useApiQuery('/syntheses/catalogue');
   const modelsQuery = useApiQuery('/syntheses/modeles');
   const canWrite = user?.role === 'admin' || user?.role === 'operateur';
+  const weekRange = useMemo(() => (week ? { debut: week, fin: addDays(week, 6) } : null), [week]);
 
-  const [draft, setDraft] = useState(createDefaultDraft);
+  const [draft, setDraft] = useState(() => createDefaultDraft(weekRange));
   const [result, setResult] = useState(null);
   const [resultError, setResultError] = useState(null);
   const [running, setRunning] = useState(false);
@@ -126,6 +128,25 @@ export default function LaboratoirePage() {
   const runRef = useRef(run);
   useEffect(() => { runRef.current = run; }, [run]);
 
+  const studioWeekRef = useRef(week);
+  useEffect(() => {
+    const previous = studioWeekRef.current;
+    if (previous === week) return;
+    studioWeekRef.current = week;
+    if (!week || !previous) return;
+    const current = draftRef.current;
+    const followsStudioWeek = current.periode?.mode === 'plage'
+      && current.periode.debut === previous
+      && current.periode.fin === addDays(previous, 6);
+    if (!followsStudioWeek) return;
+    const next = { ...current, periode: { ...current.periode, debut: week, fin: addDays(week, 6) } };
+    revisionRef.current += 1;
+    draftRef.current = next;
+    setDraft(next);
+    setDirty(true);
+    runRef.current(next);
+  }, [week]);
+
   useEffect(() => {
     if (!catalogueReady) return;
     const key = catalogueQuery.data?.version || 'fallback';
@@ -145,7 +166,7 @@ export default function LaboratoirePage() {
   };
 
   const reset = () => {
-    const next = createDefaultDraft();
+    const next = createDefaultDraft(weekRange);
     revisionRef.current += 1;
     setDraft(next);
     draftRef.current = next;
@@ -155,6 +176,9 @@ export default function LaboratoirePage() {
 
   const loadDraft = (requete, name) => {
     const next = draftFromRequete(requete);
+    if (weekRange && (requete?.periode?.mode === 'semaine' || requete?.periode?.mode === 'herite')) {
+      next.periode = { mode: 'plage', debut: weekRange.debut, fin: weekRange.fin };
+    }
     revisionRef.current += 1;
     setDraft(next);
     draftRef.current = next;
@@ -252,15 +276,23 @@ export default function LaboratoirePage() {
   };
 
   const onRetry = lastSpec ? () => void execute(lastSpec) : undefined;
+  const actions = <>
+    <Button variant="secondary" onClick={reset} disabled={running}><RotateCcw className="h-4 w-4" aria-hidden="true" />{t('common.reset')}</Button>
+    {canWrite && <Button variant="secondary" onClick={openSave} disabled={running || !catalogueReady || validation.length > 0} data-testid="lab-save-open">
+      <Save className="h-4 w-4" aria-hidden="true" />{t('lab.saveModel')}
+    </Button>}
+    <Button onClick={() => run(draft)} loading={running} disabled={!catalogueReady}><Play className="h-4 w-4" aria-hidden="true" />{t('lab.evaluate')}</Button>
+  </>;
 
   return <div className="page-container">
-    <PageHeader eyebrow={t('lab.eyebrow')} title={t('lab.title')} description={t('lab.subtitle')} actions={<>
-      <Button variant="secondary" onClick={reset} disabled={running}><RotateCcw className="h-4 w-4" aria-hidden="true" />{t('common.reset')}</Button>
-      {canWrite && <Button variant="secondary" onClick={openSave} disabled={running || !catalogueReady || validation.length > 0} data-testid="lab-save-open">
-        <Save className="h-4 w-4" aria-hidden="true" />{t('lab.saveModel')}
-      </Button>}
-      <Button onClick={() => run(draft)} loading={running} disabled={!catalogueReady}><Play className="h-4 w-4" aria-hidden="true" />{t('lab.evaluate')}</Button>
-    </>} />
+    {embedded ? <div className="mb-4 flex flex-wrap items-end justify-between gap-3" data-lab-embedded>
+      <div>
+        <h2 className="text-xl font-black text-ink">{t('lab.title')}</h2>
+        <p className="mt-1 text-sm text-muted">{week ? t('report.studio.labWeek', { debut: formatDate(week), fin: formatDate(addDays(week, 6)) }) : t('lab.subtitle')}</p>
+        <p className="mt-1 text-xs text-muted">{t('report.studio.labHelp')}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">{actions}</div>
+    </div> : <PageHeader eyebrow={t('lab.eyebrow')} title={t('lab.title')} description={t('lab.subtitle')} actions={actions} />}
 
     {catalogueQuery.error ? <Alert variant="danger" title={t('lab.catalogueError')} action={
       <Button size="sm" variant="secondary" onClick={() => catalogueQuery.reload()}>{t('common.retry')}</Button>

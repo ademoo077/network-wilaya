@@ -219,6 +219,8 @@
   "report.studio.tools": "أدوات الاستوديو",
   "report.studio.noWeekly": "النموذج الأسبوعي غير موجود",
   "report.studio.noWeeklyHelp": "أعد تشغيل الخادم لتثبيت نماذج النظام ثم أعد المحاولة.",
+  "report.studio.labWeek": "أسبوع التقرير: {debut} ← {fin}",
+  "report.studio.labHelp": "يعمل المختبر على أسبوع التقرير. عدّل الفترة عند الحاجة، واختبر استعلامًا، ثم احفظ نموذجًا للتركيب.",
   "synthese.print.title": "إعداد التقرير الرسمي",
   "synthese.print.defaultSubtitle": "تقرير تركيبي لدعم اتخاذ القرار",
   "synthese.print.defaultDepartment": "الخلية التقنية للرقمنة",

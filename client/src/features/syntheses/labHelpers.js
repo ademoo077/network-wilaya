@@ -25,16 +25,18 @@ function refName(item, lang) {
     : (item.name_fr || item.name_ar || '—');
 }
 
-export function createDefaultDraft() {
+export function createDefaultDraft(weekRange = null) {
   const today = todayAlgiers();
   return {
     mesures: [{ id: 'recues' }],
     dimensions: [],
     filtres: [],
-    periode: { mode: 'glissant', jours: 30, debut: addDays(today, -29), fin: today },
+    periode: weekRange
+      ? { mode: 'plage', debut: weekRange.debut, fin: weekRange.fin }
+      : { mode: 'glissant', jours: 30, debut: addDays(today, -29), fin: today },
     comparaison: 'aucune',
-    comparaison_debut: addDays(today, -59),
-    comparaison_fin: addDays(today, -30),
+    comparaison_debut: weekRange ? addDays(weekRange.debut, -30) : addDays(today, -59),
+    comparaison_fin: weekRange ? addDays(weekRange.debut, -1) : addDays(today, -30),
     statut_mode: 'actuel',
     limite: '',
     regrouper_autres: true,
