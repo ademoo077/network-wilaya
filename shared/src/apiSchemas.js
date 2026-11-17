@@ -70,6 +70,20 @@ export const reseauxSociauxImportPreviewSchema = z.object({ item: z.object({
 export const reseauxSociauxImportResultSchema = z.object({ item: z.object({ created: z.number().nonnegative(), skipped: z.number().nonnegative(),
   deja_applique: z.boolean(), errors: z.array(z.object({ ligne: z.number(), colonne: z.string(), message: z.string() })) }).passthrough() });
 export const reseauxSociauxImportCancelSchema = z.object({ item: z.object({ annule: z.literal(true), importId: z.string().uuid() }) });
+export const compteSocialBatchResultSchema = z.object({ item: z.object({
+  created: z.number().int().nonnegative(), ids: z.array(z.number().int().positive()),
+  errors: z.array(z.object({ index: z.number().int().nonnegative(), message: z.string(), fields: z.record(z.string()).optional() })),
+}) });
+export const compteSocialMergeResultSchema = z.object({ item: z.object({
+  sourceId: z.number().int().positive(), cibleId: z.number().int().positive(),
+  champs: z.array(z.string()), cible: compteSocialResponseSchema,
+}) });
+export const compteSocialHistorySchema = z.object({ item: z.object({
+  id: z.number().int().positive(), action: z.string(), details: z.unknown().nullable(),
+  username: z.string().nullable(), at: z.string(),
+}).passthrough() });
+export const compteSocialHistoryListSchema = z.object({ items: z.array(compteSocialHistorySchema.shape.item), total: z.number().int().nonnegative() });
+export const compteSocialActionResultSchema = z.object({ item: compteSocialResponseSchema });
 
 const syntheseEntry = z.object({ id: z.string() }).passthrough();
 export const syntheseCatalogueSchema = z.object({
@@ -131,6 +145,10 @@ export function responseContract(path) {
   if (route === '/ref/bootstrap') return [bootstrapResponseSchema, null];
   if (route === '/reseaux-sociaux') return [reseauxSociauxListSchema, null];
   if (route === '/reseaux-sociaux/stats') return [reseauxSociauxStatsSchema, { item: null }];
+  if (route === '/reseaux-sociaux/lot') return [compteSocialBatchResultSchema, { item: { created: 0, ids: [], errors: [] } }];
+  if (route === '/reseaux-sociaux/fusion') return [compteSocialMergeResultSchema, null];
+  if (/^\/reseaux-sociaux\/\d+\/historique$/.test(route)) return [compteSocialHistoryListSchema, { items: [], total: 0 }];
+  if (/\/reseaux-sociaux\/\d+\/(?:restaurer|controle)$/.test(route)) return [compteSocialActionResultSchema, { item: null }];
   if (/^\/reseaux-sociaux\/\d+$/.test(route)) return [compteSocialItemSchema, { item: null }];
   if (route === '/setup/status') return [z.object({ referentielTerritorialVide: z.boolean() }).passthrough(), null];
   if (route === '/anomalies') return [anomalyListSchema, emptyAnomalyList];

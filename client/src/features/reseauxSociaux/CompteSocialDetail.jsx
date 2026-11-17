@@ -1,16 +1,34 @@
-import { ExternalLink, Pencil } from 'lucide-react';
-import { formatDateTime, isSafeHttpUrl, normaliserCompteSocial } from '@anm/shared';
-import { Alert, Button, Drawer, EmptyState, PlatformBadge } from '../../components/ui/index.js';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ExternalLink, GitMerge, Pencil, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react';
+import { compteSocialActionResultSchema, formatDateTime, isSafeHttpUrl, normaliserCompteSocial } from '@anm/shared';
+import { api } from '../../api/client.js';
+import { Alert, Button, Drawer, EmptyState, PlatformBadge, useToast } from '../../components/ui/index.js';
 import QueryContent from '../../components/ui/QueryContent.jsx';
 import { useApiQuery } from '../../hooks/useApiQuery.js';
 import { useI18n } from '../../i18n/index.jsx';
 import { CompteSocialEtat, CompteSocialType, socialLocationLabel } from './CompteSocialBadges.jsx';
+import CompteSocialHistory from './CompteSocialHistory.jsx';
+import CompteSocialMergeDialog from './CompteSocialMergeDialog.jsx';
 
 function DetailField({ label, children }) {
   return <div className="min-w-0"><dt className="text-xs font-semibold text-muted">{label}</dt><dd className="mt-1 break-words text-sm font-semibold text-ink">{children}</dd></div>;
 }
-export default function CompteSocialDetail({ id, onClose, onEdit, canManage }) {
-  const { t, lang } = useI18n(); const query = useApiQuery(`/reseaux-sociaux/${id}`); const item = query.data?.item;
+export default function CompteSocialDetail({ id, onClose, onEdit, onChanged, canManage }) {
+  const { t, lang } = useI18n(); const { push } = useToast(); const queryClient = useQueryClient();
+  const query = useApiQuery(`/reseaux-sociaux/${id}`); const item = query.data?.item;
+  const [busy, setBusy] = useState(false); const [merging, setMerging] = useState(false);
+  const refresh = async () => { await queryClient.invalidateQueries({ predicate: ({ queryKey }) => String(queryKey[1]).startsWith('/reseaux-sociaux') }); await onChanged?.(); };
+  const mutate = async (path, options, message) => {
+    setBusy(true);
+    try {
+      const result = await api(path, { ...options, schema: compteSocialActionResultSchema, fallback: null });
+      if (!result?.item) throw new Error(t('social.badResponse'));
+      push(t(message)); await refresh();
+      if (options.method === 'DELETE') onClose();
+    } catch (cause) { push(cause.message || t('common.error')); }
+    finally { setBusy(false); }
+  };
   return <Drawer open title={t('social.detail')} onClose={onClose}>
     <QueryContent query={query}>
       {!item ? <EmptyState title={t('social.missingRecord')} /> : <div className="space-y-5">
@@ -21,6 +39,15 @@ export default function CompteSocialDetail({ id, onClose, onEdit, canManage }) {
         <div className="flex flex-wrap gap-2">
           {isSafeHttpUrl(item.lien_url) && <Button as="a" href={item.lien_url} target="_blank" rel="noopener noreferrer" variant="secondary"><ExternalLink className="h-4 w-4" aria-hidden="true" />{t('social.openLink')}</Button>}
           {canManage && <Button onClick={() => onEdit(item)}><Pencil className="h-4 w-4" aria-hidden="true" />{t('social.edit')}</Button>}
+          {canManage && !item.deleted_at && <Button variant="secondary" loading={busy}
+            onClick={() => mutate(`/reseaux-sociaux/${item.id}/controle`, { method: 'POST', body: { verification: item.verification === 'verifie' ? 'a_verifier' : 'verifie', version: item.version } }, 'social.controlled')}>
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />{t(item.verification === 'verifie' ? 'social.controlUndo' : 'social.control')}</Button>}
+          {canManage && !item.deleted_at && <Button variant="secondary" disabled={busy} onClick={() => setMerging(true)}>
+            <GitMerge className="h-4 w-4" aria-hidden="true" />{t('social.merge.title')}</Button>}
+          {canManage && <Button variant="ghost" loading={busy} onClick={() => mutate(item.deleted_at ? `/reseaux-sociaux/${item.id}/restaurer` : `/reseaux-sociaux/${item.id}`,
+            { method: item.deleted_at ? 'POST' : 'DELETE' }, item.deleted_at ? 'social.restored' : 'social.trashed')}>
+            {item.deleted_at ? <RotateCcw className="h-4 w-4" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
+            {t(item.deleted_at ? 'social.restore' : 'social.trash')}</Button>}
         </div>
         {(!item.commune_id || !item.nom) && <Alert variant="warning">{t('social.incompleteHelp')}</Alert>}
         {normaliserCompteSocial(item.lien_url).publication && <Alert variant="warning">{t('social.warning.lien_publication')}</Alert>}
@@ -42,7 +69,9 @@ export default function CompteSocialDetail({ id, onClose, onEdit, canManage }) {
             <DetailField label={t('social.nameSource')}><bdi>{item.nom_source || t('social.missingName')}</bdi></DetailField>
           </dl>
         </div>}
+        <CompteSocialHistory id={id} />
       </div>}
     </QueryContent>
+    {merging && item && <CompteSocialMergeDialog source={item} onClose={() => setMerging(false)} onChanged={refresh} />}
   </Drawer>;
 }

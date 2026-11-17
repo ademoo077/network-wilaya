@@ -25,6 +25,9 @@
 
 @layer components {
   .app-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); min-height: 100dvh; }
+  body.studio-focus .app-grid { grid-template-columns: minmax(0, 1fr); }
+  body.studio-focus aside, body.studio-focus header[role='banner'] { display: none; }
+  body.studio-focus .page-container { max-width: none; padding-inline: 12px; }
   .page-container { width: 100%; max-width: 1480px; min-width: 0; margin-inline: auto; padding: 24px 28px 40px; }
   .sidebar-pattern { position: relative; }
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }

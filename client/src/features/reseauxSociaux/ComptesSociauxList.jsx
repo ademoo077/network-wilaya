@@ -1,18 +1,21 @@
-import { ArrowUpRight, Database, ExternalLink, MapPin, Pencil } from 'lucide-react';
+import { ArrowUpRight, Database, ExternalLink, MapPin, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { isSafeHttpUrl } from '@anm/shared';
 import { Card, CardHeader, DataTable, EmptyState, ErrorState, IconButton, Pagination, PlatformBadge } from '../../components/ui/index.js';
 import QueryContent from '../../components/ui/QueryContent.jsx';
 import { useI18n } from '../../i18n/index.jsx';
 import { CompteSocialEtat, CompteSocialType, socialLocationLabel } from './CompteSocialBadges.jsx';
 
-export default function ComptesSociauxList({ query, filters, onFilter, onOpen, onEdit, canManage, title, emptyAction }) {
+export default function ComptesSociauxList({ query, filters, onFilter, onOpen, onEdit, onTrash, onRestore, canManage, title, emptyAction }) {
   const { t, lang } = useI18n();
   const data = query.data || { items: [], total: 0, page: 1, pageSize: 25 };
   const name = (item) => item.nom || t('social.missingName');
   const actions = (item) => <div className="flex items-center gap-1">
     {isSafeHttpUrl(item.lien_url) && <a className="inline-grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink2 hover:bg-surface2" href={item.lien_url}
       target="_blank" rel="noopener noreferrer" aria-label={t('social.openLinkNamed', { nom: name(item) })}><ExternalLink className="h-4 w-4" aria-hidden="true" /></a>}
-    {canManage && <IconButton aria-label={t('social.editNamed', { nom: name(item) })} onClick={() => onEdit(item)}><Pencil className="h-4 w-4" aria-hidden="true" /></IconButton>}
+    {canManage && !item.deleted_at && <IconButton aria-label={t('social.editNamed', { nom: name(item) })} onClick={() => onEdit(item)}><Pencil className="h-4 w-4" aria-hidden="true" /></IconButton>}
+    {canManage && (item.deleted_at
+      ? <IconButton aria-label={t('social.restoreNamed', { nom: name(item) })} onClick={() => onRestore(item)}><RotateCcw className="h-4 w-4" aria-hidden="true" /></IconButton>
+      : <IconButton aria-label={t('social.trashNamed', { nom: name(item) })} onClick={() => onTrash(item)}><Trash2 className="h-4 w-4" aria-hidden="true" /></IconButton>)}
   </div>;
   const columns = [
     { key: 'nom', label: t('social.name'), sortable: true, render: (item) => <button type="button" className="flex min-h-11 max-w-sm items-center gap-2 text-start font-bold text-brand-700 hover:underline"

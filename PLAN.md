@@ -160,7 +160,7 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 - [x] `AUDIT_V9.md` : causes et correctifs L1–L10, état réel des parties B/C
 - [x] Grille 12 colonnes, largeurs portées par le modèle système (KPI 12, anneau 4, daïra 8)
 - [x] KPI sans troncature, anneau entier avec légende, tableau sans scroll ni pagination inutile
-- [x] Largeur d’affichage (Écran large / Fidèle à l’impression), en-tête compact, aucun jargon, menu non rogné
+- [x] Largeur d’affichage (Écran large / Fidèle à l’impression / Plein écran), barre compacte, en-tête compact, aucun jargon, menu non rogné
 - [x] Barre d’actions des widgets (ⓘ, données, fiches, plein écran, CSV/PNG), étiquette système unique
 - [x] Scénarios 113–115 (géométrie, axe, FR/AR, clair/sombre) et `npm run qa` vert ; commit de phase
 
@@ -175,8 +175,8 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 - [x] File « À qualifier » avec P/R/G/C/I et annulation Z ; cinq onglets et panneaux Imports/Qualité ; scénarios 116–119
 
 ## Phase 4 — Interface `#/reseaux-sociaux`
-- [ ] Ajout manuel et en lot, édition, fusion, corbeille, historique, contrôle manuel, onglet Qualité
-- [ ] Scénarios 120–121 et 126
+- [x] Ajout manuel et en lot, édition, fusion, corbeille, historique, contrôle manuel, onglet Qualité
+- [x] Scénarios 120–121 et 126
 
 ## Phase 5 — Statistiques et catalogue
 - [ ] Jeux `sources`/`couverture`, ≥ 14 widgets, modèle système n°9, cohérence annuaire/Lab/export
@@ -196,4 +196,6 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 - 2026-11-17 — Tag `avant-v9`, audit initial et plan. Début de la phase 1.
 - 2026-11-17 — Phase 1 livrée : L1–L10 corrigés, 7 tests dédiés (dont 4 variantes FR/AR × clair/sombre), `npm run qa` vert (115 Playwright).
 - 2026-11-17 — Phases 2–3 livrées : import tolérant et annulable, refus contact/Feuil1, compteurs qualité SQL, cinq onglets `#/reseaux` et file P/R/G/C/I avec Z. 17 scénarios du répertoire verts.
+- 2026-11-17 — Phase 4 livrée : ajout par lot (≤ 100), fusion contrôlée, corbeille/restauration, contrôle manuel et historique audité ; migration additive `012`, 28 tests serveur, scénarios 120/121/126 et `npm run qa` vert (614 Vitest, 11 E2E API, 124 Playwright).
+- 2026-11-17 — Studio : « Plein écran », barre compacte masquant menu et topbar, retour à la semaine courante ; contrats de migration alignés sur `001–012`. Scénario dédié FR/AR à 390/1440 px et `npm run qa` vert.
 

@@ -112,6 +112,7 @@ export const reseauxSociauxQuerySchema = z.object({
   verification: z.enum(COMPTE_SOCIAL_VERIFICATIONS).optional(), actif: z.enum(['0', '1']).optional(),
   daira_id: z.coerce.number().int().positive().optional(), commune_id: z.coerce.number().int().positive().optional(),
   non_rattache: z.enum(['ca', 'commune']).optional(),
+  corbeille: z.enum(['0', '1']).optional(),
   ca_libelle: z.string().trim().max(200).optional(), commune_libelle: z.string().trim().max(200).optional(),
   page: z.coerce.number().int().positive().max(100000).default(1),
   pageSize: z.coerce.number().int().positive().max(200).default(25),
@@ -130,3 +131,13 @@ export const reseauxSociauxSourceSchema = z.object({
 }).strict();
 export const reseauxSociauxImportCommitSchema = z.object({ importId: z.string().uuid() }).strict();
 export const reseauxSociauxImportCancelRequestSchema = reseauxSociauxImportCommitSchema;
+
+/** Écritures V9 : lot, fusion, corbeille et contrôle manuel. */
+export const compteSocialBatchSchema = z.object({ elements: z.array(compteSocialCreateSchema).min(1).max(100) }).strict();
+export const compteSocialMergeSchema = z.object({
+  sourceId: z.number().int().positive(), cibleId: z.number().int().positive(),
+  expectedSourceVersion: z.number().int().positive(), expectedCibleVersion: z.number().int().positive(),
+}).strict().refine((value) => value.sourceId !== value.cibleId, { message: 'La source et la cible doivent être deux fiches différentes', path: ['cibleId'] });
+export const compteSocialControlSchema = z.object({
+  verification: z.enum(COMPTE_SOCIAL_VERIFICATIONS), version: z.number().int().positive(),
+}).strict();

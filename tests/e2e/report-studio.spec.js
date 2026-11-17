@@ -262,3 +262,49 @@ test('115 — Studio : les cinq actions de chaque widget sont présentes et fonc
   expect(errors.snapshot().pageError).toEqual([]);
   expect(errors.snapshot().consoleError).toEqual([]);
 });
+
+test('Studio — affichage maximal, barre compacte et retour à la semaine courante', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/#/rapport?semaine=2026-11-15');
+  const wrapper = page.locator('[data-display-width]');
+  await expect(wrapper).toHaveAttribute('data-display-width', 'large', { timeout: 20_000 });
+  const largeWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+
+  await page.locator('#report-studio-width').selectOption('max');
+  await expect(wrapper).toHaveAttribute('data-display-width', 'max');
+  const maxWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  expect(maxWidth, 'Le mode plein écran doit être plus large que le mode large').toBeGreaterThan(largeWidth);
+
+  await page.getByRole('button', { name: 'Agrandir l’espace de travail' }).click();
+  await expect(page.locator('[data-report-studio]')).toHaveCount(0);
+  await expect(page.locator('[data-report-studio-compact]')).toBeVisible();
+  await expect(page.locator('aside')).toBeHidden();
+  await expect(page.locator('header[role="banner"]')).toBeHidden();
+  const focusWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  expect(focusWidth, 'Le mode compact doit libérer toute la largeur').toBeGreaterThanOrEqual(maxWidth);
+  await expect(page.locator('#report-studio-compact-week')).toHaveValue('2026-11-15');
+  await expectNoOverflow(page);
+  await expectAccessible(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expectNoOverflow(page);
+  await expectAccessible(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
+  await page.getByRole('button', { name: 'Réafficher la barre d’outils' }).click();
+  await expect(page.locator('[data-report-studio]')).toBeVisible();
+  await expect(page.locator('[data-report-studio-compact]')).toHaveCount(0);
+  await expect(page.locator('aside')).toBeVisible();
+  await expect(page.locator('#report-studio-week')).toHaveValue('2026-11-15');
+
+  await page.locator('#report-studio-week').fill('2026-11-01');
+  await expect(page).toHaveURL(/semaine=2026-11-01/);
+  await page.getByRole('button', { name: 'Revenir à cette semaine' }).click();
+  await expect(page).toHaveURL(/semaine=2026-11-15/);
+  await expect(page.locator('#report-studio-week')).toHaveValue('2026-11-15');
+
+  await expectAccessible(page);
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
+});

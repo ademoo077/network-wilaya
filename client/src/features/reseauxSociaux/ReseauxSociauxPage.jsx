@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Database, FileSpreadsheet, FileText, MapPin, Plus, RefreshCw, RotateCcw, Upload, UserRound } from 'lucide-react';
-import { COMPTE_SOCIAL_TYPES, COMPTE_SOCIAL_VERIFICATIONS, PLATEFORMES, reseauxSociauxQuerySchema } from '@anm/shared';
-import { download, queryString } from '../../api/client.js';
+import { COMPTE_SOCIAL_TYPES, COMPTE_SOCIAL_VERIFICATIONS, PLATEFORMES, compteSocialActionResultSchema, reseauxSociauxQuerySchema } from '@anm/shared';
+import { api, download, queryString } from '../../api/client.js';
 import { PageHeader } from '../../components/layout/PageHeader.jsx';
 import { Alert, Button, Card, ErrorState, Input, KpiCard, Select, Tabs, useToast } from '../../components/ui/index.js';
 import QueryContent from '../../components/ui/QueryContent.jsx';
@@ -17,19 +17,20 @@ import CompteSocialDetail from './CompteSocialDetail.jsx';
 import CompteSocialDialog from './CompteSocialDialog.jsx';
 import ComptesSociauxList from './ComptesSociauxList.jsx';
 import QualificationQueue from './QualificationQueue.jsx';
+import ReseauxSociauxBatchDialog from './ReseauxSociauxBatchDialog.jsx';
 import ReseauxSociauxImportDialog from './ReseauxSociauxImportDialog.jsx';
 import ReseauxSociauxStats from './ReseauxSociauxStats.jsx';
 import { ImportsPanel, QualityPanel } from './SocialPanels.jsx';
 
 const VIEWS = ['repertoire', 'statistiques', 'qualifier', 'imports', 'qualite'];
-const FILTER_KEYS = ['q', 'plateforme', 'categorie', 'daira_id', 'commune_id', 'verification', 'actif', 'page', 'pageSize', 'sort', 'dir', 'non_rattache', 'ca_libelle', 'commune_libelle'];
+const FILTER_KEYS = ['q', 'plateforme', 'categorie', 'daira_id', 'commune_id', 'verification', 'actif', 'corbeille', 'page', 'pageSize', 'sort', 'dir', 'non_rattache', 'ca_libelle', 'commune_libelle'];
 const CLEAR_ATTACHMENT = { non_rattache: '', ca_libelle: '', commune_libelle: '' };
 const isSocialQuery = ({ queryKey }) => queryKey[0] === 'api' && String(queryKey[1]).startsWith('/reseaux-sociaux');
 
 export function ReseauxSociauxWorkspace({ embedded = false }) {
   const { t, lang } = useI18n(); const { user } = useAuth(); const { refs } = useRefs(); const { push } = useToast();
   const queryClient = useQueryClient(); const action = useAsyncAction({ success: false });
-  const [params, setParams] = useSearchParams(); const [editing, setEditing] = useState(null); const [importing, setImporting] = useState(false);
+  const [params, setParams] = useSearchParams(); const [editing, setEditing] = useState(null); const [importing, setImporting] = useState(false); const [batching, setBatching] = useState(false);
   const parsed = reseauxSociauxQuerySchema.safeParse(Object.fromEntries(FILTER_KEYS.filter((key) => params.has(key)).map((key) => [key, params.get(key)])));
   const filters = parsed.success ? parsed.data : reseauxSociauxQuerySchema.parse({});
   const q = useDebounced(filters.q, 250);
@@ -59,6 +60,15 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
     setEditing(null); update({ fiche: item.id }, false); await invalidate(); push(t('social.saved'));
   };
   const edit = (item) => { update({ fiche: '' }, false); setEditing(item); };
+  const move = async (path, options, message) => {
+    await action.run(async () => {
+      const response = await api(path, { ...options, schema: compteSocialActionResultSchema, fallback: null });
+      if (!response?.item) throw new Error(t('social.badResponse'));
+      push(t(message)); await invalidate();
+    });
+  };
+  const trash = (item) => move(`/reseaux-sociaux/${item.id}`, { method: 'DELETE' }, 'social.trashed');
+  const restore = (item) => move(`/reseaux-sociaux/${item.id}/restaurer`, { method: 'POST' }, 'social.restored');
   const drill = (values) => update({ ...(Object.hasOwn(values, 'daira_id') || Object.hasOwn(values, 'commune_id') ? CLEAR_ATTACHMENT : {}), ...values, onglet: 'repertoire', fiche: '' });
   const communes = filters.daira_id ? refs.dairas.find((row) => row.id === filters.daira_id)?.communes || [] : refs.dairas.flatMap((row) => row.communes || []);
   const addButton = canManage && <Button onClick={() => setEditing({})}><Plus className="h-4 w-4" aria-hidden="true" />{t('social.add')}</Button>;
@@ -66,7 +76,8 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
     <Button variant="secondary" loading={action.isPending} disabled={updating || !parsed.success || !data || !listing.data} onClick={() => action.run(() => download(`/reseaux-sociaux/export${queryString({ ...scope, q, sort: filters.sort, dir: filters.dir, format: 'xlsx' })}`, 'reseaux-sociaux.xlsx'))}>
       <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />{t('social.exportExcel')}</Button>
     <Button variant="secondary" disabled={action.isPending || updating || !parsed.success || !data || !listing.data} onClick={() => action.run(() => download(`/reseaux-sociaux/export${queryString({ ...scope, q, sort: filters.sort, dir: filters.dir, format: 'csv' })}`, 'reseaux-sociaux.csv'))}>{t('social.exportCsv')}</Button>
-    {canManage && <Button variant="secondary" onClick={() => setImporting(true)}><Upload className="h-4 w-4" aria-hidden="true" />{t('social.import')}</Button>}{addButton}
+    {canManage && <Button variant="secondary" onClick={() => setImporting(true)}><Upload className="h-4 w-4" aria-hidden="true" />{t('social.import')}</Button>}
+    {canManage && <Button variant="secondary" onClick={() => setBatching(true)}><FileText className="h-4 w-4" aria-hidden="true" />{t('social.bulkAdd')}</Button>}{addButton}
   </>;
   return <div className="space-y-5" data-social-workspace>
     {embedded ? <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-black">{t('social.title')}</h2><p className="mt-1 text-sm text-muted">{t('social.subtitle')}</p></div><div className="flex flex-wrap gap-2">{tools}</div></div>
@@ -107,6 +118,8 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
         onChange={(event) => update({ verification: event.target.value })} />
       <Select label={t('social.activity')} placeholder={t('common.all')} value={filters.actif ?? ''} options={[{ value: '1', label: t('social.active') }, { value: '0', label: t('social.inactive') }]}
         onChange={(event) => update({ actif: event.target.value })} />
+      {canManage && <Select label={t('social.state')} placeholder={t('common.all')} value={filters.corbeille || ''} options={[{ value: '0', label: t('social.activeView') }, { value: '1', label: t('social.trashView') }]}
+        onChange={(event) => update({ corbeille: event.target.value })} />}
       <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={reset}><RotateCcw className="h-4 w-4" aria-hidden="true" />{t('social.resetFilters')}</Button>
         <Button variant="ghost" aria-label={t('social.refresh')} loading={stats.isFetching || listing.isFetching} onClick={() => action.run(() => Promise.all([stats.refetch(), listing.refetch()]))}><RefreshCw className="h-4 w-4" aria-hidden="true" /></Button></div>
     </div></Card>}
@@ -116,12 +129,13 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
     </QueryContent>}
     {view === 'imports' && <ImportsPanel canManage={canManage} onImport={() => setImporting(true)} />}
     {view === 'qualite' && <QualityPanel resume={data?.resume} onFilter={(values) => update({ ...CLEAR_ATTACHMENT, ...values }, false)} />}
-    {['repertoire', 'statistiques'].includes(view) && <ComptesSociauxList query={listing} filters={filters} onFilter={update} onOpen={(fiche) => update({ fiche }, false)} onEdit={edit} canManage={canManage}
+    {['repertoire', 'statistiques'].includes(view) && <ComptesSociauxList query={listing} filters={filters} onFilter={update} onOpen={(fiche) => update({ fiche }, false)} onEdit={edit} onTrash={trash} onRestore={restore} canManage={canManage}
       title={view === 'statistiques' ? t('social.accountsInScope') : t('social.directory')} emptyAction={canManage ? addButton : null} />}
     {!canManage && <p className="text-xs text-muted">{t('social.readOnly')}</p>}
-    {selectedId && !editing && <CompteSocialDetail id={selectedId} onClose={() => update({ fiche: '' }, false)} canManage={canManage} onEdit={edit} />}
+    {selectedId && !editing && <CompteSocialDetail id={selectedId} onClose={() => update({ fiche: '' }, false)} canManage={canManage} onEdit={edit} onChanged={invalidate} />}
     {editing && canManage && <CompteSocialDialog key={editing.id || 'new'} item={editing} onClose={() => setEditing(null)} onSaved={saved} />}
     {importing && canManage && <ReseauxSociauxImportDialog onClose={() => setImporting(false)} onChanged={invalidate} />}
+    {batching && canManage && <ReseauxSociauxBatchDialog onClose={() => setBatching(false)} onChanged={invalidate} />}
   </div>;
 }
 export default function ReseauxSociauxPage() { return <div className="page-container"><ReseauxSociauxWorkspace /></div>; }

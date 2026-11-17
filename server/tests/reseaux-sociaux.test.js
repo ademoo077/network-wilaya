@@ -54,8 +54,16 @@ describe('API du répertoire social', () => {
     expect(edited.status).toBe(200); expect(edited.body.item).toMatchObject({ version: 2, nom: '[DEMO] Nom corrigé', actif: 0, verification: 'verifie' });
     const list = await agent.get('/api/reseaux-sociaux?actif=0');
     expect(reseauxSociauxListSchema.safeParse(list.body).success).toBe(true); expect(list.body.total).toBe(1);
-    expect((await agent.delete(`/api/reseaux-sociaux/${created.body.item.id}`).set('X-CSRF-Token', csrf)).status).toBe(404);
-    expect(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action IN ('RESEAUX_SOCIAUX_CREATE','RESEAUX_SOCIAUX_UPDATE')").get().n).toBe(2);
+    const trashed = await agent.delete(`/api/reseaux-sociaux/${created.body.item.id}`).set('X-CSRF-Token', csrf);
+    expect(trashed.status).toBe(200); expect(trashed.body.item.deleted_at).toBeTruthy();
+    expect((await agent.get('/api/reseaux-sociaux')).body.total).toBe(0);
+    expect((await agent.get('/api/reseaux-sociaux?corbeille=1')).body.total).toBe(1);
+    const restored = await write(agent, csrf, 'post', `/api/reseaux-sociaux/${created.body.item.id}/restaurer`);
+    expect(restored.status).toBe(200); expect(restored.body.item.deleted_at).toBeNull();
+    const history = await agent.get(`/api/reseaux-sociaux/${created.body.item.id}/historique`);
+    expect(history.status).toBe(200);
+    expect(history.body.items.map((row) => row.action)).toEqual(expect.arrayContaining(['CREATION', 'MODIFICATION', 'CORBEILLE', 'RESTAURATION']));
+    expect(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action IN ('RESEAUX_SOCIAUX_CREATE','RESEAUX_SOCIAUX_UPDATE','RESEAUX_SOCIAUX_CORBEILLE','RESEAUX_SOCIAUX_RESTAURATION')").get().n).toBe(4);
   });
   it('ne contourne jamais un conflit de version', async () => {
     const { agent, csrf } = await login(app);
@@ -285,5 +293,62 @@ describe('Statistiques et exports contractuels', () => {
     const response = await agent.get('/api/reseaux-sociaux/export?format=csv&plateforme=tiktok');
     expect(response.status).toBe(200); expect(response.headers['content-type']).toContain('text/csv'); expect(response.text).toContain('[DEMO] Profil اسم');
     expect(response.text).not.toContain('[DEMO] Page environnement');
+  });
+});
+
+describe('Workflow V9 du répertoire social', () => {
+  it('ajoute un lot, signale les doublons sans écraser la fiche existante', async () => {
+    const { agent, csrf } = await login(app);
+    const first = payload({ nom: '[DEMO] Lot A', lien_url: 'https://facebook.com/demo.lot.a' });
+    const second = payload({ nom: '[DEMO] Lot B', lien_url: 'https://facebook.com/demo.lot.b' });
+    const result = await write(agent, csrf, 'post', '/api/reseaux-sociaux/lot', { elements: [first, second, first] });
+    expect(result.status).toBe(201);
+    expect(result.body.item).toMatchObject({ created: 2 });
+    expect(result.body.item.ids).toHaveLength(2);
+    expect(result.body.item.errors).toHaveLength(1);
+    expect(result.body.item.errors[0]).toMatchObject({ index: 2 });
+    expect((await agent.get('/api/reseaux-sociaux')).body.total).toBe(2);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM comptes_sociaux_historique WHERE action='CREATION'").get().n).toBe(2);
+  });
+
+  it('fusionne en préservant le lien de la cible et en mettant la source en corbeille', async () => {
+    const { agent, csrf } = await login(app);
+    const sourceItem = createCompteSocial(db, payload({ nom: '[DEMO] Source détaillée', lien_url: 'https://facebook.com/demo.fusion.source',
+      observations: 'Observations transférées', commune_id: null, daira_id: null, commune_libelle: 'Commune source' }), userIds.admin);
+    const cible = createCompteSocial(db, payload({ nom: '[DEMO] Cible', lien_url: 'https://facebook.com/demo.fusion.cible' }), userIds.admin);
+    const merged = await write(agent, csrf, 'post', '/api/reseaux-sociaux/fusion', {
+      sourceId: sourceItem.id, cibleId: cible.id, expectedSourceVersion: 1, expectedCibleVersion: 1,
+    });
+    expect(merged.status).toBe(200);
+    expect(merged.body.item.champs).toContain('observations');
+    expect(merged.body.item.cible).toMatchObject({ id: cible.id, version: 2, observations: 'Observations transférées', commune_libelle: 'Commune Test' });
+    expect(merged.body.item.champs).not.toContain('commune_libelle');
+    expect(merged.body.item.cible.lien_normalise).toBe(cible.lien_normalise);
+    const trashed = await agent.get(`/api/reseaux-sociaux/${sourceItem.id}`);
+    expect(trashed.body.item).toMatchObject({ actif: 0, fusionne_dans: cible.id });
+    expect(trashed.body.item.deleted_at).toBeTruthy();
+    const restore = await write(agent, csrf, 'post', `/api/reseaux-sociaux/${sourceItem.id}/restaurer`);
+    expect(restore.status).toBe(409); expect(restore.body.error.code).toBe('COMPTE_FUSIONNE');
+  });
+
+  it('contrôle manuellement une fiche avec verrou optimiste et historique', async () => {
+    const { agent, csrf } = await login(app);
+    const item = createCompteSocial(db, payload(), userIds.admin);
+    const controlled = await write(agent, csrf, 'post', `/api/reseaux-sociaux/${item.id}/controle`, { verification: 'verifie', version: 1 });
+    expect(controlled.status).toBe(200);
+    expect(controlled.body.item).toMatchObject({ verification: 'verifie', version: 2 });
+    const stale = await write(agent, csrf, 'post', `/api/reseaux-sociaux/${item.id}/controle`, { verification: 'a_verifier', version: 1 });
+    expect(stale.status).toBe(409);
+    const history = (await agent.get(`/api/reseaux-sociaux/${item.id}/historique`)).body;
+    expect(history.items.map((row) => row.action)).toContain('CONTROLE_MANUEL');
+  });
+
+  it('réserve le lot, la fusion, le contrôle et la corbeille aux administrateurs', async () => {
+    const { agent, csrf } = await login(app, 'operateur');
+    expect((await write(agent, csrf, 'post', '/api/reseaux-sociaux/lot', { elements: [payload()] })).status).toBe(403);
+    expect((await write(agent, csrf, 'post', '/api/reseaux-sociaux/fusion', { sourceId: 1, cibleId: 2, expectedSourceVersion: 1, expectedCibleVersion: 1 })).status).toBe(403);
+    expect((await write(agent, csrf, 'post', '/api/reseaux-sociaux/1/controle', { verification: 'verifie', version: 1 })).status).toBe(403);
+    expect((await agent.delete('/api/reseaux-sociaux/1').set('X-CSRF-Token', csrf)).status).toBe(403);
+    expect((await write(agent, csrf, 'post', '/api/reseaux-sociaux/1/restaurer')).status).toBe(403);
   });
 });

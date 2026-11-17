@@ -11,7 +11,7 @@ const SORTS = { nom: 's.nom COLLATE NOCASE', plateforme: 's.plateforme', categor
 
 /** Liste et statistiques partagent strictement la même population et les mêmes paramètres liés. */
 export function socialFilters(query = {}) {
-  const conditions = []; const params = [];
+  const conditions = [query.corbeille === '1' ? 's.deleted_at IS NOT NULL' : 's.deleted_at IS NULL']; const params = [];
   for (const key of ['plateforme', 'categorie', 'verification', 'actif', 'daira_id', 'commune_id']) {
     if (query[key] !== undefined) { conditions.push(`s.${key}=?`); params.push(query[key]); }
   }
@@ -32,6 +32,13 @@ function publicCompte(row) {
   if (!row) return null;
   const { search_norm: _search, ...item } = row;
   return item;
+}
+
+/** Journal V9 : une ligne par opération, même pour les fiches ensuite mises en corbeille. */
+function journal(db, compteId, action, details, userId) {
+  const username = userId ? db.prepare('SELECT username FROM users WHERE id=?').get(userId)?.username || null : null;
+  db.prepare(`INSERT INTO comptes_sociaux_historique(compte_id,action,details_json,user_id,username)
+    VALUES (?,?,?,?,?)`).run(compteId, action, details ? JSON.stringify(details) : null, userId || null, username);
 }
 export function getCompteSocial(db, id) {
   const row = db.prepare(`${SOCIAL_SELECT} WHERE s.id=?`).get(id);
@@ -100,10 +107,12 @@ export function createCompteSocial(db, data, userId, provenance = null) {
       fichier_source: provenance?.fichier || null, feuille_source: provenance?.feuille || null,
       ligne_source: provenance?.ligne || null, colonne_source: provenance?.colonne || null,
       nom_source: provenance?.nom ?? null, ca_source: provenance?.ca ?? null, commune_source: provenance?.commune ?? null });
-    return getCompteSocial(db, Number(result.lastInsertRowid));
+    const created = getCompteSocial(db, Number(result.lastInsertRowid));
+    journal(db, created.id, 'CREATION', { origine: created.origine, categorie: created.categorie }, userId);
+    return created;
   })();
 }
-export function updateCompteSocial(db, id, data, userId) {
+export function updateCompteSocial(db, id, data, userId, action = 'MODIFICATION') {
   return db.transaction(() => {
     const current = getCompteSocial(db, id);
     if (data.version !== current.version) throw conflict('VERSION_CONFLICT', 'Cette fiche a été modifiée. Rechargez-la avant de réessayer.', { current });
@@ -115,6 +124,86 @@ export function updateCompteSocial(db, id, data, userId) {
       search_norm=@search_norm,modifie_par=@userId,version=version+1,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
       WHERE id=@id AND version=@version`).run({ ...item, id, version: data.version, userId });
     if (!result.changes) throw conflict('VERSION_CONFLICT', 'Cette fiche a été modifiée. Rechargez-la avant de réessayer.');
+    const updated = getCompteSocial(db, id);
+    journal(db, id, action, { champs: Object.keys(data).filter((key) => key !== 'version'), version: updated.version }, userId);
+    return updated;
+  })();
+}
+
+export function createComptesSociauxLot(db, elements, userId) {
+  return db.transaction(() => {
+    const ids = []; const errors = [];
+    elements.forEach((element, index) => {
+      try { ids.push(createCompteSocial(db, element, userId).id); }
+      catch (cause) { errors.push({ index, message: cause.message, ...(cause.fields ? { fields: cause.fields } : {}) }); }
+    });
+    return { created: ids.length, ids, errors };
+  })();
+}
+
+export function controlerCompteSocial(db, id, data, userId) {
+  return updateCompteSocial(db, id, data, userId, 'CONTROLE_MANUEL');
+}
+
+export function mettreEnCorbeille(db, id, userId) {
+  return db.transaction(() => {
+    const current = getCompteSocial(db, id);
+    if (current.deleted_at) throw conflict('DEJA_EN_CORBEILLE', 'Cette fiche est déjà dans la corbeille');
+    db.prepare(`UPDATE comptes_sociaux SET deleted_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), actif=0,
+      version=version+1, modifie_par=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?`).run(userId || null, id);
+    journal(db, id, 'CORBEILLE', { nom: current.nom }, userId);
     return getCompteSocial(db, id);
   })();
+}
+
+export function restaurerCompteSocial(db, id, userId) {
+  return db.transaction(() => {
+    const current = getCompteSocial(db, id);
+    if (!current.deleted_at) throw conflict('PAS_EN_CORBEILLE', 'Cette fiche n’est pas dans la corbeille');
+    if (current.fusionne_dans) throw conflict('COMPTE_FUSIONNE', 'Cette fiche a été fusionnée : elle ne peut pas être restaurée séparément', { cible: current.fusionne_dans });
+    db.prepare(`UPDATE comptes_sociaux SET deleted_at=NULL, actif=1, version=version+1,
+      modifie_par=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?`).run(userId || null, id);
+    journal(db, id, 'RESTAURATION', { nom: current.nom }, userId);
+    return getCompteSocial(db, id);
+  })();
+}
+
+const FUSION_COPIABLES = ['nom', 'observations', 'daira_id', 'commune_id', 'ca_libelle', 'commune_libelle'];
+export function fusionnerComptesSociaux(db, { sourceId, cibleId, expectedSourceVersion, expectedCibleVersion }, userId) {
+  return db.transaction(() => {
+    const source = getCompteSocial(db, sourceId);
+    const cible = getCompteSocial(db, cibleId);
+    if (source.deleted_at || cible.deleted_at) throw conflict('FICHE_EN_CORBEILLE', 'Les deux fiches doivent être actives pour être fusionnées');
+    if (source.version !== expectedSourceVersion || cible.version !== expectedCibleVersion) {
+      throw conflict('VERSION_CONFLICT', 'Une des fiches a changé. Rechargez-les avant de réessayer.', { source: source.version, cible: cible.version });
+    }
+    const champs = FUSION_COPIABLES.filter((key) => !cible[key] && source[key]);
+    if (champs.length) {
+      const assignments = champs.map((key) => `${key}=@${key}`).join(',');
+      db.prepare(`UPDATE comptes_sociaux SET ${assignments}, version=version+1, modifie_par=@userId,
+        updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=@id AND version=@version`)
+        .run({ ...Object.fromEntries(champs.map((key) => [key, source[key]])), userId: userId || null, id: cibleId, version: expectedCibleVersion });
+    }
+    db.prepare(`UPDATE comptes_sociaux SET deleted_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), actif=0,
+      fusionne_dans=?, version=version+1, modifie_par=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
+      WHERE id=? AND version=?`).run(cibleId, userId || null, sourceId, expectedSourceVersion);
+    journal(db, cibleId, 'FUSION_RECU', { sourceId, champs }, userId);
+    journal(db, sourceId, 'FUSION', { cibleId, champs }, userId);
+    return { sourceId, cibleId, champs, cible: getCompteSocial(db, cibleId) };
+  })();
+}
+
+export function historiqueCompteSocial(db, id) {
+  getCompteSocial(db, id);
+  const journalRows = db.prepare(`SELECT h.id, h.action, h.details_json, h.username, h.at
+    FROM comptes_sociaux_historique h WHERE h.compte_id=? ORDER BY h.at DESC, h.id DESC LIMIT 100`).all(id)
+    .map((row) => ({ id: row.id, action: row.action, details: row.details_json ? JSON.parse(row.details_json) : null,
+      username: row.username, at: row.at, source: 'journal' }));
+  const dejaJournalises = new Set(['RESEAUX_SOCIAUX_CREATE', 'RESEAUX_SOCIAUX_UPDATE', 'RESEAUX_SOCIAUX_IMPORT']);
+  const audits = db.prepare(`SELECT id, action, details_json, username, at FROM audit_log
+    WHERE entite='comptes_sociaux' AND entite_id=? ORDER BY at DESC, id DESC LIMIT 100`).all(String(id))
+    .filter((row) => !dejaJournalises.has(row.action))
+    .map((row) => ({ id: row.id + 1000000, action: row.action, details: row.details_json ? JSON.parse(row.details_json) : null,
+      username: row.username, at: row.at, source: 'audit' }));
+  return { items: [...journalRows, ...audits].sort((a, b) => b.at.localeCompare(a.at) || b.id - a.id).slice(0, 100), total: journalRows.length + audits.length };
 }

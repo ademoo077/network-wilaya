@@ -279,7 +279,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
             </>
           }
         /></div>}
-        <div className={`flex-1 overflow-auto ${embedded ? 'p-2 sm:p-3' : 'p-4 sm:p-6 lg:p-8'}`}>
+        <div className={`flex-1 overflow-auto ${activeWidth === 'max' ? 'p-1 sm:p-2' : embedded ? 'p-2 sm:p-3' : 'p-4 sm:p-6 lg:p-8'}`}>
           {!embedded && <Button size="sm" variant="ghost" className="mb-3" onClick={() => navigate('/syntheses')}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />{t('common.back')}
           </Button>}
@@ -287,7 +287,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
           {validModeleId && modeleQuery.isError && <ErrorState message={modeleQuery.error?.message || t('error.load')} onRetry={() => modeleQuery.refetch()} />}
           {validModeleId && modeleQuery.isSuccess && !remoteModele && <EmptyState title={t('synthese.modeleIntrouvable')} description={t('synthese.modeleIntrouvableHelp')} />}
           {validModeleId && modeleQuery.isPending && !modele && <div className="grid place-items-center min-h-[40vh]"><Skeleton className="h-10 w-48" /></div>}
-          {modele && <div className={`mx-auto w-full ${activeWidth === 'print' ? 'max-w-[794px]' : 'max-w-[1280px]'}`} data-display-width={activeWidth}>
+          {modele && <div className={`mx-auto w-full ${activeWidth === 'print' ? 'max-w-[794px]' : activeWidth === 'max' ? 'max-w-none' : 'max-w-[1280px]'}`} data-display-width={activeWidth}>
             <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
               onEdit={(bloc) => { setSelectedBloc(bloc); setOpenInspector(true); }} onVoirFiches={() => { navigate('/anomalies'); push(t('synthese.voirFichesInfo'), 'success'); }} embedded={embedded} /></OfficialPrintDocument>

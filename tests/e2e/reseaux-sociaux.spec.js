@@ -6,6 +6,8 @@ import { expectAccessible, expectCompactCards, expectNoOverflow } from './geomet
 
 const fr = JSON.parse(fs.readFileSync(new URL('../../client/src/i18n/fr-reseaux.json', import.meta.url)));
 const ar = JSON.parse(fs.readFileSync(new URL('../../client/src/i18n/ar-reseaux.json', import.meta.url)));
+const common = JSON.parse(fs.readFileSync(new URL('../../client/src/i18n/fr.json', import.meta.url)));
+const arCommon = JSON.parse(fs.readFileSync(new URL('../../client/src/i18n/ar.json', import.meta.url)));
 const dict = (lang) => lang === 'ar' ? ar : fr;
 const dialog = (page, key, lang = 'fr') => page.getByRole('dialog', { name: dict(lang)[key], exact: true });
 const openRecord = (page, name, lang = 'fr') => page.getByRole('button', { name: dict(lang)['social.openNamed'].replace('{nom}', name), exact: true });
@@ -506,3 +508,84 @@ test('Répertoire social — un aperçu peut être annulé sans aucune écriture
   await expect(page.getByText(fr['social.imports.cancelled'], { exact: true })).toBeVisible();
   expect((await (await page.request.get(`${baseURL}/api/reseaux-sociaux`)).json()).total).toBe(0);
 });
+
+test('Scénario 120 — ajout en lot, contrôle, fusion, corbeille, restauration et historique', async ({ page, baseURL }) => {
+  const session = await authenticate(page, baseURL);
+  const errors = collectErrors(page);
+  await page.goto('/#/reseaux');
+  await page.getByRole('button', { name: fr['social.bulkAdd'], exact: true }).click();
+  const batch = dialog(page, 'social.batch.title');
+  await batch.getByRole('textbox', { name: fr['social.link'], exact: true }).fill([
+    'https://facebook.com/demo.lot.un | [DEMO] Lot un | page',
+    'https://facebook.com/demo.lot.deux | [DEMO] Lot deux | groupe',
+  ].join('\n'));
+  await batch.getByRole('button', { name: fr['social.batch.start'], exact: true }).click();
+  await expect(batch.getByText(fr['social.batch.result'].replace('{created}', '2').replace('{errors}', '0'), { exact: true })).toBeVisible();
+  await batch.getByRole('button', { name: fr['social.finish'], exact: true }).click();
+  const item = (await (await page.request.get(`${baseURL}/api/reseaux-sociaux?q=${encodeURIComponent('[DEMO] Lot un')}`)).json()).items[0];
+  const source = await createAccount(page, baseURL, session, { nom: '[DEMO] Source fusion', lien_url: 'https://facebook.com/demo.source.fusion', observations: 'Observations à transmettre' });
+  await page.reload();
+  await openRecord(page, source.nom).click();
+  const detail = dialog(page, 'social.detail');
+  await detail.getByRole('button', { name: fr['social.merge.title'], exact: true }).click();
+  const merge = dialog(page, 'social.merge.title');
+  await merge.getByLabel(fr['social.merge.target'], { exact: true }).selectOption(String(item.id));
+  await merge.getByRole('button', { name: fr['social.merge.action'], exact: true }).click();
+  await expect(page.getByText(fr['social.merge.done'], { exact: true })).toBeVisible();
+  await expect.poll(async () => (await (await page.request.get(`${baseURL}/api/reseaux-sociaux/${source.id}`)).json()).item.deleted_at).toBeTruthy();
+  await expect.poll(async () => (await (await page.request.get(`${baseURL}/api/reseaux-sociaux/${item.id}`)).json()).item.observations).toBe('Observations à transmettre');
+  await detail.getByRole('button', { name: common['common.close'], exact: true }).click();
+  await openRecord(page, item.nom).click();
+  await dialog(page, 'social.detail').getByRole('button', { name: fr['social.control'], exact: true }).click();
+  await expect.poll(async () => (await (await page.request.get(`${baseURL}/api/reseaux-sociaux/${item.id}`)).json()).item.verification).toBe('verifie');
+  await expect(dialog(page, 'social.detail').locator('[data-social-history]')).toContainText(fr['social.history.action.CONTROLE_MANUEL']);
+  await dialog(page, 'social.detail').getByRole('button', { name: common['common.close'], exact: true }).click();
+  await page.getByRole('button', { name: fr['social.trashNamed'].replace('{nom}', item.nom), exact: true }).click();
+  await expect(page.getByText(fr['social.trashed'], { exact: true })).toBeVisible();
+  await page.getByLabel(fr['social.state'], { exact: true }).selectOption('1');
+  await expect(openRecord(page, item.nom)).toBeVisible();
+  await page.getByRole('button', { name: fr['social.restoreNamed'].replace('{nom}', item.nom), exact: true }).click();
+  await expect(page.getByText(fr['social.restored'], { exact: true })).toBeVisible();
+  expect(errors.snapshot().pageError).toEqual([]); expect(errors.snapshot().consoleError).toEqual([]);
+});
+
+test('Scénario 121 — les rôles en lecture consultent l’historique sans outils d’écriture', async ({ page, baseURL }) => {
+  const session = await authenticate(page, baseURL);
+  const item = await createAccount(page, baseURL, session);
+  for (const role of ['lecteur', 'operateur']) {
+    await authenticate(page, baseURL, role);
+    await page.goto(`/#/reseaux?fiche=${item.id}`);
+    const detail = dialog(page, 'social.detail');
+    await expect(detail.locator('[data-social-history]')).toBeVisible();
+    await expect(detail.getByRole('button', { name: fr['social.edit'], exact: true })).toHaveCount(0);
+    await expect(detail.getByRole('button', { name: fr['social.trash'], exact: true })).toHaveCount(0);
+    await expect(detail.getByRole('button', { name: fr['social.merge.title'], exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: fr['social.bulkAdd'], exact: true })).toHaveCount(0);
+  }
+});
+
+for (const lang of ['fr', 'ar']) for (const theme of ['light', 'dark']) {
+  test(`Scénario 126 — lot et historique sans débordement ni chevauchement / ${lang} / ${theme}`, async ({ page, baseURL }, info) => {
+    await page.addInitScript(({ lang, theme }) => { localStorage.setItem('anm-language', lang); localStorage.setItem('anm-theme', theme); }, { lang, theme });
+    await authenticate(page, baseURL);
+    const text = dict(lang);
+    const errors = collectErrors(page);
+    for (const width of [390, 768, 1024, 1440]) {
+      await test.step(`${width} px`, async () => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto('/#/reseaux');
+        await expect(page.locator('html')).toHaveAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await page.getByRole('button', { name: text['social.bulkAdd'], exact: true }).click();
+        const batch = dialog(page, 'social.batch.title', lang);
+        await expectNoOverflow(page); await expectAccessible(page); await expectControlsSeparate(batch);
+        if (width === 1440) await info.attach(`lot-${lang}-${theme}`, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+        const labels = lang === 'ar' ? arCommon : common;
+        await batch.getByRole('button', { name: labels['common.cancel'], exact: true }).click();
+        await page.goto('/#/reseaux');
+        await expectNoOverflow(page); await expectAccessible(page);
+      });
+    }
+    expect(errors.snapshot().pageError).toEqual([]); expect(errors.snapshot().consoleError).toEqual([]);
+  });
+}
