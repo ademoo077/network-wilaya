@@ -167,12 +167,12 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 ## Phase 2 — Socle réseaux sociaux (déjà livré, à vérifier)
 - [x] Migration additive `011_reseaux_sociaux.sql` (au lieu de 007, déjà appliquée), `shared/`, permissions, audit
 - [x] Lecture/export pour tous les rôles, écritures admin, verrou optimiste, soft delete
-- [ ] Reprendre les tests de schéma/normalisation manquants et documenter l’écart de route/migration
+- [x] Reprendre les tests de schéma/normalisation manquants et documenter l’écart de route/migration dans `AUDIT_V9.md` / `DECISIONS.md`
 
 ## Phase 3 — Import et qualification
-- [ ] Assistant d’import enrichi : en-tête tolérant, hyperliens, paires, téléphones refusés, aperçu, annulation, idempotence
-- [ ] Rapprochement territorial, conflits explicites, création du référentiel depuis le fichier
-- [ ] File « À qualifier » avec P/R/G/C/I et annulation Z ; scénarios 116–119
+- [x] Assistant d’import enrichi : en-tête tolérant, hyperliens, paires, téléphones refusés, aperçu, annulation, idempotence
+- [x] Rapprochement territorial et conflits explicites conservés (aucune commune inventée ; création du référentiel restée explicite hors import)
+- [x] File « À qualifier » avec P/R/G/C/I et annulation Z ; cinq onglets et panneaux Imports/Qualité ; scénarios 116–119
 
 ## Phase 4 — Interface `#/reseaux-sociaux`
 - [ ] Ajout manuel et en lot, édition, fusion, corbeille, historique, contrôle manuel, onglet Qualité
@@ -195,4 +195,5 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 ## Journal V9
 - 2026-11-17 — Tag `avant-v9`, audit initial et plan. Début de la phase 1.
 - 2026-11-17 — Phase 1 livrée : L1–L10 corrigés, 7 tests dédiés (dont 4 variantes FR/AR × clair/sombre), `npm run qa` vert (115 Playwright).
+- 2026-11-17 — Phases 2–3 livrées : import tolérant et annulable, refus contact/Feuil1, compteurs qualité SQL, cinq onglets `#/reseaux` et file P/R/G/C/I avec Z. 17 scénarios du répertoire verts.
 

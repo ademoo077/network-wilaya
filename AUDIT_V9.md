@@ -22,7 +22,9 @@ Date : 17/11/2026. Références : prompt V9, docs/SPEC_V8.md, PLAN.md, DECISIONS
 
 Deja livre et verifie (commit 14524c1) : annuaire manual comptes_sociaux, migration additive 011 (007 etant deja appliquee aux agents), route #/reseaux-sociaux (pas #/reseaux), assistant d'import LIEN reelle (hyperliens, remplissage de daira, paires, idempotence), statistiques SQL, exports CSV/XLSX, permissions admin/operateur/lecteur, audit, docs.
 
-Ecarts V9 restants : file « A qualifier » avec raccourcis clavier, onglet Qualite, import avec rapprochement territorial et conflits, creation du referentiel depuis le fichier, 14 widgets prets et modele systeme n°9, jeu sources/couverture du catalogue, suggestion de source dans le formulaire anomalie et filtre associe, bouton Veille, integration P2/P3 (stat semestrielle, POINTS). Ces ecarts sont decrits dans PLAN.md et traites dans les phases suivantes.
+Corrigé en phases 2–3 : import LIEN tolérent (en-têtes déplacés, hyperliens, paires), refus des colonnes de contact et de « Feuil1 », aperçu annulable sans écriture, idempotence conservée, cinq onglets `#/reseaux` (dont « À qualifier », « Imports » et « Qualité »), raccourcis P/R/G/C/I et Z, compteurs qualité calculés en SQL. Un accès `view` avant sa déclaration dans `ReseauxSociauxPage.jsx` provoquait une erreur « Cannot access 'R' before initialization » en production : l'initialisation a été réordonnée et vérifiée par rebuild + scénarios navigateur.
+
+Ecarts V9 restants : création du référentiel depuis le fichier (restée explicite pour ne rien inventer), 14 widgets prêts et modèle système n°9, jeu sources/couverture du catalogue, suggestion de source dans le formulaire anomalie et filtre associé, bouton Veille réservé aux pages/groupes, intégration P2/P3 (stat semestrielle, POINTS). Ces écarts sont décrits dans `PLAN.md` et traités dans les phases suivantes.
 
 ## 3. Causes transversales
 

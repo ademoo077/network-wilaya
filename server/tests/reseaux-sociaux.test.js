@@ -103,6 +103,28 @@ describe('Import LIEN additif', () => {
     expect(preview.summary).toMatchObject({ total: 3, nouveaux: 3, sans_lien: 1, erreurs: 0 });
     expect(preview.rows.map((row) => row.categorie)).toEqual(['page', 'profil', 'groupe']);
   });
+  it('accepte un en-tête déplacé, lit la cible des hyperliens et refuse contacts et Feuil1', async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('LIEN');
+    sheet.getRow(2).values = ['Daïra', 'Commune', 'Lien Facebook', 'Nom', 'Lien TikTok', 'Nom du profil'];
+    sheet.getRow(3).values = ['Daïra Test', 'Commune Test',
+      { text: 'Voir la page', hyperlink: 'https://facebook.com/demo.deplacement' }, '[DEMO] Page déplacée',
+      'https://tiktok.com/@demo', '[DEMO] Profil déplacé'];
+    const parsed = await parseSocialWorkbook({ originalname: 'deplace.xlsx', buffer: Buffer.from(await workbook.xlsx.writeBuffer()) });
+    expect(parsed.lignes[0]).toMatchObject({ lien: 'https://facebook.com/demo.deplacement', nom: '[DEMO] Page déplacée',
+      autres: 'https://tiktok.com/@demo', nom_autres: '[DEMO] Profil déplacé' });
+    expect(previewSocialImport(db, parsed).rows.map((row) => row.categorie)).toEqual(['page', 'profil']);
+
+    const withContact = new ExcelJS.Workbook();
+    withContact.addWorksheet('LIEN').getRow(2).values = ['CA', 'COMMUNES', 'lien', 'Téléphone', 'nom'];
+    await expect(parseSocialWorkbook({ originalname: 'contact.xlsx', buffer: Buffer.from(await withContact.xlsx.writeBuffer()) }))
+      .rejects.toThrow(/contact/i);
+
+    const defaultSheet = new ExcelJS.Workbook();
+    defaultSheet.addWorksheet('Feuil1').getRow(1).values = ['lien', 'https://facebook.com/demo.interdit'];
+    await expect(parseSocialWorkbook({ originalname: 'brut.xlsx', buffer: Buffer.from(await defaultSheet.xlsx.writeBuffer()) }))
+      .rejects.toThrow(/Feuil1/i);
+  });
   it('extrait exactement les 95 liens fournis sans inventer la commune ni le nom absent', () => {
     importTerritoire(db, JSON.parse(fs.readFileSync(new URL('../../seed/territoire-alger.json', import.meta.url))), { commit: true });
     const input = suppliedSocialSource();
@@ -166,6 +188,14 @@ describe('Import LIEN additif', () => {
     const file = path.join(config.tmpDir, `reseaux-import-${expired.importId}.json`);
     const saved = JSON.parse(fs.readFileSync(file, 'utf8')); saved.expiresAt = '2000-01-01T00:00:00.000Z'; fs.writeFileSync(file, JSON.stringify(saved));
     expect((await write(agent, csrf, 'post', '/api/reseaux-sociaux/import/commit', { importId: expired.importId })).status).toBe(400);
+  });
+  it('permet d’annuler un aperçu avant application sans écrire en base', async () => {
+    const preview = createSocialImportPreview(db, source([{ lien: 'https://facebook.com/demo.annule', nom: '[DEMO] Annulé' }]), userIds.admin);
+    const { agent, csrf } = await login(app);
+    const cancelled = await write(agent, csrf, 'post', '/api/reseaux-sociaux/import/annuler', { importId: preview.importId });
+    expect(cancelled.status).toBe(200); expect(cancelled.body.item.annule).toBe(true);
+    expect((await write(agent, csrf, 'post', '/api/reseaux-sociaux/import/commit', { importId: preview.importId })).status).toBe(400);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM comptes_sociaux').get().n).toBe(0);
   });
   it('revérifie les doublons apparus depuis l’aperçu', async () => {
     const preview = createSocialImportPreview(db, source([{ lien: 'https://facebook.com/demo.environnement', nom: '[DEMO] Import' }]), userIds.admin);
@@ -232,6 +262,12 @@ describe('Statistiques et exports contractuels', () => {
     expect(statsReseauxSociaux(db, filters).resume.total).toBe(1);
     expect(listComptesSociaux(db, query({ non_rattache: 'ca', ca_libelle: 'CA A' })).total).toBe(2);
     expect(listComptesSociaux(db, query({ non_rattache: 'commune' })).items.map((row) => row.nom)).toEqual(['[DEMO] d']);
+  });
+  it('compte en SQL les fiches à nommer et les liens non normalisés pour la qualité', () => {
+    importComptesSociaux(db, source([{ lien: 'https://facebook.com/groups/qualite' }]), userIds.admin);
+    const stats = statsReseauxSociaux(db, query());
+    expect(stats.resume).toMatchObject({ total: 1, sans_nom: 1, sans_lien_normalise: 0, a_verifier: 1 });
+    expect(reseauxSociauxStatsSchema.safeParse({ item: stats }).success).toBe(true);
   });
   it('exporte la totalité filtrée, neutralise les formules et inclut les statistiques SQL dans Excel', async () => {
     populate();

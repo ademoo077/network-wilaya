@@ -16,9 +16,12 @@ import { refLabel, useI18n } from '../../i18n/index.jsx';
 import CompteSocialDetail from './CompteSocialDetail.jsx';
 import CompteSocialDialog from './CompteSocialDialog.jsx';
 import ComptesSociauxList from './ComptesSociauxList.jsx';
+import QualificationQueue from './QualificationQueue.jsx';
 import ReseauxSociauxImportDialog from './ReseauxSociauxImportDialog.jsx';
 import ReseauxSociauxStats from './ReseauxSociauxStats.jsx';
+import { ImportsPanel, QualityPanel } from './SocialPanels.jsx';
 
+const VIEWS = ['repertoire', 'statistiques', 'qualifier', 'imports', 'qualite'];
 const FILTER_KEYS = ['q', 'plateforme', 'categorie', 'daira_id', 'commune_id', 'verification', 'actif', 'page', 'pageSize', 'sort', 'dir', 'non_rattache', 'ca_libelle', 'commune_libelle'];
 const CLEAR_ATTACHMENT = { non_rattache: '', ca_libelle: '', commune_libelle: '' };
 const isSocialQuery = ({ queryKey }) => queryKey[0] === 'api' && String(queryKey[1]).startsWith('/reseaux-sociaux');
@@ -32,9 +35,12 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
   const q = useDebounced(filters.q, 250);
   const listing = useApiQuery(`/reseaux-sociaux${queryString({ ...filters, q })}`);
   const { page: _page, pageSize: _size, sort: _sort, dir: _dir, ...scope } = filters;
+  const requestedView = params.get('onglet');
+  const view = VIEWS.includes(requestedView) ? requestedView : 'repertoire';
   const stats = useApiQuery(`/reseaux-sociaux/stats${queryString({ ...scope, q })}`);
+  const queue = useApiQuery(`/reseaux-sociaux${queryString({ ...scope, q, verification: 'a_verifier', page: 1, pageSize: 25, sort: 'updated_at', dir: 'desc' })}`,
+    { enabled: view === 'qualifier' });
   const data = stats.data?.item;
-  const view = params.get('onglet') === 'statistiques' ? 'statistiques' : 'repertoire';
   const selectedId = /^[1-9]\d*$/.test(params.get('fiche') || '') ? Number(params.get('fiche')) : null;
   const canManage = user?.role === 'admin';
   const updating = stats.isPlaceholderData || listing.isPlaceholderData || filters.q !== q;
@@ -75,14 +81,19 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
         <div data-social-kpi="communes"><KpiCard icon={MapPin} label={t('social.coveredCommunes')} value={data.resume.communes_couvertes} onClick={() => update({ onglet: 'statistiques' }, false)}><p className="text-xs text-muted">{t('social.caCount', { count: data.resume.ca_couverts })}</p></KpiCard></div>
       </div> : <ErrorState message={t('social.badResponse')} onRetry={stats.refetch} />}
     </QueryContent>
-    <Tabs value={view} ariaLabel={t('social.views')} tabs={[{ value: 'repertoire', label: t('social.directory') }, { value: 'statistiques', label: t('social.statistics') }]}
-      onChange={(onglet) => update({ onglet }, false)} />
+    <Tabs value={view} ariaLabel={t('social.views')} tabs={[
+      { value: 'repertoire', label: t('social.tab.directory') },
+      { value: 'statistiques', label: t('social.tab.statistics') },
+      { value: 'qualifier', label: t('social.tab.qualify') },
+      { value: 'imports', label: t('social.tab.imports') },
+      { value: 'qualite', label: t('social.tab.quality') },
+    ]} onChange={(onglet) => update({ onglet }, false)} />
     {!parsed.success && <Alert variant="warning" action={<Button variant="secondary" onClick={reset}>{t('social.resetFilters')}</Button>}>{t('social.invalidFilters')}</Alert>}
     {filters.non_rattache && <Alert variant="info" action={<Button variant="secondary" onClick={() => update(CLEAR_ATTACHMENT)}>{t('social.clearAttachmentFilter')}</Button>}>
       {t('social.attachmentFilter')} <bdi>{filters.ca_libelle || '—'}{filters.non_rattache === 'commune' ? ` / ${filters.commune_libelle || '—'}` : ''}</bdi>
     </Alert>}
     {updating && <p role="status" className="text-xs text-muted">{t('social.updating')}</p>}
-    <Card className="p-4"><div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    {['repertoire', 'statistiques', 'qualifier'].includes(view) && <Card className="p-4"><div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Input type="search" label={t('social.search')} maxLength={150} value={filters.q} onChange={(event) => update({ q: event.target.value })} placeholder={t('social.searchPlaceholder')} />
       <Select label={t('social.network')} placeholder={t('common.all')} value={filters.plateforme || ''} options={PLATEFORMES.map((value) => ({ value, label: t(`platform.${value}`) }))}
         onChange={(event) => update({ plateforme: event.target.value })} />
@@ -98,10 +109,15 @@ export function ReseauxSociauxWorkspace({ embedded = false }) {
         onChange={(event) => update({ actif: event.target.value })} />
       <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={reset}><RotateCcw className="h-4 w-4" aria-hidden="true" />{t('social.resetFilters')}</Button>
         <Button variant="ghost" aria-label={t('social.refresh')} loading={stats.isFetching || listing.isFetching} onClick={() => action.run(() => Promise.all([stats.refetch(), listing.refetch()]))}><RefreshCw className="h-4 w-4" aria-hidden="true" /></Button></div>
-    </div></Card>
+    </div></Card>}
     {view === 'statistiques' && <QueryContent query={stats}>{data && <ReseauxSociauxStats data={data} onDrill={drill} />}</QueryContent>}
-    <ComptesSociauxList query={listing} filters={filters} onFilter={update} onOpen={(fiche) => update({ fiche }, false)} onEdit={edit} canManage={canManage}
-      title={view === 'statistiques' ? t('social.accountsInScope') : t('social.directory')} emptyAction={canManage ? addButton : null} />
+    {view === 'qualifier' && <QueryContent query={queue}>
+      <QualificationQueue query={queue} canManage={canManage} onChanged={invalidate} onOpen={(fiche) => update({ fiche }, false)} />
+    </QueryContent>}
+    {view === 'imports' && <ImportsPanel canManage={canManage} onImport={() => setImporting(true)} />}
+    {view === 'qualite' && <QualityPanel resume={data?.resume} onFilter={(values) => update({ ...CLEAR_ATTACHMENT, ...values }, false)} />}
+    {['repertoire', 'statistiques'].includes(view) && <ComptesSociauxList query={listing} filters={filters} onFilter={update} onOpen={(fiche) => update({ fiche }, false)} onEdit={edit} canManage={canManage}
+      title={view === 'statistiques' ? t('social.accountsInScope') : t('social.directory')} emptyAction={canManage ? addButton : null} />}
     {!canManage && <p className="text-xs text-muted">{t('social.readOnly')}</p>}
     {selectedId && !editing && <CompteSocialDetail id={selectedId} onClose={() => update({ fiche: '' }, false)} canManage={canManage} onEdit={edit} />}
     {editing && canManage && <CompteSocialDialog key={editing.id || 'new'} item={editing} onClose={() => setEditing(null)} onSaved={saved} />}

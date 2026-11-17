@@ -129,3 +129,4 @@ export const reseauxSociauxSourceSchema = z.object({
   }).strict()).min(1).max(MAX_IMPORT_ROWS),
 }).strict();
 export const reseauxSociauxImportCommitSchema = z.object({ importId: z.string().uuid() }).strict();
+export const reseauxSociauxImportCancelRequestSchema = reseauxSociauxImportCommitSchema;

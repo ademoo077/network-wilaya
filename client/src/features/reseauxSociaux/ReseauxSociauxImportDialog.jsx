@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { CheckCircle2, FileSpreadsheet, Upload } from 'lucide-react';
-import { MAX_UPLOAD_BYTES, reseauxSociauxImportPreviewSchema, reseauxSociauxImportResultSchema } from '@anm/shared';
+import { MAX_UPLOAD_BYTES, reseauxSociauxImportCancelSchema, reseauxSociauxImportPreviewSchema, reseauxSociauxImportResultSchema } from '@anm/shared';
 import { api } from '../../api/client.js';
-import { Alert, Button, DataTable, Dialog, Input, PlatformBadge } from '../../components/ui/index.js';
+import { Alert, Button, DataTable, Dialog, Input, PlatformBadge, useToast } from '../../components/ui/index.js';
 import { useI18n } from '../../i18n/index.jsx';
 import { CompteSocialType } from './CompteSocialBadges.jsx';
 
 export default function ReseauxSociauxImportDialog({ onClose, onChanged }) {
-  const { t } = useI18n();
+  const { t } = useI18n(); const { push } = useToast();
   const [file, setFile] = useState(null); const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null); const [busy, setBusy] = useState(false); const [error, setError] = useState(null);
   const close = () => { if (!busy) onClose(); };
@@ -21,6 +21,16 @@ export default function ReseauxSociauxImportDialog({ onClose, onChanged }) {
         { method: 'POST', ...(supplied ? {} : { body }), schema: reseauxSociauxImportPreviewSchema, fallback: null });
       if (!response?.item) throw new Error(t('social.badResponse'));
       setPreview(response.item);
+    } catch (cause) { setError(cause.message); }
+    finally { setBusy(false); }
+  };
+  const cancelPreview = async () => {
+    if (!preview?.importId || busy) return;
+    setBusy(true); setError(null);
+    try {
+      await api('/reseaux-sociaux/import/annuler', { method: 'POST', body: { importId: preview.importId },
+        schema: reseauxSociauxImportCancelSchema, fallback: null });
+      setPreview(null); push(t('social.imports.cancelled'));
     } catch (cause) { setError(cause.message); }
     finally { setBusy(false); }
   };
@@ -55,7 +65,8 @@ export default function ReseauxSociauxImportDialog({ onClose, onChanged }) {
       {result.errors.length > 0 && <Alert variant="warning">{t('social.importErrors', { count: result.errors.length })}</Alert>}
     </div> : preview ? <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="min-w-0 break-words text-sm font-semibold"><bdi>{preview.fichier}</bdi><span className="ms-2 text-muted">{preview.feuille}</span></p>
-        <Button variant="ghost" disabled={busy} onClick={() => { setPreview(null); setError(null); }}>{t('social.changeFile')}</Button></div>
+        <div className="flex flex-wrap gap-2"><Button variant="ghost" disabled={busy} onClick={() => { setPreview(null); setError(null); }}>{t('social.changeFile')}</Button>
+          <Button variant="ghost" disabled={busy} loading={busy} onClick={cancelPreview}>{t('social.imports.cancelPreview')}</Button></div></div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{['nouveaux', 'existants', 'doublons', 'erreurs'].map((key) => <div key={key} className="rounded-md border border-border bg-surface2 p-3">
         <p className="text-2xl font-black">{preview.summary[key]}</p><p className="mt-1 text-xs text-muted">{t(`social.summary.${key}`)}</p>
       </div>)}</div>

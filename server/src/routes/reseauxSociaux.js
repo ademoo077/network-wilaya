@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { compteSocialCreateSchema, compteSocialUpdateSchema, reseauxSociauxQuerySchema, reseauxSociauxImportCommitSchema, zodFields } from '@anm/shared';
+import { compteSocialCreateSchema, compteSocialUpdateSchema, reseauxSociauxQuerySchema, reseauxSociauxImportCancelRequestSchema, reseauxSociauxImportCommitSchema, zodFields } from '@anm/shared';
 import { getDb } from '../db/index.js';
 import { config } from '../config/index.js';
 import { requireAdmin, requireAuth } from '../middleware/auth.js';
@@ -10,7 +10,7 @@ import { createBackup } from '../services/backups.js';
 import { createCompteSocial, getCompteSocial, listComptesSociaux, updateCompteSocial } from '../services/reseauxSociaux.js';
 import { statsReseauxSociaux } from '../services/statsReseauxSociaux.js';
 import { exportReseauxSociaux } from '../services/exportReseauxSociaux.js';
-import { commitSocialImportPreview, createSocialImportPreview, parseSocialWorkbook, readSocialImportPreview, suppliedSocialSource } from '../services/importReseauxSociaux.js';
+import { cancelSocialImportPreview, commitSocialImportPreview, createSocialImportPreview, parseSocialWorkbook, readSocialImportPreview, suppliedSocialSource } from '../services/importReseauxSociaux.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
@@ -35,6 +35,10 @@ router.post('/import/preview', requireAdmin, upload.single('file'), asyncHandler
   const source = await parseSocialWorkbook(req.file);
   res.json({ item: createSocialImportPreview(getDb(), source, req.user.id) });
 }));
+router.post('/import/annuler', requireAdmin, (req, res) => {
+  const data = parse(reseauxSociauxImportCancelRequestSchema, req.body);
+  res.json({ item: cancelSocialImportPreview(data.importId, req.user.id) });
+});
 router.post('/import/commit', requireAdmin, asyncHandler(async (req, res) => {
   const data = parse(reseauxSociauxImportCommitSchema, req.body);
   const preview = readSocialImportPreview(data.importId, req.user.id);

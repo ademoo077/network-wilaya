@@ -469,3 +469,40 @@ for (const lang of ['fr', 'ar']) for (const theme of ['light', 'dark']) {
     expect(errors.snapshot().pageError).toEqual([]); expect(errors.snapshot().consoleError).toEqual([]);
   });
 }
+
+test('Répertoire social — cinq vues, file de qualification avec raccourcis et annulation', async ({ page, baseURL }) => {
+  const session = await authenticate(page, baseURL);
+  const item = await createAccount(page, baseURL, session, { nom: '[DEMO] À qualifier vite' });
+  const errors = collectErrors(page);
+  await page.goto('/#/reseaux?onglet=qualifier');
+  await expect(page).toHaveURL(/onglet=qualifier/);
+  const queue = page.locator('[data-qualify-queue]');
+  await expect(queue.locator(`[data-qualify-item="${item.id}"]`)).toBeVisible();
+  const stored = async () => (await (await page.request.get(`${baseURL}/api/reseaux-sociaux/${item.id}`)).json()).item;
+  await page.keyboard.press('g');
+  await expect.poll(stored).toMatchObject({ categorie: 'groupe', verification: 'verifie', actif: 1 });
+  await expect(page.getByRole('button', { name: fr['social.qualify.undo'], exact: true })).toBeEnabled();
+  await page.keyboard.press('z');
+  await expect.poll(stored).toMatchObject({ categorie: 'page', verification: 'a_verifier', actif: 1 });
+  await queue.locator(`[data-qualify-item="${item.id}"]`).getByRole('button', { name: fr['social.qualify.action.ignorer'] }).click();
+  await expect.poll(stored).toMatchObject({ verification: 'verifie', actif: 0 });
+  await page.getByRole('tab', { name: fr['social.tab.imports'], exact: true }).click();
+  await expect(page.locator('[data-social-imports]')).toBeVisible();
+  await page.getByRole('tab', { name: fr['social.tab.quality'], exact: true }).click();
+  await expect(page.locator('[data-social-quality]')).toBeVisible();
+  await expect(page.locator('[data-social-quality]').getByText(fr['social.quality.toReview'], { exact: true })).toBeVisible();
+  expect(errors.snapshot().pageError).toEqual([]); expect(errors.snapshot().consoleError).toEqual([]);
+});
+
+test('Répertoire social — un aperçu peut être annulé sans aucune écriture', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL);
+  await page.goto('/#/reseaux?onglet=imports');
+  await page.getByRole('button', { name: fr['social.imports.start'], exact: true }).click();
+  const importing = dialog(page, 'social.importTitle');
+  await importing.getByRole('button', { name: fr['social.previewSupplied'], exact: true }).click();
+  await expect(importing.getByRole('button', { name: fr['social.imports.cancelPreview'], exact: true })).toBeEnabled();
+  await expect(importing.getByRole('button', { name: fr['social.importValid'].replace('{count}', '95'), exact: true })).toBeEnabled();
+  await importing.getByRole('button', { name: fr['social.imports.cancelPreview'], exact: true }).click();
+  await expect(page.getByText(fr['social.imports.cancelled'], { exact: true })).toBeVisible();
+  expect((await (await page.request.get(`${baseURL}/api/reseaux-sociaux`)).json()).total).toBe(0);
+});

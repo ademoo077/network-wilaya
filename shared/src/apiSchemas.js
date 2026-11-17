@@ -46,7 +46,8 @@ export const compteSocialItemSchema = z.object({ item: compteSocialResponseSchem
 export const reseauxSociauxListSchema = z.object({ items: z.array(compteSocialResponseSchema), total: z.number().int().nonnegative(), page: z.number(), pageSize: z.number() });
 const socialCounts = z.object({ total: z.number().nonnegative(), pages: z.number().nonnegative(), profils: z.number().nonnegative(),
   groupes: z.number().nonnegative(), chaines: z.number().nonnegative(), autres: z.number().nonnegative(),
-  actifs: z.number().nonnegative(), a_verifier: z.number().nonnegative() }).passthrough();
+  actifs: z.number().nonnegative(), a_verifier: z.number().nonnegative(),
+  sans_nom: z.number().nonnegative().optional(), sans_lien_normalise: z.number().nonnegative().optional() }).passthrough();
 const socialShare = socialCounts.extend({ key: z.string(), pourcentage: z.number().min(0).max(100).nullable() });
 export const reseauxSociauxStatsSchema = z.object({ item: z.object({
   resume: socialCounts.extend({ reseaux: z.number().nonnegative(), communes_couvertes: z.number().nonnegative(), ca_couverts: z.number().nonnegative(),
@@ -68,6 +69,7 @@ export const reseauxSociauxImportPreviewSchema = z.object({ item: z.object({
 }).passthrough() });
 export const reseauxSociauxImportResultSchema = z.object({ item: z.object({ created: z.number().nonnegative(), skipped: z.number().nonnegative(),
   deja_applique: z.boolean(), errors: z.array(z.object({ ligne: z.number(), colonne: z.string(), message: z.string() })) }).passthrough() });
+export const reseauxSociauxImportCancelSchema = z.object({ item: z.object({ annule: z.literal(true), importId: z.string().uuid() }) });
 
 const syntheseEntry = z.object({ id: z.string() }).passthrough();
 export const syntheseCatalogueSchema = z.object({

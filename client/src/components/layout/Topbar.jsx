@@ -14,7 +14,7 @@ function breadcrumbItems(pathname, t) {
   if (pathname === '/') return [{ label: t('nav.dashboard') }];
   if (pathname.startsWith('/anomalies/nouvelle')) return [{ label: t('nav.anomalies'), to: '/anomalies' }, { label: t('form.newTitle') }];
   if (pathname.startsWith('/anomalies/')) return [{ label: t('nav.anomalies'), to: '/anomalies' }, { label: t('detail.title') }];
-  const names = { anomalies: 'nav.anomalies', carte: 'nav.map', rapport: 'nav.syntheses', syntheses: 'nav.syntheses', 'a-faire': 'nav.work', 'reseaux-sociaux': 'nav.socialDirectory', laboratoire: 'nav.lab', admin: 'nav.admin', assistant: 'setup.title', profil: 'nav.profile', reception: 'nav.inbox' };
+  const names = { anomalies: 'nav.anomalies', carte: 'nav.map', rapport: 'nav.syntheses', syntheses: 'nav.syntheses', 'a-faire': 'nav.work', 'reseaux-sociaux': 'nav.socialDirectory', reseaux: 'nav.socialDirectory', laboratoire: 'nav.lab', admin: 'nav.admin', assistant: 'setup.title', profil: 'nav.profile', reception: 'nav.inbox' };
   return [{ label: t(names[pathname.split('/')[1]] || 'notFound.title') }];
 }
 export function Topbar({ onMenu }) {

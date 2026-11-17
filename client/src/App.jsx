@@ -56,6 +56,7 @@ function Application() {
       <Route path="carte" element={page(MapPage)} />
       <Route path="a-faire" element={page(WorkPage)} />
       <Route path="reseaux-sociaux" element={page(ReseauxSociauxPage)} />
+      <Route path="reseaux" element={page(ReseauxSociauxPage)} />
       <Route path="laboratoire" element={page(LaboratoirePage)} />
       <Route path="veille" element={page(VeillePage)} />
       <Route path="veille/tableau" element={page(VeilleDashboardPage)} />

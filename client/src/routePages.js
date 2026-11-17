@@ -25,7 +25,7 @@ export const NotFoundPage = lazyWithRetry(() => import('./features/NotFoundPage.
 export function preloadRoute(path) {
   const pages = { '/': DashboardPage, '/anomalies': AnomaliesPage, '/anomalies/nouvelle': AnomalyFormPage,
     '/carte': MapPage, '/rapport': ReportPage, '/a-faire': WorkPage, '/profil': ProfilePage, '/admin/referentiels': AdminPage,
-    '/laboratoire': LaboratoirePage, '/reseaux-sociaux': ReseauxSociauxPage, '/admin/reseaux-sociaux': AdminPage,
+    '/laboratoire': LaboratoirePage, '/reseaux-sociaux': ReseauxSociauxPage, '/reseaux': ReseauxSociauxPage, '/admin/reseaux-sociaux': AdminPage,
     '/veille': VeillePage, '/veille/tableau': VeilleDashboardPage, '/veille/conformite': VeilleCompliancePage,
     '/veille/reglages': VeilleSettingsPage, '/syntheses': SynthesesPage };
     pages[path]?.preload();

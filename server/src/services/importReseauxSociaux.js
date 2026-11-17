@@ -11,19 +11,53 @@ export const RESEAUX_SOURCE_FILE = new URL('../../../seed/reseaux-sociaux-lien.j
 const PREVIEW_TTL_MS = 15 * 60 * 1000;
 
 function textCell(cell, hyperlink = false) {
+  if (!cell) return '';
   const value = cell.value;
+  if (hyperlink) {
+    const link = (value && typeof value === 'object' && (value.hyperlink || value.target))
+      || (typeof cell.hyperlink === 'string' ? cell.hyperlink : cell.hyperlink?.target);
+    if (link) return String(link).trim();
+  }
   if (value === null || value === undefined) return '';
   if (typeof value === 'object') {
-    if (hyperlink && value.hyperlink) return String(value.hyperlink).trim();
     if (value.text) return String(value.text).trim();
     if (value.richText) return value.richText.map((part) => part.text).join('').trim();
     return '';
   }
   return String(value).trim();
 }
+const emptyCell = () => ({ value: null });
+const cellAt = (row, column) => (column > 0 ? row.getCell(column) : emptyCell());
 export function suppliedSocialSource() {
   if (!fs.existsSync(RESEAUX_SOURCE_FILE)) throw notFound('Le tableau fourni n’est pas disponible');
   return reseauxSociauxSourceSchema.parse(JSON.parse(fs.readFileSync(RESEAUX_SOURCE_FILE, 'utf8')));
+}
+
+const CONTACT_HEADER = /(telephone|phone|mobile|portable|gsm|contact|email|e-mail|mail|whatsapp|numero|n°|fax)/;
+const LIEN_HEADER = /^liens?\b/;
+const AUTRES_HEADER = /^(autres?\b|second lien|lien 2|lien de droite)/;
+
+/** Repère l'en-tête LIEN même si des colonnes ont été ajoutées ou déplacées. */
+export function detectSocialColumns(sheet) {
+  for (let number = 1; number <= Math.min(20, sheet.rowCount); number += 1) {
+    const row = sheet.getRow(number);
+    const labels = Array.from({ length: 12 }, (_, index) => normalize(textCell(cellAt(row, index + 1))));
+    const filled = labels.filter(Boolean);
+    if (filled.length < 2) continue;
+    if (labels.some((label) => CONTACT_HEADER.test(label))) {
+      throw badRequest('Les colonnes de contact (téléphone, e-mail, WhatsApp) ne peuvent pas être importées');
+    }
+    const ca = labels.findIndex((label) => ['ca', 'c a', 'daira'].includes(label));
+    const commune = labels.findIndex((label) => ['commune', 'communes'].includes(label));
+    const liens = labels.map((label, index) => (LIEN_HEADER.test(label) ? index : -1)).filter((index) => index >= 0);
+    const autres = labels.map((label, index) => (AUTRES_HEADER.test(label) ? index : -1)).filter((index) => index >= 0);
+    if (ca < 0 || commune < 0 || !liens.length) continue;
+    const premier = liens[0];
+    const second = [...liens, ...autres].filter((index) => index > premier).sort((a, b) => a - b)[0];
+    return { header: number, ca: ca + 1, commune: commune + 1, lienA: premier + 1, nomA: premier + 2,
+      lienB: second === undefined ? 0 : second + 1, nomB: second === undefined ? 0 : second + 2 };
+  }
+  throw badRequest('En-tête CA / COMMUNES / lien introuvable dans la feuille LIEN');
 }
 
 /** Seule la feuille LIEN est lue ; les onglets d'anomalies et de contacts ne sont jamais importés. */
@@ -33,23 +67,25 @@ export async function parseSocialWorkbook(file) {
   const workbook = new ExcelJS.Workbook();
   try { await workbook.xlsx.load(file.buffer); } catch { throw badRequest('Fichier Excel illisible'); }
   const sheet = workbook.worksheets.find((entry) => normalize(entry.name) === 'lien');
-  if (!sheet) throw badRequest('La feuille « LIEN » est requise (CA, COMMUNES, lien, nom, autres, nom)');
-  let header = 0;
-  for (let number = 1; number <= Math.min(20, sheet.rowCount); number += 1) {
-    const row = sheet.getRow(number);
-    if (normalize(textCell(row.getCell(1))) === 'ca' && ['commune', 'communes'].includes(normalize(textCell(row.getCell(2))))
-      && ['lien', 'liens'].includes(normalize(textCell(row.getCell(3))))) { header = number; break; }
+  if (!sheet) {
+    const defaultSheet = workbook.worksheets.some((entry) => /^feuil1$/i.test(entry.name));
+    throw badRequest(defaultSheet
+      ? 'La feuille « LIEN » est requise : « Feuil1 » ne peut pas être importée (aucune donnée de réseaux sociaux n’y est reconnue)'
+      : 'La feuille « LIEN » est requise (CA, COMMUNES, lien, nom, autres, nom)');
   }
-  if (!header) throw badRequest('En-tête CA / COMMUNES / lien introuvable dans la feuille LIEN');
+  const columns = detectSocialColumns(sheet);
   const lignes = []; let ca = ''; let commune = '';
   sheet.eachRow({ includeEmpty: false }, (row, number) => {
-    if (number <= header) return;
-    const nextCa = textCell(row.getCell(1));
+    if (number <= columns.header) return;
+    const communeCell = textCell(cellAt(row, columns.commune));
+    const nextCa = textCell(cellAt(row, columns.ca));
     if (nextCa && nextCa !== ca) { ca = nextCa; commune = ''; }
-    commune = textCell(row.getCell(2)) || commune;
-    const lien = textCell(row.getCell(3), true); const autres = textCell(row.getCell(5), true);
-    const nom = textCell(row.getCell(4)); const nom_autres = textCell(row.getCell(6));
-    if (![nextCa, textCell(row.getCell(2)), lien, autres, nom, nom_autres].some(Boolean)) return;
+    commune = communeCell || commune;
+    const lien = textCell(cellAt(row, columns.lienA), true);
+    const autres = textCell(cellAt(row, columns.lienB), true);
+    const nom = textCell(cellAt(row, columns.nomA));
+    const nom_autres = textCell(cellAt(row, columns.nomB));
+    if (![nextCa, communeCell, lien, autres, nom, nom_autres].some(Boolean)) return;
     lignes.push({ ligne: number, ca, commune, lien, nom, autres, nom_autres });
   });
   if (lignes.length > MAX_IMPORT_ROWS) throw tooLarge(`Maximum ${MAX_IMPORT_ROWS} lignes`);
@@ -148,4 +184,12 @@ export function commitSocialImportPreview(db, importId, userId) {
   const result = importComptesSociaux(db, preview.source, userId);
   fs.writeFileSync(previewPath(importId), JSON.stringify({ ...preview, result }));
   return { ...result, deja_applique: false };
+}
+
+/** L'administrateur peut jeter un aperçu non appliqué ; rien n'est écrit en base. */
+export function cancelSocialImportPreview(importId, userId) {
+  const preview = readSocialImportPreview(importId, userId);
+  if (preview.result) throw badRequest('Cet import a déjà été appliqué — il ne peut plus être annulé');
+  fs.unlinkSync(previewPath(importId));
+  return { annule: true, importId };
 }

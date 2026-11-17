@@ -4,11 +4,15 @@ import { socialFilters, SOCIAL_FROM } from './reseauxSociaux.js';
 const COUNTS = `COUNT(*) AS total, COALESCE(SUM(categorie='page'),0) AS pages,
   COALESCE(SUM(categorie='profil'),0) AS profils, COALESCE(SUM(categorie='groupe'),0) AS groupes,
   COALESCE(SUM(categorie='chaine'),0) AS chaines, COALESCE(SUM(categorie='autre'),0) AS autres,
-  COALESCE(SUM(actif=1),0) AS actifs, COALESCE(SUM(verification='a_verifier'),0) AS a_verifier`;
+  COALESCE(SUM(actif=1),0) AS actifs, COALESCE(SUM(verification='a_verifier'),0) AS a_verifier,
+  COALESCE(SUM(TRIM(nom)=''),0) AS sans_nom,
+  COALESCE(SUM(lien_normalise IS NULL OR lien_normalise=''),0) AS sans_lien_normalise`;
 const JOIN_COUNTS = `COUNT(f.id) AS total, COALESCE(SUM(f.categorie='page'),0) AS pages,
   COALESCE(SUM(f.categorie='profil'),0) AS profils, COALESCE(SUM(f.categorie='groupe'),0) AS groupes,
   COALESCE(SUM(f.categorie='chaine'),0) AS chaines, COALESCE(SUM(f.categorie='autre'),0) AS autres,
-  COALESCE(SUM(f.actif=1),0) AS actifs, COALESCE(SUM(f.verification='a_verifier'),0) AS a_verifier`;
+  COALESCE(SUM(f.actif=1),0) AS actifs, COALESCE(SUM(f.verification='a_verifier'),0) AS a_verifier,
+  COALESCE(SUM(TRIM(f.nom)=''),0) AS sans_nom,
+  COALESCE(SUM(f.lien_normalise IS NULL OR f.lien_normalise=''),0) AS sans_lien_normalise`;
 
 /** Agrégations SQL uniquement ; aucun compteur n'est calculé à partir d'une page de résultats. */
 export function statsReseauxSociaux(db, query) {
