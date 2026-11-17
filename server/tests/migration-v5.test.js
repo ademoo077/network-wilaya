@@ -14,13 +14,13 @@ beforeAll(() => { ({ db } = freshDatabase()); });
 describe('Migration V5 et groupes thématiques', () => {
   it('applique 002 puis 003 (index) sans altérer les tables V4', () => {
     const versions = db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((row) => row.version);
-    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(versions).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     const columns = db.prepare("PRAGMA table_info('anomalies')").all().map((row) => row.name);
     expect(columns).toEqual(expect.arrayContaining([
       'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',
       'date_publication_estimee', 'legende', 'auteur_publication',
     ]));
-    for (const table of ['groupes_domaines', 'limites_communes', 'liens_cache', 'vues_sauvegardees', 'boite_reception']) {
+    for (const table of ['groupes_domaines', 'limites_communes', 'liens_cache', 'vues_sauvegardees', 'boite_reception', 'comptes_sociaux']) {
       expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)?.name).toBe(table);
     }
     const indexes = db.prepare("SELECT name, sql FROM sqlite_master WHERE type='index' AND tbl_name='anomalies'").all();

@@ -36,6 +36,7 @@
     "ref:import": "node scripts/import-refs.js",
     "workflow:import": "node scripts/import-workflow.js",
     "territoire:import": "node scripts/import-territoire.js",
+    "reseaux:import": "node scripts/import-reseaux-sociaux.js",
     "db:check": "node scripts/db-check.js",
     "https:setup": "node scripts/https-setup.js"
   },

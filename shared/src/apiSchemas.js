@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DEFAULT_PARAMS, PLATEFORMES, ROLES, STATUTS, VERIFICATIONS } from './constants.js';
+import { COMPTE_SOCIAL_TYPES, COMPTE_SOCIAL_VERIFICATIONS } from './reseauxSociaux.js';
 
 const reference = z.object({ id: z.number(), name_fr: z.string().nullable().optional(), name_ar: z.string().nullable().optional() }).passthrough();
 const user = z.object({ id: z.number(), username: z.string(), full_name: z.string(), role: z.enum(ROLES), must_change_password: z.number().optional() }).passthrough();
@@ -33,6 +34,40 @@ export const veilleElementListSchema = z.object({
 export const veilleStatusSchema = z.object({
   item: z.object({ activee: z.boolean(), a_qualifier: z.number(), retenus: z.number(), rejetes: z.number() }).passthrough(),
 }).passthrough();
+
+export const compteSocialResponseSchema = z.object({
+  id: z.number().int().positive(), version: z.number().int().positive(), nom: z.string(), lien_url: z.string(),
+  plateforme: z.enum(PLATEFORMES), categorie: z.enum(COMPTE_SOCIAL_TYPES),
+  daira_id: z.number().nullable(), commune_id: z.number().nullable(), ca_libelle: z.string(), commune_libelle: z.string(),
+  verification: z.enum(COMPTE_SOCIAL_VERIFICATIONS), actif: z.number().int().min(0).max(1), observations: z.string(),
+  origine: z.enum(['manuel', 'excel']), created_at: z.string(), updated_at: z.string(),
+}).passthrough();
+export const compteSocialItemSchema = z.object({ item: compteSocialResponseSchema });
+export const reseauxSociauxListSchema = z.object({ items: z.array(compteSocialResponseSchema), total: z.number().int().nonnegative(), page: z.number(), pageSize: z.number() });
+const socialCounts = z.object({ total: z.number().nonnegative(), pages: z.number().nonnegative(), profils: z.number().nonnegative(),
+  groupes: z.number().nonnegative(), chaines: z.number().nonnegative(), autres: z.number().nonnegative(),
+  actifs: z.number().nonnegative(), a_verifier: z.number().nonnegative() }).passthrough();
+const socialShare = socialCounts.extend({ key: z.string(), pourcentage: z.number().min(0).max(100).nullable() });
+export const reseauxSociauxStatsSchema = z.object({ item: z.object({
+  resume: socialCounts.extend({ reseaux: z.number().nonnegative(), communes_couvertes: z.number().nonnegative(), ca_couverts: z.number().nonnegative(),
+    sans_rattachement: z.number().nonnegative(), communes_referentiel: z.number().nonnegative(), communes_sans_compte: z.number().nonnegative(),
+    couverture: z.number().min(0).max(100).nullable() }),
+  reseaux: z.array(socialShare), types: z.array(socialShare),
+  ca: z.array(socialCounts.extend({ id: z.number().nullable(), name_fr: z.string().nullable(), name_ar: z.string().nullable(),
+    communes: z.number().nonnegative(), pourcentage: z.number().min(0).max(100).nullable() })),
+  communes: z.array(socialCounts.extend({ id: z.number().nullable(), name_fr: z.string().nullable(), name_ar: z.string().nullable(),
+    daira_id: z.number().nullable(), ca_fr: z.string().nullable(), ca_ar: z.string().nullable() })),
+}) });
+export const reseauxSociauxImportPreviewSchema = z.object({ item: z.object({
+  importId: z.string().uuid(), expiresAt: z.string(), fichier: z.string(), feuille: z.literal('LIEN'),
+  summary: z.object({ total: z.number(), nouveaux: z.number(), existants: z.number(), doublons: z.number(), erreurs: z.number(), sans_lien: z.number(), a_verifier: z.number() }),
+  rows: z.array(z.object({ ligne: z.number(), colonne: z.string(), nom: z.string(), lien_url: z.string(),
+    plateforme: z.enum(PLATEFORMES), categorie: z.enum(COMPTE_SOCIAL_TYPES), ca_libelle: z.string(), commune_libelle: z.string(),
+    statut: z.enum(['nouveau', 'existant', 'doublon', 'erreur']), messages: z.array(z.string()), erreur: z.string().nullable(),
+  }).passthrough()),
+}).passthrough() });
+export const reseauxSociauxImportResultSchema = z.object({ item: z.object({ created: z.number().nonnegative(), skipped: z.number().nonnegative(),
+  deja_applique: z.boolean(), errors: z.array(z.object({ ligne: z.number(), colonne: z.string(), message: z.string() })) }).passthrough() });
 
 const syntheseEntry = z.object({ id: z.string() }).passthrough();
 export const syntheseCatalogueSchema = z.object({
@@ -92,6 +127,9 @@ export function responseContract(path) {
   const route = path.split('?')[0];
   if (['/auth/me', '/auth/login'].includes(route)) return [authResponseSchema, null];
   if (route === '/ref/bootstrap') return [bootstrapResponseSchema, null];
+  if (route === '/reseaux-sociaux') return [reseauxSociauxListSchema, null];
+  if (route === '/reseaux-sociaux/stats') return [reseauxSociauxStatsSchema, { item: null }];
+  if (/^\/reseaux-sociaux\/\d+$/.test(route)) return [compteSocialItemSchema, { item: null }];
   if (route === '/setup/status') return [z.object({ referentielTerritorialVide: z.boolean() }).passthrough(), null];
   if (route === '/anomalies') return [anomalyListSchema, emptyAnomalyList];
   if (route === '/veille/elements') return [veilleElementListSchema, { items: [], total: 0, page: 1, pageSize: 25 }];

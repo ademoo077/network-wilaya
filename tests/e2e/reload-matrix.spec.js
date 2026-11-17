@@ -3,7 +3,7 @@ import { authenticate, collectErrors, expectNotBlank } from './helpers.js';
 import { routeCases } from './route-cases.js';
 import fs from 'node:fs';
 function loadDict(lang) {
-  return ['', '-v5', '-v6', '-v7', '-v8'].reduce((merged, suffix) => ({
+  return ['', '-v5', '-v6', '-v7', '-v8', '-reseaux'].reduce((merged, suffix) => ({
     ...merged,
     ...JSON.parse(fs.readFileSync(new URL(`../../client/src/i18n/${lang}${suffix}.json`, import.meta.url))),
   }), {});

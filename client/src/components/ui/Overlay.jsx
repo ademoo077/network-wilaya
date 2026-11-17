@@ -34,7 +34,7 @@ function useModal(open, onClose, panelRef) {
 
 function ModalHeader({ title, onClose, id }) {
   const { t } = useI18n();
-  return <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4"><h2 id={id} className="text-lg font-bold text-ink">{title}</h2><IconButton aria-label={t('common.close')} onClick={onClose}><X className="h-5 w-5" /></IconButton></div>;
+  return <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-4"><h2 id={id} className="text-lg font-bold text-ink">{title}</h2><IconButton aria-label={t('common.close')} onClick={onClose}><X className="h-5 w-5" /></IconButton></div>;
 }
 
 export function Dialog({ open, onClose, title, children, footer, size = 'md' }) {
@@ -43,7 +43,7 @@ export function Dialog({ open, onClose, title, children, footer, size = 'md' }) 
   useModal(open, onClose, panelRef);
   if (!open) return null;
   const widths = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl', xl: 'max-w-5xl' };
-  return createPortal(<div className="fixed inset-0 z-[90] grid place-items-center bg-[var(--overlay)] p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}><div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`max-h-[90dvh] w-full overflow-hidden rounded-lg border border-border bg-surface shadow-3 ${widths[size]}`}><ModalHeader title={title} onClose={onClose} id={titleId} /><div className="max-h-[calc(90dvh-136px)] overflow-y-auto p-5">{children}</div>{footer && <div className="flex flex-wrap justify-end gap-2 border-t border-border px-5 py-4">{footer}</div>}</div></div>, document.body);
+  return createPortal(<div className="fixed inset-0 z-[90] grid place-items-center bg-[var(--overlay)] p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}><div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className={`flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-3 ${widths[size]}`}><ModalHeader title={title} onClose={onClose} id={titleId} /><div data-dialog-body className="min-h-0 flex-1 overflow-y-auto p-5">{children}</div>{footer && <div data-dialog-footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-border px-5 py-4">{footer}</div>}</div></div>, document.body);
 }
 
 export function Drawer({ open, onClose, title, children, width = 'max-w-xl', side = 'end' }) {

@@ -44,7 +44,8 @@ function contrast(fg, bg) {
 
 const PAIRS = [
   ['ink', 'bg'], ['ink', 'surface'], ['ink', 'surface-2'],
-  ['ink-2', 'bg'], ['ink-2', 'surface'], ['muted', 'surface'],
+  ['ink-2', 'bg'], ['ink-2', 'surface'], ['ink-2', 'surface-2'],
+  ['muted', 'bg'], ['muted', 'surface'], ['muted', 'surface-2'],
   ['brand-50', 'brand-700'], ['brand-50', 'brand-800'], ['brand-50', 'brand-900'],
   ['brand-text-100', 'brand-800'], ['brand-text-100', 'brand-900'],
   ['brand-text-700', 'bg'], ['brand-text-700', 'surface'], ['brand-text-700', 'surface-2'],

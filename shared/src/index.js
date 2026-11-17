@@ -30,3 +30,4 @@ export * from './formFiles.js';
 export * from './duplicateAnomaly.js';
 export * from './workQueue.js';
 export * from './veille/index.js';
+export * from './reseauxSociaux.js';

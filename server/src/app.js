@@ -30,6 +30,7 @@ import viewsRoutes from './routes/views.js';
 import workRoutes from './routes/work.js';
 import veilleRoutes from './routes/veille.js';
 import synthesesRoutes from './routes/syntheses.js';
+import reseauxSociauxRoutes from './routes/reseauxSociaux.js';
 import { setupStatus } from './services/refs.js';
 
 const distDir = config.clientDist;
@@ -124,6 +125,7 @@ export function createApp() {
   app.use('/api/veille/capture', extensionCors);
   app.use('/api/veille', veilleRoutes);
   app.use('/api/syntheses', synthesesRoutes);
+  app.use('/api/reseaux-sociaux', reseauxSociauxRoutes);
   app.use('/api/admin', adminRoutes);
   app.get('/api/setup/status', (_req, res) => res.json(setupStatus(getDb())));
 

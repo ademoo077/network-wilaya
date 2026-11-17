@@ -16,13 +16,13 @@ beforeAll(() => {
 });
 
 describe('Fondations Veille — migration', () => {
-  it('applique les migrations 009 et 010 et crée les tables attendues', () => {
+  it('applique les migrations 009, 010 et 011 et crée les tables attendues', () => {
     const version = db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v;
-    expect(version).toBe(10);
+    expect(version).toBe(11);
     for (const table of [
       'veille_sources', 'veille_elements', 'veille_lexique', 'veille_jobs', 'veille_jetons', 'veille_alertes',
       'syntheses_editions', 'syntheses_modeles', 'syntheses_blocs_bibliotheque', 'syntheses_requetes',
-      'syntheses_partages', 'syntheses_planifications', 'syntheses_commentaires', 'objectifs', 'data_version',
+      'syntheses_partages', 'syntheses_planifications', 'syntheses_commentaires', 'objectifs', 'data_version', 'comptes_sociaux',
     ]) {
       expect(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)?.name).toBe(table);
     }
@@ -34,21 +34,32 @@ describe('Fondations Veille — migration', () => {
     const copyPath = path.join(config.tmpDir, 'veille-copy-target.db');
     for (const suffix of ['', '-wal', '-shm']) fs.rmSync(`${sourcePath}${suffix}`, { force: true });
     const source = new Database(sourcePath);
-    source.exec('CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)');
-    for (const file of fs.readdirSync('server/src/db/migrations').filter((f) => /^00[1-8]_.*\.sql$/.test(f)).sort()) {
-      source.exec(fs.readFileSync(path.join('server/src/db/migrations', file), 'utf8'));
-      source.prepare('INSERT INTO schema_migrations(version, name) VALUES (?, ?)').run(Number.parseInt(file, 10), file);
+    try {
+      source.exec('CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)');
+      for (const file of fs.readdirSync('server/src/db/migrations').filter((f) => /^00[1-8]_.*\.sql$/.test(f)).sort()) {
+        source.exec(fs.readFileSync(path.join('server/src/db/migrations', file), 'utf8'));
+        source.prepare('INSERT INTO schema_migrations(version, name) VALUES (?, ?)').run(Number.parseInt(file, 10), file);
+      }
+      await source.backup(copyPath);
+    } finally {
+      source.close();
     }
-    await source.backup(copyPath);
-    source.close();
+    const original = fs.readFileSync(sourcePath);
     expect(fs.existsSync(copyPath)).toBe(true);
     const copy = new Database(copyPath);
-    runMigrations(copy, { logger: { info() {} } });
-    expect(copy.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(10);
-    expect(copy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='veille_elements'").get()?.name).toBe('veille_elements');
-    expect(copy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='syntheses_editions'").get()?.name).toBe('syntheses_editions');
-    copy.close();
-    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(10);
+    try {
+      runMigrations(copy, { logger: { info() {} } });
+      expect(copy.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(11);
+      expect(copy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='veille_elements'").get()?.name).toBe('veille_elements');
+      expect(copy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='syntheses_editions'").get()?.name).toBe('syntheses_editions');
+      expect(copy.prepare('SELECT COUNT(*) AS n FROM comptes_sociaux').get().n).toBe(0);
+      expect(copy.pragma('integrity_check', { simple: true })).toBe('ok');
+      expect(copy.pragma('foreign_key_check')).toEqual([]);
+    } finally {
+      copy.close();
+    }
+    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(11);
+    expect(fs.readFileSync(sourcePath)).toEqual(original);
     for (const file of [sourcePath, copyPath]) fs.rmSync(file, { force: true });
   });
 });

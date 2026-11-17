@@ -9,8 +9,10 @@ import frV7 from './fr-v7.json';
 import arV7 from './ar-v7.json';
 import frV8 from './fr-v8.json';
 import arV8 from './ar-v8.json';
+import frSocial from './fr-reseaux.json';
+import arSocial from './ar-reseaux.json';
 
-const dictionaries = { fr: { ...fr, ...frV5, ...frV6, ...frV7, ...frV8 }, ar: { ...ar, ...arV5, ...arV6, ...arV7, ...arV8 } };
+const dictionaries = { fr: { ...fr, ...frV5, ...frV6, ...frV7, ...frV8, ...frSocial }, ar: { ...ar, ...arV5, ...arV6, ...arV7, ...arV8, ...arSocial } };
 const I18nContext = createContext(null);
 
 function storedLanguage() {

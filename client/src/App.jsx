@@ -10,7 +10,7 @@ import { useI18n } from './i18n/index.jsx';
 import { LoginPage, ProfilePage, SetupPage, DashboardPage, AnomaliesPage, AnomalyFormPage,
   AnomalyDetailPage, MapPage, ReportPage, WorkPage, LaboratoirePage, AdminPage, NotFoundPage,
   VeillePage, VeilleDashboardPage, VeilleCompliancePage, VeilleDetailPage, VeilleSettingsPage,
-  SynthesesPage, SynthesePage } from './routePages.js';
+  SynthesesPage, SynthesePage, ReseauxSociauxPage } from './routePages.js';
 
 export function BootScreen() {
   const { t } = useI18n();
@@ -55,6 +55,7 @@ function Application() {
       <Route path="anomalies/:id/modifier" element={page(AnomalyFormPage)} />
       <Route path="carte" element={page(MapPage)} />
       <Route path="a-faire" element={page(WorkPage)} />
+      <Route path="reseaux-sociaux" element={page(ReseauxSociauxPage)} />
       <Route path="laboratoire" element={page(LaboratoirePage)} />
       <Route path="veille" element={page(VeillePage)} />
       <Route path="veille/tableau" element={page(VeilleDashboardPage)} />

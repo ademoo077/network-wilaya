@@ -9,16 +9,18 @@ import AuditAdmin from './AuditAdmin.jsx';
 import ImportExportAdmin from './ImportExportAdmin.jsx';
 import TrashAdmin from './TrashAdmin.jsx';
 import HealthAdmin from './HealthAdmin.jsx';
+import ReseauxSociauxAdmin from './ReseauxSociauxAdmin.jsx';
 
 const tabs = [
   ['referentiels', 'admin.references'], ['utilisateurs', 'admin.users'], ['parametres', 'admin.settings'],
+  ['reseaux-sociaux', 'nav.socialDirectory'],
   ['sauvegardes', 'admin.backups'], ['audit', 'admin.audit'], ['import-export', 'admin.importExport'], ['corbeille', 'admin.trash'],
   ['sante', 'health.title'],
 ];
 const pages = {
   referentiels: ReferencesAdmin, utilisateurs: UsersAdmin, parametres: SettingsAdmin,
   sauvegardes: BackupsAdmin, audit: AuditAdmin, 'import-export': ImportExportAdmin, corbeille: TrashAdmin,
-  sante: HealthAdmin,
+  sante: HealthAdmin, 'reseaux-sociaux': ReseauxSociauxAdmin,
 };
 
 export default function AdminPage() {
