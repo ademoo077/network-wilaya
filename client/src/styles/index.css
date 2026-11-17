@@ -69,12 +69,17 @@
   [data-print-document] { width: auto; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
   [data-print-document].print-portrait { page: synthesis-portrait; }
   [data-print-document].print-landscape { page: synthesis-landscape; }
-  [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6mm !important; }
-  [data-print-document].print-landscape [data-synthese-grid] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-  [data-print-document] [data-synthese-grid] > section { grid-column: span 1 / span 1 !important; }
+  [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: 6mm !important; }
+  [data-print-document] [data-largeur='simple'] { grid-column: span 6 / span 6 !important; }
+  [data-print-document] [data-largeur='double'], [data-print-document] [data-largeur='pleine'] { grid-column: span 12 / span 12 !important; }
+  [data-print-document].print-landscape [data-largeur='simple'] { grid-column: span 4 / span 4 !important; }
+  [data-print-document].print-landscape [data-largeur='double'] { grid-column: span 8 / span 8 !important; }
+  [data-print-document].print-landscape [data-largeur='pleine'] { grid-column: span 12 / span 12 !important; }
   [data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section { break-inside: avoid; page-break-inside: avoid; }
-  [data-print-document] .official-print-header { margin-bottom: 8mm; }
-  [data-print-document] .official-print-footer { margin-top: 10mm; }
+  [data-print-document] .official-print-header { margin-bottom: 8mm; break-after: avoid; page-break-after: avoid; }
+  [data-print-document] .official-print-footer { margin-top: 10mm; break-inside: avoid; page-break-inside: avoid; }
+  [data-print-document] .official-print-body { min-width: 0; }
+  [data-print-document] img, [data-print-document] svg { max-width: 100%; }
   [data-print-document] .recharts-responsive-container { max-height: 65mm; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

@@ -251,8 +251,8 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
   }, [snapshotEdition, snapshotBlocs, editor.results]);
 
   return (
-    <main className={`page-container grid ${embedded ? 'px-2 py-4 sm:px-3' : 'min-h-dvh'}`} data-synthese-page>
-      {brouillon && <div className="fixed inset-0 z-[50] pointer-events-none" aria-hidden="true">
+    <main className={`page-container grid ${embedded ? 'px-2 py-4 sm:px-3' : 'min-h-dvh'}`} data-synthese-page data-synthese-state={snapshotEdition ? 'edition' : mode === 'personnaliser' ? 'personnalisation' : 'lecture'} aria-busy={editor.evaluating || undefined}>
+      {brouillon && <div className="no-print fixed inset-0 z-[50] pointer-events-none" aria-hidden="true">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-12deg] text-[8vw] text-brand-100/10 font-black select-none">BROUILLON</div>
       </div>}
       <div className="flex min-w-0 flex-col h-full">
@@ -266,6 +266,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
               <select id="synthese-width" value={activeWidth} onChange={(event) => setLocalWidth(event.target.value)} className="h-9 rounded-md border border-border bg-surface px-2 text-xs font-bold text-ink">
                 <option value="large">{t('report.studio.widthLarge')}</option>
                 <option value="print">{t('report.studio.widthPrint')}</option>
+                <option value="max">{t('report.studio.widthMax')}</option>
               </select>
               {canPersonnaliser && <Button size="sm" onClick={handlePersonnaliser}>
                 {mode === 'personnaliser' ? (alreadyFrozen ? t('synthese.modeLecture') : t('synthese.quitterPersonnalisation')) : t('synthese.personnaliser')}
@@ -290,6 +291,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
           {modele && <div className={`mx-auto w-full ${activeWidth === 'print' ? 'max-w-[794px]' : activeWidth === 'max' ? 'max-w-none' : 'max-w-[1280px]'}`} data-display-width={activeWidth}>
             <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
+              onPrint={() => setPrintOpen(true)}
               onEdit={(bloc) => { setSelectedBloc(bloc); setOpenInspector(true); }} onVoirFiches={() => { navigate('/anomalies'); push(t('synthese.voirFichesInfo'), 'success'); }} embedded={embedded} /></OfficialPrintDocument>
           </div>}
         </div>
@@ -299,7 +301,9 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
       <BlocInspectorDrawer open={openInspector} onClose={() => { setOpenInspector(false); setSelectedBloc(null); }} bloc={selectedBloc} onPatch={handleBlocPatch} typeLabel={typeLabel} t={t} lang={lang} />
       <EditionsDrawer open={openEditions} onClose={() => setOpenEditions(false)} periode={periode} onPeriode={setPeriode} editor={editor} busy={editionBusy} canFreeze={peutFiger} onGenerate={handleGenererEdition} onOpen={handleOpenEdition} onFreeze={handleFreezeEdition} t={t} lang={lang} />
       <EditionDialog edition={snapshotEdition} blocs={snapshotBlocs} onClose={() => setSnapshotEdition(null)} t={t} lang={lang} dir={dir} />
-      <PrintCustomizer open={printOpen} settings={printSettings} onChange={setPrintSettings} onClose={() => setPrintOpen(false)} onPrint={handlePrint} t={t} lang={lang} />
+      <PrintCustomizer open={printOpen} settings={printSettings} onChange={setPrintSettings} onClose={() => setPrintOpen(false)} onPrint={handlePrint}
+        onReset={() => setPrintSettings(createPrintSettings({ modele, periode: periodeOverride || periode, user, t }))}
+        blocs={activeBlocs} t={t} lang={lang} />
     </main>
   );
 }

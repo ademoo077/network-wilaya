@@ -308,3 +308,50 @@ test('Studio — affichage maximal, barre compacte et retour à la semaine coura
   expect(errors.snapshot().pageError).toEqual([]);
   expect(errors.snapshot().consoleError).toEqual([]);
 });
+
+test('Studio — préparation d’impression A4 lisible et réglages réinitialisables', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/#/rapport?semaine=2026-11-15');
+  await expect(page.locator('[data-synthese-state]')).toHaveAttribute('data-synthese-state', 'lecture', { timeout: 20_000 });
+
+  await page.getByRole('button', { name: 'Ouvrir l’impression A4' }).click();
+  const printDialog = page.getByRole('dialog', { name: 'Préparer le rapport officiel' });
+  await expect(printDialog).toBeVisible();
+  await expect(printDialog.locator('legend', { hasText: 'Mise en page A4' })).toBeVisible();
+  const preview = printDialog.locator('[data-print-preview]');
+  await expect(preview).toHaveAttribute('data-orientation', 'portrait');
+
+  await printDialog.getByLabel('Référence').fill('UX-2026-11');
+  await printDialog.getByLabel('Orientation A4').selectOption('landscape');
+  await expect(preview).toHaveAttribute('data-orientation', 'landscape');
+  await printDialog.getByRole('button', { name: 'Rétablir les valeurs initiales' }).click();
+  await expect(printDialog.getByLabel('Référence')).toHaveValue('');
+  await expect(printDialog.getByLabel('Orientation A4')).toHaveValue('portrait');
+  await expect(preview).toHaveAttribute('data-orientation', 'portrait');
+
+  await printDialog.getByLabel('Référence').fill('UX-2026-11');
+  await printDialog.getByLabel('Orientation A4').selectOption('landscape');
+  await printDialog.getByRole('button', { name: 'Annuler' }).click();
+  await expect(printDialog).toHaveCount(0);
+
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('[data-print-header]')).toBeVisible();
+  await expect(page.locator('[data-print-footer]')).toBeVisible();
+  await expect(page.locator('[data-print-document]')).toHaveClass(/print-landscape/);
+  const spans = await page.locator('[data-print-document] [data-largeur]').evaluateAll((items) => items.map((item) => getComputedStyle(item).gridColumnEnd));
+  expect(spans.length).toBeGreaterThan(0);
+  expect(spans.every((value) => value !== 'span 1'), 'Les blocs ne doivent pas être écrasés sur une colonne').toBe(true);
+  const [fullWidth, gridWidth] = await Promise.all([
+    page.locator('[data-print-document] [data-largeur="pleine"]').first().evaluate((element) => element.getBoundingClientRect().width),
+    page.locator('[data-print-document] [data-synthese-grid]').evaluate((element) => element.getBoundingClientRect().width),
+  ]);
+  expect(fullWidth).toBeGreaterThan(gridWidth * 0.9);
+  await page.emulateMedia({ media: 'screen' });
+
+  await expectNoOverflow(page);
+  await expectAccessible(page);
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
+});

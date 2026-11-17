@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Clock, Edit, EyeOff, Plus, RotateCcw, RotateCw, Save, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Edit, EyeOff, Plus, Printer, RotateCcw, RotateCw, Save, Trash2 } from 'lucide-react';
 import { Alert, Button, Card, EmptyState, Skeleton } from '../../components/ui/index.js';
 import { Chip } from '../../components/ui/Chip.jsx';
 import WidgetCard from './WidgetCard.jsx';
@@ -13,7 +13,7 @@ const WIDTH_CLASSES = {
 
 export default function SyntheseCanvas({
   modele, mode, sourceId, alreadyFrozen, editor, blocs, activeBlocs, activeResults, maxWidgets,
-  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onVoirFiches, embedded = false,
+  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onVoirFiches, embedded = false,
 }) {
   return <>
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
@@ -45,6 +45,9 @@ export default function SyntheseCanvas({
         <Button size="sm" variant="secondary" onClick={onOpenEditions}>
           <Clock className="h-4 w-4" aria-hidden="true" />{t('synthese.editions')}
         </Button>
+        <Button size="sm" variant="ghost" onClick={onPrint} aria-label={t('synthese.print.launch')}>
+          <Printer className="h-4 w-4" aria-hidden="true" />{t('common.imprimer')}
+        </Button>
       </div>
     </div>
 
@@ -61,7 +64,7 @@ export default function SyntheseCanvas({
         const index = blocs.findIndex((item) => item.id === bloc.id);
         const width = WIDTH_CLASSES[bloc.options?.largeur] || '';
         const printVisibility = bloc.options?.masquer_impression ? 'print:hidden' : '';
-        return <section key={bloc.id} className={`group relative min-w-0 break-inside-avoid ${width} ${printVisibility}`}>
+        return <section key={bloc.id} data-largeur={bloc.options?.largeur || 'simple'} data-bloc-type={bloc.type} className={`group relative min-w-0 break-inside-avoid ${width} ${printVisibility}`}>
           {mode === 'personnaliser' && <div className="absolute -top-3 end-2 z-10 flex items-center gap-1 rounded-md border border-border bg-surface p-1 opacity-0 shadow-1 transition group-hover:opacity-100 group-focus-within:opacity-100 no-print">
             <Button size="sm" variant="ghost" onClick={() => editor.moveBloc(bloc.id, -1)} disabled={index <= 0} title={t('synthese.monter')} aria-label={t('synthese.monter')}><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /></Button>
             <Button size="sm" variant="ghost" onClick={() => editor.moveBloc(bloc.id, 1)} disabled={index >= blocs.length - 1} title={t('synthese.descendre')} aria-label={t('synthese.descendre')}><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /></Button>

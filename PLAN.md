@@ -198,4 +198,5 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 - 2026-11-17 — Phases 2–3 livrées : import tolérant et annulable, refus contact/Feuil1, compteurs qualité SQL, cinq onglets `#/reseaux` et file P/R/G/C/I avec Z. 17 scénarios du répertoire verts.
 - 2026-11-17 — Phase 4 livrée : ajout par lot (≤ 100), fusion contrôlée, corbeille/restauration, contrôle manuel et historique audité ; migration additive `012`, 28 tests serveur, scénarios 120/121/126 et `npm run qa` vert (614 Vitest, 11 E2E API, 124 Playwright).
 - 2026-11-17 — Studio : « Plein écran », barre compacte masquant menu et topbar, retour à la semaine courante ; contrats de migration alignés sur `001–012`. Scénario dédié FR/AR à 390/1440 px et `npm run qa` vert.
+- 2026-11-17 — Synthèse — confort général et impression : aperçu A4 fidèle, sections de réglages et réinitialisation, largeurs de blocs respectées sur la feuille, accès à l'impression depuis le canevas, état accessible de la page. Nouveau scénario Studio et `npm run qa` vert (614 Vitest, 11 E2E API, 125 Playwright).
 
