@@ -42,6 +42,7 @@ export default function ReportPage() {
   const legacySnapshot = params.get('source') === 'snapshot';
   const snapshotVersion = Number(params.get('version')) || null;
   const [displayWidth, setDisplayWidth] = useState('large');
+  const defaultWidthModelRef = useRef(null);
   const [focus, setFocus] = useState(false);
   const studioActions = useRef(null);
   const [studioState, setStudioState] = useState({ canPersonnaliser: false, peutFiger: false, alreadyFrozen: false, mode: 'lecture', busy: false });
@@ -68,6 +69,18 @@ export default function ReportPage() {
       updateParams({ modele: weeklyModel.id, personnaliser: null, source: null }, { replace: true });
     }
   }, [modelsQuery.isSuccess, requestedExists, updateParams, validRequestedModel, weeklyModel]);
+
+  useEffect(() => {
+    if (!weeklyModel?.id) return;
+    if (modeleId !== weeklyModel.id) {
+      defaultWidthModelRef.current = null;
+      return;
+    }
+    if (defaultWidthModelRef.current !== weeklyModel.id) {
+      defaultWidthModelRef.current = weeklyModel.id;
+      setDisplayWidth('max');
+    }
+  }, [modeleId, weeklyModel?.id]);
 
   useEffect(() => {
     if (!legacySnapshot) return;

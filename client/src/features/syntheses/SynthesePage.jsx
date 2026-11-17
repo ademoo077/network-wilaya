@@ -3,7 +3,7 @@
  * Deux modes : Lecture (feuille temps réel ou figée) et Personnaliser
  * (éditeur de blocs, galerie, undo/redo, autosave, éditions figées, exports).
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Printer, ShieldAlert } from 'lucide-react';
 import { useApiQuery } from '../../hooks/useApiQuery.js';
@@ -84,8 +84,21 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
   const periodeOverrideKey = JSON.stringify(periodeOverride);
   const [printOpen, setPrintOpen] = useState(false);
   const [localWidth, setLocalWidth] = useState('large');
+  const defaultWidthRef = useRef(null);
   const activeWidth = displayWidth || localWidth;
   const [printSettings, setPrintSettings] = useState(() => createPrintSettings({ modele: null, periode: periodeOverride, user, t }));
+
+  useEffect(() => {
+    if (embedded || !remoteModele?.id) return;
+    if (remoteModele.cle_systeme === 'hebdomadaire') {
+      if (defaultWidthRef.current !== remoteModele.id) {
+        defaultWidthRef.current = remoteModele.id;
+        setLocalWidth('max');
+      }
+    } else {
+      defaultWidthRef.current = null;
+    }
+  }, [embedded, remoteModele?.id, remoteModele?.cle_systeme]);
 
   useEffect(() => { if (periodeOverride) setPeriode(periodeOverride); }, [periodeOverrideKey, periodeOverride]);
 

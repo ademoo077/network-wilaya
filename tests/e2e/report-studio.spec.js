@@ -194,7 +194,7 @@ test('114 — Studio : en-tête compact, aucun jargon, menu entier et largeur d�
   const errors = collectErrors(page);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/#/rapport?semaine=2026-11-15');
-  await expect(page.locator('[data-display-width]')).toHaveAttribute('data-display-width', 'large', { timeout: 20_000 });
+  await expect(page.locator('[data-display-width]')).toHaveAttribute('data-display-width', 'max', { timeout: 20_000 });
 
   const headerHeight = await page.locator('[data-report-studio]').evaluate((element) => element.getBoundingClientRect().height);
   expect(headerHeight, 'En-tête du studio trop haut').toBeLessThanOrEqual(140);
@@ -208,8 +208,8 @@ test('114 — Studio : en-tête compact, aucun jargon, menu entier et largeur d�
   expect(lefts.every((left) => left >= 0), 'Entrées de menu rognées à gauche').toBe(true);
 
   const wrapper = page.locator('[data-display-width]');
-  const largeWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
-  expect(largeWidth).toBeGreaterThan(1100);
+  const maxWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  expect(maxWidth).toBeGreaterThan(1100);
   await page.locator('#report-studio-width').selectOption('print');
   await expect(wrapper).toHaveAttribute('data-display-width', 'print');
   const printWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
@@ -271,13 +271,15 @@ test('Studio — affichage maximal, barre compacte et retour à la semaine coura
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/#/rapport?semaine=2026-11-15');
   const wrapper = page.locator('[data-display-width]');
-  await expect(wrapper).toHaveAttribute('data-display-width', 'large', { timeout: 20_000 });
-  const largeWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  await expect(wrapper).toHaveAttribute('data-display-width', 'max', { timeout: 20_000 });
+  const maxWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
 
+  await page.locator('#report-studio-width').selectOption('large');
+  await expect(wrapper).toHaveAttribute('data-display-width', 'large');
+  const largeWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  expect(largeWidth, 'Le mode plein écran doit être plus large que le mode large').toBeLessThan(maxWidth);
   await page.locator('#report-studio-width').selectOption('max');
   await expect(wrapper).toHaveAttribute('data-display-width', 'max');
-  const maxWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
-  expect(maxWidth, 'Le mode plein écran doit être plus large que le mode large').toBeGreaterThan(largeWidth);
 
   await page.getByRole('button', { name: 'Agrandir l’espace de travail' }).click();
   await expect(page.locator('[data-report-studio]')).toHaveCount(0);
