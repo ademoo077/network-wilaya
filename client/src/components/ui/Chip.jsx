@@ -1,5 +1,5 @@
 /** Badge générique (jeton d’étiquette) sans configuration de statut. Utilise uniquement des tokens. */
-export function Chip({ children, className = '', variant = 'secondaire' }) {
+export function Chip({ children, className = '', variant = 'secondaire', ...props }) {
   const base = 'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold border border-border';
   const variantes = {
     secondaire: 'bg-surface2 text-ink2',
@@ -7,5 +7,5 @@ export function Chip({ children, className = '', variant = 'secondaire' }) {
     fantome: 'bg-transparent text-muted',
     primaire: 'bg-brand-700 text-brand-50 border-brand-700',
   };
-  return <span className={`${base} ${variantes[variant] ?? variantes.secondaire} ${className}`}>{children}</span>;
+  return <span className={`${base} ${variantes[variant] ?? variantes.secondaire} ${className}`} {...props}>{children}</span>;
 }

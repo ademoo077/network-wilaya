@@ -2,6 +2,29 @@ import { test, expect } from './fixture.js';
 import { authenticate, collectErrors } from './helpers.js';
 import { expectAccessible, expectNoOverflow } from './geometry.js';
 
+for (const [lang, theme] of [['fr', 'light'], ['fr', 'dark'], ['ar', 'light'], ['ar', 'dark']]) {
+  test(`Studio — géométrie et accessibilité ${lang}/${theme}`, async ({ page, baseURL }) => {
+    await authenticate(page, baseURL, 'operateur');
+    const errors = collectErrors(page);
+    await page.addInitScript(({ language, dark }) => {
+      localStorage.setItem('anm-language', language);
+      localStorage.setItem('anm-theme', dark);
+    }, { language: lang, dark: theme });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto('/#/rapport?semaine=2026-11-15');
+    await expect(page.locator('html')).toHaveAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    await expect(page.locator('[data-kpi-value]').first()).toBeVisible({ timeout: 20_000 });
+    await expectNoOverflow(page);
+    const widths = await page.locator('[data-synthese-grid] > section').evaluateAll((items) => items.map((item) => item.getBoundingClientRect().width));
+    expect(widths[1]).toBeLessThan(widths[2]);
+    expect(await page.locator('[data-report-studio]').evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(140);
+    await expectAccessible(page);
+    expect(errors.snapshot().pageError).toEqual([]);
+    expect(errors.snapshot().consoleError).toEqual([]);
+  });
+}
+
 test('Rapport — studio unifié, semaine héritée, modèles et laboratoire', async ({ page, baseURL }) => {
   await authenticate(page, baseURL, 'operateur');
   const errors = collectErrors(page);
@@ -113,6 +136,129 @@ test('Rapport — l’onglet officiel et la personnalisation suivent la semaine 
   await expect(page).toHaveURL(new RegExp(`source=${weekly.id}`));
   await expect(page.getByLabel('Semaine du rapport')).toHaveValue('2026-12-06');
 
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
+});
+
+test('113 — Studio : grille 12 colonnes, KPI lisibles, anneau entier et tableau sans scroll', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/#/rapport?semaine=2026-11-15');
+  await expect(page.locator('[data-synthese-grid] > section')).toHaveCount(3, { timeout: 20_000 });
+  await expect(page.locator('[data-kpi-value]').first()).toBeVisible({ timeout: 20_000 });
+
+  const geometry = await page.evaluate(() => {
+    const grid = document.querySelector('[data-synthese-grid]');
+    const ring = document.querySelector('[data-anneau-chart]');
+    const tableRegion = document.querySelector('[data-widget-table]')?.parentElement;
+    const box = (element) => { const r = element?.getBoundingClientRect(); return r && { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width }; };
+    return {
+      gridWidth: grid.getBoundingClientRect().width,
+      widths: [...grid.children].map((child) => child.getBoundingClientRect().width),
+      labels: [...document.querySelectorAll('[data-kpi-label]')].map((el) => ({ text: el.textContent, scroll: el.scrollWidth, client: el.clientWidth })),
+      values: [...document.querySelectorAll('[data-kpi-value]')].map((el) => ({ height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) })),
+      ring: box(ring), ringCard: box(ring?.closest('[data-widget-card]')), svg: box(ring?.querySelector('svg')), legend: box(document.querySelector('[data-anneau-legend]')),
+      table: tableRegion && { scroll: tableRegion.scrollWidth, client: tableRegion.clientWidth },
+    };
+  });
+  expect(geometry.widths[0]).toBeGreaterThan(geometry.gridWidth * 0.95);
+  expect(geometry.widths[1]).toBeGreaterThan((geometry.gridWidth / 3) * 0.95);
+  expect(geometry.widths[1]).toBeLessThan((geometry.gridWidth / 3) * 1.05);
+  expect(geometry.widths[2]).toBeGreaterThan((geometry.gridWidth * 2) / 3 * 0.95);
+  expect(geometry.widths[2]).toBeLessThan((geometry.gridWidth * 2) / 3 * 1.05);
+  expect(geometry.labels.every((item) => item.scroll <= item.client + 1), 'Libellés KPI tronqués').toBe(true);
+  expect(geometry.values.every((item) => item.height <= item.line * 1.5 + 1), 'Valeurs KPI sur plusieurs lignes').toBe(true);
+  expect(geometry.svg.left).toBeGreaterThanOrEqual(geometry.ring.left - 1);
+  expect(geometry.svg.right).toBeLessThanOrEqual(geometry.ring.right + 1);
+  expect(geometry.svg.bottom).toBeLessThanOrEqual(geometry.ring.bottom + 1);
+  expect(geometry.ring.bottom).toBeLessThanOrEqual(geometry.ringCard.bottom + 1);
+  expect(geometry.legend.top).toBeGreaterThanOrEqual(geometry.ring.bottom - 1);
+  expect(geometry.table.scroll).toBeLessThanOrEqual(geometry.table.client + 1);
+  await expect(page.getByText(/Page\s+\d+\s*\/\s*\d+/)).toHaveCount(0);
+
+  for (const width of [1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const table = await page.locator('[data-widget-table]').evaluate((element) => ({ scroll: element.parentElement.scrollWidth, client: element.parentElement.clientWidth }));
+    expect(table.scroll, `Défilement horizontal du tableau à ${width} px`).toBeLessThanOrEqual(table.client + 1);
+  }
+  await expectAccessible(page);
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
+});
+
+test('114 — Studio : en-tête compact, aucun jargon, menu entier et largeur d’affichage', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/#/rapport?semaine=2026-11-15');
+  await expect(page.locator('[data-display-width]')).toHaveAttribute('data-display-width', 'large', { timeout: 20_000 });
+
+  const headerHeight = await page.locator('[data-report-studio]').evaluate((element) => element.getBoundingClientRect().height);
+  expect(headerHeight, 'En-tête du studio trop haut').toBeLessThanOrEqual(140);
+  await expect(page.locator('[data-studio-toolbar]')).toHaveCount(1);
+  const text = await page.locator('body').innerText();
+  for (const forbidden of ['SQL', 'catalogue contrôlé', '{{', 'undefined', '[object']) {
+    expect(text, `Texte technique visible : ${forbidden}`).not.toContain(forbidden);
+  }
+  const lefts = await page.locator('aside a').evaluateAll((items) => items.map((item) => item.getBoundingClientRect().left));
+  expect(lefts.length).toBeGreaterThan(0);
+  expect(lefts.every((left) => left >= 0), 'Entrées de menu rognées à gauche').toBe(true);
+
+  const wrapper = page.locator('[data-display-width]');
+  const largeWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  expect(largeWidth).toBeGreaterThan(1100);
+  await page.locator('#report-studio-width').selectOption('print');
+  await expect(wrapper).toHaveAttribute('data-display-width', 'print');
+  const printWidth = await wrapper.evaluate((element) => element.getBoundingClientRect().width);
+  expect(printWidth).toBeLessThanOrEqual(800);
+  await page.emulateMedia({ media: 'print' });
+  const paperWidth = await page.locator('[data-print-document]').evaluate((element) => element.getBoundingClientRect().width);
+  expect(paperWidth).toBeLessThanOrEqual(800);
+  await expect(page.locator('[data-print-document]')).toHaveClass(/print-portrait/);
+  await page.emulateMedia({ media: 'screen' });
+
+  await expectAccessible(page);
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
+});
+
+test('115 — Studio : les cinq actions de chaque widget sont présentes et fonctionnelles', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/#/rapport?semaine=2026-11-15');
+  const cards = page.locator('[data-widget-card]');
+  await expect(cards.first()).toBeVisible({ timeout: 20_000 });
+  expect(await cards.count()).toBeGreaterThanOrEqual(3);
+
+  for (let index = 0; index < 3; index += 1) {
+    const card = cards.nth(index);
+    for (const label of ['Voir la définition', 'Voir les données', 'Voir les fiches', 'Afficher en plein écran', 'Exporter ce widget en CSV', 'Exporter en PNG']) {
+      await expect(card.getByRole('button', { name: label }), `${label} absent du widget ${index}`).toHaveCount(1);
+    }
+  }
+  const first = cards.first();
+  await first.getByRole('button', { name: 'Voir la définition' }).click();
+  await expect(page.getByRole('dialog', { name: /Voir la définition/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await first.getByRole('button', { name: 'Voir les données' }).click();
+  await expect(page.getByRole('dialog', { name: /Voir les données/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await first.getByRole('button', { name: 'Afficher en plein écran' }).click();
+  await expect(page.locator('[data-widget-fullscreen]')).toBeVisible();
+  await page.locator('[data-widget-fullscreen]').getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.locator('[data-widget-fullscreen]')).toHaveCount(0);
+
+  const csv = page.waitForEvent('download');
+  await first.getByRole('button', { name: 'Exporter ce widget en CSV' }).click();
+  expect((await csv).suggestedFilename()).toMatch(/\.csv$/);
+  const png = page.waitForEvent('download');
+  await first.getByRole('button', { name: 'Exporter en PNG' }).click();
+  expect((await png).suggestedFilename()).toMatch(/\.png$/);
+
+  await first.getByRole('button', { name: 'Voir les fiches' }).click();
+  await expect(page).toHaveURL(/#\/anomalies/);
   expect(errors.snapshot().pageError).toEqual([]);
   expect(errors.snapshot().consoleError).toEqual([]);
 });

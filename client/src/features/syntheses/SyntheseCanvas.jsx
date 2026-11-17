@@ -3,20 +3,25 @@ import { Alert, Button, Card, EmptyState, Skeleton } from '../../components/ui/i
 import { Chip } from '../../components/ui/Chip.jsx';
 import WidgetCard from './WidgetCard.jsx';
 
+// Grille réelle à 12 colonnes (SPEC V8 § 2) : simple = 4, double = 8, pleine = 12.
+// En dessous de 768 px chaque bloc occupe toute la ligne pour rester lisible.
 const WIDTH_CLASSES = {
-  double: 'sm:col-span-2',
-  pleine: 'sm:col-span-2 lg:col-span-3 xl:col-span-4',
+  simple: 'col-span-12 md:col-span-4',
+  double: 'col-span-12 md:col-span-8',
+  pleine: 'col-span-12',
 };
 
 export default function SyntheseCanvas({
   modele, mode, sourceId, alreadyFrozen, editor, blocs, activeBlocs, activeResults, maxWidgets,
-  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onVoirFiches,
+  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onVoirFiches, embedded = false,
 }) {
   return <>
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-        <Chip variant={modele.portee === 'systeme' ? 'secondaire' : 'primaire'}>{t(`synthese.portee.${modele.portee}`)}</Chip>
-        {modele.cle_systeme && <Chip variant="fantome">{t('synthese.systeme')}</Chip>}
+        {embedded && <h2 className="truncate text-sm font-bold text-ink">{modele.nom}</h2>}
+        {modele.cle_systeme
+          ? <Chip variant="secondaire" data-system-label>{t('synthese.systemeUnique')}</Chip>
+          : <Chip variant="primaire">{t(`synthese.portee.${modele.portee}`)}</Chip>}
         {alreadyFrozen && <Chip variant="secondaire">{t('synthese.feuilleFeigeeLabel')}</Chip>}
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2 no-print">
@@ -37,7 +42,7 @@ export default function SyntheseCanvas({
             <EyeOff className="h-4 w-4" aria-hidden="true" />{t('synthese.revenirStandard')}
           </Button>}
         </>}
-        <Button size="sm" variant="outline" onClick={onOpenEditions}>
+        <Button size="sm" variant="secondary" onClick={onOpenEditions}>
           <Clock className="h-4 w-4" aria-hidden="true" />{t('synthese.editions')}
         </Button>
       </div>
@@ -50,7 +55,7 @@ export default function SyntheseCanvas({
       {editor.saveError.message || t('common.error')}
     </Alert>}
 
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-synthese-grid>
+    <div className="grid grid-cols-12 gap-4" data-synthese-grid>
       {editor.evaluating && <div className="col-span-full"><Card className="p-8"><Skeleton className="h-24 w-full" /></Card></div>}
       {activeBlocs.map((bloc) => {
         const index = blocs.findIndex((item) => item.id === bloc.id);
@@ -73,7 +78,7 @@ export default function SyntheseCanvas({
     </div>
 
     {mode === 'personnaliser' && <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted no-print">
-      <div className="flex flex-wrap items-center gap-3"><span>{t('synthese.nbWidgets', { count: blocs.length, max: maxWidgets })}</span>{editor.lastSavedAt && !editor.dirty && <span role="status" className="text-straite">{t('synthese.enregistree')}</span>}</div>
+      <div className="flex flex-wrap items-center gap-3"><span>{t('synthese.nbWidgets', { count: blocs.length, max: maxWidgets })}</span>{editor.lastSavedAt && !editor.dirty && <span role="status" className="text-muted">{t('synthese.enregistree')}</span>}</div>
       <Button size="sm" variant="ghost" disabled={!editor.dirty} onClick={onSave} loading={editor.saving}><Save className="h-3.5 w-3.5" aria-hidden="true" />{t('synthese.enregistrer')}</Button>
     </div>}
   </>;

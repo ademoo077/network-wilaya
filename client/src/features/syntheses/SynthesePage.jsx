@@ -44,7 +44,8 @@ function typeLabel(type, lang) {
   return (lang === 'ar' ? 'عنصر' : map[type]) || type;
 }
 
-export default function SynthesePage({ modeleId: modeleIdOverride, embedded = false, periodeOverride = null, modeleHref = null } = {}) {
+export default function SynthesePage({ modeleId: modeleIdOverride, embedded = false, periodeOverride = null, modeleHref = null,
+  displayWidth = null, registerActions = null, onStudioState = null } = {}) {
   const { t, lang, dir } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -82,6 +83,8 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
   const [editionBusy, setEditionBusy] = useState(false);
   const periodeOverrideKey = JSON.stringify(periodeOverride);
   const [printOpen, setPrintOpen] = useState(false);
+  const [localWidth, setLocalWidth] = useState('large');
+  const activeWidth = displayWidth || localWidth;
   const [printSettings, setPrintSettings] = useState(() => createPrintSettings({ modele: null, periode: periodeOverride, user, t }));
 
   useEffect(() => { if (periodeOverride) setPeriode(periodeOverride); }, [periodeOverrideKey, periodeOverride]);
@@ -219,6 +222,22 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
   }, [printSettings.title]);
 
+  // Le studio unifié expose les actions de cette feuille dans sa barre d'outils unique.
+  useEffect(() => {
+    if (!registerActions) return;
+    registerActions({ personnaliser: handlePersonnaliser, figer: handleFiger, print: () => setPrintOpen(true) });
+  }, [registerActions, handlePersonnaliser, handleFiger]);
+  useEffect(() => {
+    if (!onStudioState) return;
+    onStudioState({
+      canPersonnaliser: Boolean(canPersonnaliser),
+      peutFiger: Boolean(peutFiger),
+      alreadyFrozen: Boolean(alreadyFrozen),
+      mode,
+      busy: Boolean(editionBusy || editor.saving || editor.evaluating),
+    });
+  }, [onStudioState, canPersonnaliser, peutFiger, alreadyFrozen, mode, editionBusy, editor.saving, editor.evaluating]);
+
   const snapshotBlocs = useMemo(() => snapshotEdition?.snapshot?.blocs || [], [snapshotEdition]);
   const activeBlocs = snapshotEdition ? snapshotBlocs : blocs;
   const activeResults = useMemo(() => {
@@ -232,17 +251,22 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
   }, [snapshotEdition, snapshotBlocs, editor.results]);
 
   return (
-    <main className={`page-container grid ${embedded ? '' : 'min-h-dvh'}`} data-synthese-page>
+    <main className={`page-container grid ${embedded ? 'px-2 py-4 sm:px-3' : 'min-h-dvh'}`} data-synthese-page>
       {brouillon && <div className="fixed inset-0 z-[50] pointer-events-none" aria-hidden="true">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-12deg] text-[8vw] text-brand-100/10 font-black select-none">BROUILLON</div>
       </div>}
-      <div className="flex flex-col h-full">
-        <div className="no-print"><PageHeader
+      <div className="flex min-w-0 flex-col h-full">
+        {!embedded && <div className="no-print"><PageHeader
           eyebrow={t('synthese.eyebrow')}
           title={modele ? modele.nom : t('synthese.chargement')}
           description={t('synthese.subtitle')}
           actions={
             <>
+              <label className="sr-only" htmlFor="synthese-width">{t('report.studio.displayWidth')}</label>
+              <select id="synthese-width" value={activeWidth} onChange={(event) => setLocalWidth(event.target.value)} className="h-9 rounded-md border border-border bg-surface px-2 text-xs font-bold text-ink">
+                <option value="large">{t('report.studio.widthLarge')}</option>
+                <option value="print">{t('report.studio.widthPrint')}</option>
+              </select>
               {canPersonnaliser && <Button size="sm" onClick={handlePersonnaliser}>
                 {mode === 'personnaliser' ? (alreadyFrozen ? t('synthese.modeLecture') : t('synthese.quitterPersonnalisation')) : t('synthese.personnaliser')}
               </Button>}
@@ -254,8 +278,8 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
               </Button>
             </>
           }
-        /></div>
-        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+        /></div>}
+        <div className={`flex-1 overflow-auto ${embedded ? 'p-2 sm:p-3' : 'p-4 sm:p-6 lg:p-8'}`}>
           {!embedded && <Button size="sm" variant="ghost" className="mb-3" onClick={() => navigate('/syntheses')}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />{t('common.back')}
           </Button>}
@@ -263,9 +287,11 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
           {validModeleId && modeleQuery.isError && <ErrorState message={modeleQuery.error?.message || t('error.load')} onRetry={() => modeleQuery.refetch()} />}
           {validModeleId && modeleQuery.isSuccess && !remoteModele && <EmptyState title={t('synthese.modeleIntrouvable')} description={t('synthese.modeleIntrouvableHelp')} />}
           {validModeleId && modeleQuery.isPending && !modele && <div className="grid place-items-center min-h-[40vh]"><Skeleton className="h-10 w-48" /></div>}
-          {modele && <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
-            onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
-            onEdit={(bloc) => { setSelectedBloc(bloc); setOpenInspector(true); }} onVoirFiches={() => { navigate('/anomalies'); push(t('synthese.voirFichesInfo'), 'success'); }} /></OfficialPrintDocument>}
+          {modele && <div className={`mx-auto w-full ${activeWidth === 'print' ? 'max-w-[794px]' : 'max-w-[1280px]'}`} data-display-width={activeWidth}>
+            <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
+              onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
+              onEdit={(bloc) => { setSelectedBloc(bloc); setOpenInspector(true); }} onVoirFiches={() => { navigate('/anomalies'); push(t('synthese.voirFichesInfo'), 'success'); }} embedded={embedded} /></OfficialPrintDocument>
+          </div>}
         </div>
       </div>
 

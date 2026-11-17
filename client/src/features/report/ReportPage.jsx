@@ -1,8 +1,8 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, FileText, FlaskConical, LayoutGrid, PanelTop } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, FileText, FlaskConical, LayoutGrid, PanelTop, Printer, ShieldAlert, SlidersHorizontal } from 'lucide-react';
 import { addDays, formatDate, todayAlgiers, weekStart } from '@anm/shared';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Card, EmptyState, ErrorState, LoadingBlock } from '../../components/ui/index.js';
+import { Button, EmptyState, ErrorState, LoadingBlock } from '../../components/ui/index.js';
 import { useRefs } from '../../context/RefsContext.jsx';
 import { useI18n } from '../../i18n/index.jsx';
 import { useApiQuery } from '../../hooks/useApiQuery.js';
@@ -41,6 +41,13 @@ export default function ReportPage() {
   const period = useMemo(() => ({ mode: 'plage', debut: week, fin: addDays(week, 6) }), [week]);
   const legacySnapshot = params.get('source') === 'snapshot';
   const snapshotVersion = Number(params.get('version')) || null;
+  const [displayWidth, setDisplayWidth] = useState('large');
+  const studioActions = useRef(null);
+  const [studioState, setStudioState] = useState({ canPersonnaliser: false, peutFiger: false, alreadyFrozen: false, mode: 'lecture', busy: false });
+  const registerActions = useCallback((next) => { studioActions.current = next; }, []);
+  const onStudioState = useCallback((next) => setStudioState((prev) => (
+    Object.keys(next).every((key) => prev[key] === next[key]) ? prev : next
+  )), []);
 
   const updateParams = useCallback((updates, { replace = false } = {}) => {
     const next = new URLSearchParams(params);
@@ -81,29 +88,49 @@ export default function ReportPage() {
   }, [params, week]);
 
   return <>
-    <div className="page-container pb-0 no-print" data-report-studio>
-      <Card className="overflow-hidden border-brand-700 shadow-2">
-        <div className="bg-gradient-to-r from-brand-950 to-brand-800 p-5 text-brand-50 sm:p-6">
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-brand-100">{t('report.studio.eyebrow')}</p>
-          <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-            <div><h1 className="text-2xl font-black sm:text-3xl">{t('report.studio.title')}</h1><p className="mt-1 max-w-3xl text-sm text-brand-100">{t('report.studio.help')}</p></div>
-            <div className="rounded-lg border border-brand-700 bg-brand-900 px-4 py-2 text-sm font-bold">{formatDate(week)} → {formatDate(addDays(week, 6))}</div>
-          </div>
-        </div>
-        <div className="grid gap-3 p-3 lg:grid-cols-[auto_1fr] lg:items-center">
-          <div className="flex items-center gap-1 rounded-lg border border-border bg-surface2 p-1">
-            <Button size="sm" variant="ghost" aria-label={t('common.previous')} onClick={() => moveWeek(-7)}>{dir === 'rtl' ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}</Button>
+    <div className="sticky top-0 z-20 min-w-0 overflow-hidden no-print" data-report-studio>
+      <div className="border-b border-border bg-surface shadow-sm">
+        <div className="page-container flex min-w-0 flex-wrap items-center gap-2 py-2">
+          <h1 className="shrink-0 truncate text-base font-black lg:text-lg">{t('report.studio.title')}</h1>
+          <span className="hidden whitespace-nowrap text-xs text-muted 2xl:inline">{formatDate(week)} → {formatDate(addDays(week, 6))}</span>
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-surface2 p-1" data-studio-toolbar>
+            <Button size="sm" variant="ghost" className="px-1.5" aria-label={t('common.previous')} onClick={() => moveWeek(-7)}>{dir === 'rtl' ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}</Button>
             <label className="sr-only" htmlFor="report-studio-week">{t('report.studio.week')}</label>
-            <input id="report-studio-week" type="date" value={week} onChange={(event) => updateParams({ semaine: weekStart(event.target.value, weekStartDay), version: null })} className="h-11 min-w-36 rounded-md border border-border bg-surface px-3 text-sm font-bold text-ink" />
-            <Button size="sm" variant="ghost" aria-label={t('common.next')} onClick={() => moveWeek(7)}>{dir === 'rtl' ? <ChevronLeft aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}</Button>
+            <input id="report-studio-week" type="date" value={week} onChange={(event) => updateParams({ semaine: weekStart(event.target.value, weekStartDay), version: null })} className="h-8 w-28 min-w-0 rounded-md border border-border bg-surface px-1 text-xs font-bold text-ink sm:w-32" />
+            <Button size="sm" variant="ghost" className="px-1.5" aria-label={t('common.next')} onClick={() => moveWeek(7)}>{dir === 'rtl' ? <ChevronLeft className="h-4 w-4" aria-hidden="true" /> : <ChevronRight className="h-4 w-4" aria-hidden="true" />}</Button>
           </div>
-          <nav aria-label={t('report.studio.tools')} className="flex gap-2 overflow-x-auto pb-1 lg:justify-end">
-            {TOOLS.map(({ id, key, icon: Icon }) => <Button key={id} size="sm" variant={tool === id ? 'primary' : 'ghost'} aria-current={tool === id ? 'page' : undefined} onClick={() => updateParams({ outil: id })} className="shrink-0">
-              <Icon className="h-4 w-4" aria-hidden="true" />{t(key)}
+          <nav aria-label={t('report.studio.tools')} className="flex min-w-0 max-w-full flex-1 gap-1 overflow-x-auto pb-1 sm:flex-none">
+            {TOOLS.map(({ id, key, icon: Icon }) => <Button key={id} size="sm" variant={tool === id ? 'primary' : 'ghost'} aria-current={tool === id ? 'page' : undefined} aria-label={t(key)} onClick={() => updateParams({ outil: id })} className="shrink-0 px-2 text-xs">
+              <Icon className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{t(key)}</span>
             </Button>)}
           </nav>
+          <div className="flex items-center gap-1">
+            <SlidersHorizontal className="h-4 w-4 text-muted" aria-hidden="true" />
+            <label className="sr-only" htmlFor="report-studio-width">{t('report.studio.displayWidth')}</label>
+            <select id="report-studio-width" value={displayWidth} onChange={(event) => setDisplayWidth(event.target.value)} className="h-8 max-w-[9rem] rounded-md border border-border bg-surface px-1 text-xs font-bold text-ink">
+              <option value="large">{t('report.studio.widthLarge')}</option>
+              <option value="print">{t('report.studio.widthPrint')}</option>
+            </select>
+          </div>
+          {tool === 'composition' && <div className="flex flex-wrap items-center gap-1 ms-auto">
+            <Button size="sm" className="px-2 text-xs" aria-label={studioState.mode === 'personnaliser'
+              ? (studioState.alreadyFrozen ? t('synthese.modeLecture') : t('synthese.quitterPersonnalisation'))
+              : t('synthese.personnaliser')}
+              disabled={!studioState.canPersonnaliser || studioState.busy} onClick={() => studioActions.current?.personnaliser()}>
+              <span className="hidden lg:inline">{studioState.mode === 'personnaliser'
+                ? (studioState.alreadyFrozen ? t('synthese.modeLecture') : t('synthese.quitterPersonnalisation'))
+                : t('synthese.personnaliser')}</span>
+              <SlidersHorizontal className="h-4 w-4 lg:hidden" aria-hidden="true" />
+            </Button>
+            <Button size="sm" variant="secondary" className="px-2 text-xs" aria-label={t('synthese.figer')} disabled={!studioState.peutFiger || studioState.busy} onClick={() => studioActions.current?.figer()}>
+              <ShieldAlert className="h-4 w-4" aria-hidden="true" /><span className="hidden lg:inline">{t('synthese.figer')}</span>
+            </Button>
+            <Button size="sm" variant="ghost" className="px-2 text-xs" aria-label={t('common.imprimer')} onClick={() => studioActions.current?.print()}>
+              <Printer className="h-4 w-4" aria-hidden="true" /><span className="hidden lg:inline">{t('common.imprimer')}</span>
+            </Button>
+          </div>}
         </div>
-      </Card>
+      </div>
     </div>
 
     <Suspense fallback={contentFallback()}>
@@ -115,7 +142,8 @@ export default function ReportPage() {
       {tool === 'composition' && modelsQuery.isPending && contentFallback()}
       {tool === 'composition' && modelsQuery.isError && <div className="page-container"><ErrorState message={modelsQuery.error?.message || t('error.load')} onRetry={() => modelsQuery.refetch()} /></div>}
       {tool === 'composition' && modelsQuery.isSuccess && !modeleId && <div className="page-container"><EmptyState title={t('report.studio.noWeekly')} description={t('report.studio.noWeeklyHelp')} /></div>}
-      {tool === 'composition' && modeleId && <SynthesePage embedded modeleId={modeleId} periodeOverride={period} modeleHref={hrefForModele} />}
+      {tool === 'composition' && modeleId && <SynthesePage embedded modeleId={modeleId} periodeOverride={period} modeleHref={hrefForModele}
+        displayWidth={displayWidth} registerActions={registerActions} onStudioState={onStudioState} />}
     </Suspense>
   </>;
 }

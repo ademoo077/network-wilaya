@@ -150,3 +150,49 @@ Référence : prompt V8.2 + `docs/SPEC_V8.md` + `AUDIT_V8.md`. Le tableau de bor
 ## Journal V8.2
 - 2026-11-16 — Phase 1 : audit R1–R7, `describe.js` (5 tests), schémas widget/section, 8 modèles système idempotents (4 tests). Vitest ciblé vert. Suite : mode Personnaliser.
 
+---
+
+# PLAN V9 — Studio corrigé et base des réseaux sociaux
+
+Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le tag `avant-v9` marque l’état de départ. Chaque phase se termine par un résumé de cinq lignes maximum.
+
+## Phase 1 — Audit et Partie A (L1–L10)
+- [x] `AUDIT_V9.md` : causes et correctifs L1–L10, état réel des parties B/C
+- [x] Grille 12 colonnes, largeurs portées par le modèle système (KPI 12, anneau 4, daïra 8)
+- [x] KPI sans troncature, anneau entier avec légende, tableau sans scroll ni pagination inutile
+- [x] Largeur d’affichage (Écran large / Fidèle à l’impression), en-tête compact, aucun jargon, menu non rogné
+- [x] Barre d’actions des widgets (ⓘ, données, fiches, plein écran, CSV/PNG), étiquette système unique
+- [x] Scénarios 113–115 (géométrie, axe, FR/AR, clair/sombre) et `npm run qa` vert ; commit de phase
+
+## Phase 2 — Socle réseaux sociaux (déjà livré, à vérifier)
+- [x] Migration additive `011_reseaux_sociaux.sql` (au lieu de 007, déjà appliquée), `shared/`, permissions, audit
+- [x] Lecture/export pour tous les rôles, écritures admin, verrou optimiste, soft delete
+- [ ] Reprendre les tests de schéma/normalisation manquants et documenter l’écart de route/migration
+
+## Phase 3 — Import et qualification
+- [ ] Assistant d’import enrichi : en-tête tolérant, hyperliens, paires, téléphones refusés, aperçu, annulation, idempotence
+- [ ] Rapprochement territorial, conflits explicites, création du référentiel depuis le fichier
+- [ ] File « À qualifier » avec P/R/G/C/I et annulation Z ; scénarios 116–119
+
+## Phase 4 — Interface `#/reseaux-sociaux`
+- [ ] Ajout manuel et en lot, édition, fusion, corbeille, historique, contrôle manuel, onglet Qualité
+- [ ] Scénarios 120–121 et 126
+
+## Phase 5 — Statistiques et catalogue
+- [ ] Jeux `sources`/`couverture`, ≥ 14 widgets, modèle système n°9, cohérence annuaire/Lab/export
+- [ ] Scénarios 122 et 124
+
+## Phase 6 — Données personnelles et intégrations
+- [ ] Masquage des profils par rôle, audit de consultation, aucun bouton Veille sur un profil, exports
+- [ ] Suggestion de source dans le formulaire anomalie, filtre source, revue annuelle ; scénarios 123 et 125
+
+## Phase 7 — P2/P3
+- [ ] Import « stat semestrielle » et POINTS hebdomadaires ; scénario 127
+
+## Phase 8 — Recette
+- [ ] Captures FR/AR × clair/sombre, README, `AUDIT_V9.md` final, `npm run qa` vert, scénarios 113–128
+
+## Journal V9
+- 2026-11-17 — Tag `avant-v9`, audit initial et plan. Début de la phase 1.
+- 2026-11-17 — Phase 1 livrée : L1–L10 corrigés, 7 tests dédiés (dont 4 variantes FR/AR × clair/sombre), `npm run qa` vert (115 Playwright).
+

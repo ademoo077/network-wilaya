@@ -26,7 +26,8 @@
 @layer components {
   .app-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); min-height: 100dvh; }
   .page-container { width: 100%; max-width: 1480px; min-width: 0; margin-inline: auto; padding: 24px 28px 40px; }
-  .sidebar-pattern { position: relative; overflow: hidden; }
+  .sidebar-pattern { position: relative; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
   .sidebar-pattern::after {
     content: ''; position: absolute; inset-inline: 0; bottom: 0; height: 38%; opacity: .035; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='white' stroke-width='1' shape-rendering='geometricPrecision'%3E%3Crect x='18' y='18' width='20' height='20'/%3E%3Crect x='18' y='18' width='20' height='20' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E");
@@ -67,6 +68,7 @@
   [data-print-document].print-landscape { page: synthesis-landscape; }
   [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6mm !important; }
   [data-print-document].print-landscape [data-synthese-grid] { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  [data-print-document] [data-synthese-grid] > section { grid-column: span 1 / span 1 !important; }
   [data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section { break-inside: avoid; page-break-inside: avoid; }
   [data-print-document] .official-print-header { margin-bottom: 8mm; }
   [data-print-document] .official-print-footer { margin-top: 10mm; }

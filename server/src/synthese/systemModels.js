@@ -45,13 +45,13 @@ export const SYSTEM_MODELS = [
       schema_version: 1,
       sections: [
         section('executif', [
-          bloc('kpi-executif', 'kpi', 'Indicateurs clés', q(['recues', 'traitees_periode', 'cohorte_non_traitees', 'taux_traitement'])),
+          bloc('kpi-executif', 'kpi', 'Indicateurs clés', q(['recues', 'traitees_periode', 'cohorte_non_traitees', 'taux_traitement']), { largeur: 'pleine' }),
         ]),
         section('statuts', [
-          bloc('anneau-statuts', 'anneau', 'Répartition des statuts', q(['recues'], [{ champ: 'statut' }])),
+          bloc('anneau-statuts', 'anneau', 'Répartition des statuts', q(['recues'], [{ champ: 'statut' }]), { largeur: 'simple' }),
         ]),
         section('territoire', [
-          bloc('tab-daira', 'tableau', 'Par daïra', q(['recues', 'cohorte_non_traitees'], [{ champ: 'daira' }])),
+          bloc('tab-daira', 'tableau', 'Par daïra', q(['recues', 'cohorte_non_traitees'], [{ champ: 'daira' }]), { largeur: 'double', avec_graphique: true }),
         ]),
       ],
     },
