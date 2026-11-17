@@ -200,4 +200,5 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 - 2026-11-17 — Studio : « Plein écran », barre compacte masquant menu et topbar, retour à la semaine courante ; contrats de migration alignés sur `001–012`. Scénario dédié FR/AR à 390/1440 px et `npm run qa` vert.
 - 2026-11-17 — Synthèse — confort général et impression : aperçu A4 fidèle, sections de réglages et réinitialisation, largeurs de blocs respectées sur la feuille, accès à l'impression depuis le canevas, état accessible de la page. Nouveau scénario Studio et `npm run qa` vert (614 Vitest, 11 E2E API, 125 Playwright).
 - 2026-11-17 — Correction compression : les actions des cartes étroites se replient au lieu de déborder ; le scénario 113 contrôle l'absence de débordement interne de toutes les cartes.
+- 2026-11-17 — Graphiques et rendu professionnel : clés HTML avec totaux/pourcentages, valeurs sur barres simples, axes tokens, suppression de la limite 65 mm à l'impression et bouton « Aperçu A4 » pendant la création. Nouveau scénario dédié ; `npm run qa` vert (614 Vitest, 11 E2E API, 126 Playwright).
 

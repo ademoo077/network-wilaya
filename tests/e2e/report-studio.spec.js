@@ -357,3 +357,34 @@ test('Studio — préparation d’impression A4 lisible et réglages réinitiali
   expect(errors.snapshot().pageError).toEqual([]);
   expect(errors.snapshot().consoleError).toEqual([]);
 });
+
+test('Studio — légendes des graphiques et aperçu A4 pendant la création', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/#/rapport?semaine=2026-11-15');
+  await expect(page.locator('[data-chart]').first()).toBeVisible({ timeout: 20_000 });
+
+  const charts = await page.locator('[data-chart]').count();
+  const legends = await page.locator('[data-chart-legend]').count();
+  expect(charts).toBeGreaterThanOrEqual(2);
+  expect(legends, 'Chaque graphique doit porter une clé lisible').toBeGreaterThanOrEqual(charts);
+  const firstItem = page.locator('[data-chart-legend] li').first();
+  await expect(firstItem.locator('span[aria-hidden="true"]')).toBeVisible();
+  expect((await firstItem.innerText()).trim().length).toBeGreaterThan(0);
+
+  const clipped = await page.locator('[data-chart]').evaluateAll((items) => items.filter((element) => element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1).length);
+  expect(clipped, 'Graphique comprimé ou rogné').toBe(0);
+
+  await page.getByRole('button', { name: 'Personnaliser', exact: true }).click();
+  await expect(page.locator('[data-synthese-state]')).toHaveAttribute('data-synthese-state', 'personnalisation');
+  await page.getByRole('button', { name: 'Aperçu A4' }).click();
+  await expect(page.locator('[data-display-width]')).toHaveAttribute('data-display-width', 'print');
+  await expect(page.locator('[data-print-header]')).toBeVisible();
+  await expect(page.locator('[data-print-footer]')).toBeVisible();
+
+  await expectNoOverflow(page);
+  await expectAccessible(page);
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
+});

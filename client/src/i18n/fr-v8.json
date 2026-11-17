@@ -269,6 +269,7 @@
   "synthese.print.reset": "Rétablir les valeurs initiales",
   "synthese.print.widgets": "Blocs du rapport",
   "synthese.print.previewHelp": "Aperçu de la page A4 : le contenu réel est inséré au moment de l’impression.",
+  "synthese.previewA4": "Aperçu A4",
   "synthese.widget.width": "Largeur du bloc",
   "synthese.widget.widthSimple": "1 colonne",
   "synthese.widget.widthDouble": "2 colonnes",

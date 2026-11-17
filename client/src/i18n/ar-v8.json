@@ -269,6 +269,7 @@
   "synthese.print.reset": "استعادة القيم الأولية",
   "synthese.print.widgets": "كتل التقرير",
   "synthese.print.previewHelp": "معاينة صفحة A4: يُدرج المحتوى الفعلي عند الطباعة.",
+  "synthese.previewA4": "معاينة A4",
   "synthese.widget.width": "عرض الكتلة",
   "synthese.widget.widthSimple": "عمود واحد",
   "synthese.widget.widthDouble": "عمودان",

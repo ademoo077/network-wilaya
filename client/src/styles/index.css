@@ -80,8 +80,13 @@
   [data-print-document] .official-print-footer { margin-top: 10mm; break-inside: avoid; page-break-inside: avoid; }
   [data-print-document] .official-print-body { min-width: 0; }
   [data-print-document] img, [data-print-document] svg { max-width: 100%; }
-  [data-print-document] .recharts-responsive-container { max-height: 65mm; }
+  [data-print-document] [data-chart], [data-print-document] [data-chart-legend] { break-inside: avoid; page-break-inside: avoid; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+@media screen {
+  [data-display-width='print'] [data-print-header],
+  [data-display-width='print'] [data-print-footer] { display: block !important; }
 }
 
 @page synthesis-portrait { size: A4 portrait; margin: 12mm; }

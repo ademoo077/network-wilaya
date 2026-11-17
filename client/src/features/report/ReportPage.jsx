@@ -184,7 +184,7 @@ export default function ReportPage() {
       {tool === 'composition' && modelsQuery.isError && <div className="page-container"><ErrorState message={modelsQuery.error?.message || t('error.load')} onRetry={() => modelsQuery.refetch()} /></div>}
       {tool === 'composition' && modelsQuery.isSuccess && !modeleId && <div className="page-container"><EmptyState title={t('report.studio.noWeekly')} description={t('report.studio.noWeeklyHelp')} /></div>}
       {tool === 'composition' && modeleId && <SynthesePage embedded modeleId={modeleId} periodeOverride={period} modeleHref={hrefForModele}
-        displayWidth={displayWidth} registerActions={registerActions} onStudioState={onStudioState} />}
+        displayWidth={displayWidth} onDisplayWidth={setDisplayWidth} registerActions={registerActions} onStudioState={onStudioState} />}
     </Suspense>
   </>;
 }

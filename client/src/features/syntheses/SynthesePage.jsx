@@ -45,7 +45,7 @@ function typeLabel(type, lang) {
 }
 
 export default function SynthesePage({ modeleId: modeleIdOverride, embedded = false, periodeOverride = null, modeleHref = null,
-  displayWidth = null, registerActions = null, onStudioState = null } = {}) {
+  displayWidth = null, onDisplayWidth = null, registerActions = null, onStudioState = null } = {}) {
   const { t, lang, dir } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -292,6 +292,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
             <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
               onPrint={() => setPrintOpen(true)}
+              onPreview={() => (embedded && onDisplayWidth ? onDisplayWidth('print') : setLocalWidth('print'))}
               onEdit={(bloc) => { setSelectedBloc(bloc); setOpenInspector(true); }} onVoirFiches={() => { navigate('/anomalies'); push(t('synthese.voirFichesInfo'), 'success'); }} embedded={embedded} /></OfficialPrintDocument>
           </div>}
         </div>

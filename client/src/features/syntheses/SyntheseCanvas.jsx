@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Clock, Edit, EyeOff, Plus, Printer, RotateCcw, RotateCw, Save, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Edit, EyeOff, FileText, Plus, Printer, RotateCcw, RotateCw, Save, Trash2 } from 'lucide-react';
 import { Alert, Button, Card, EmptyState, Skeleton } from '../../components/ui/index.js';
 import { Chip } from '../../components/ui/Chip.jsx';
 import WidgetCard from './WidgetCard.jsx';
@@ -13,7 +13,7 @@ const WIDTH_CLASSES = {
 
 export default function SyntheseCanvas({
   modele, mode, sourceId, alreadyFrozen, editor, blocs, activeBlocs, activeResults, maxWidgets,
-  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onVoirFiches, embedded = false,
+  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onPreview, onVoirFiches, embedded = false,
 }) {
   return <>
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
@@ -42,6 +42,9 @@ export default function SyntheseCanvas({
             <EyeOff className="h-4 w-4" aria-hidden="true" />{t('synthese.revenirStandard')}
           </Button>}
         </>}
+        {mode === 'personnaliser' && onPreview && <Button size="sm" variant="secondary" onClick={onPreview} aria-label={t('synthese.previewA4')}>
+          <FileText className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{t('synthese.previewA4')}</span>
+        </Button>}
         <Button size="sm" variant="secondary" onClick={onOpenEditions}>
           <Clock className="h-4 w-4" aria-hidden="true" />{t('synthese.editions')}
         </Button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart,
+  Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { ChevronLeft, ChevronRight, Download, FileText, Info, Maximize2, Table2, X } from 'lucide-react';
@@ -16,6 +16,17 @@ import { downloadWidgetPng } from './widgetExport.js';
 const ROWS_PER_PAGE = 12;
 const COLORS = ['var(--brand-600)', 'var(--brand-500)', 'var(--brand-800)', 'var(--brand-900)', 'var(--brand-700)'];
 function colorFor(index) { return COLORS[index % COLORS.length]; }
+
+function ChartLegend({ items, t, className = '' }) {
+  return <ul className={`mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-ink2 ${className}`} aria-label={t('synthese.action.data')} data-chart-legend>
+    {items.map((item, index) => <li key={`${item.label}-${index}`} className="flex min-w-0 items-center gap-2">
+      <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: item.color }} aria-hidden="true" />
+      <bdi className="min-w-0 truncate">{item.label}</bdi>
+      {item.value && <bdi dir="ltr" className="shrink-0 font-bold tabular-nums text-ink">{item.value}</bdi>}
+    </li>)}
+  </ul>;
+}
+
 function heightClass(bloc) {
   if (bloc.options?.hauteur === 'compacte') return 'h-[220px]';
   if (bloc.options?.hauteur === 'grande') return 'h-[380px]';
@@ -82,43 +93,55 @@ function DataTable({ result, lang, t }) {
   </div>;
 }
 
-function BarresChart({ result, title, lang, dir, height, actions }) {
+function BarresChart({ result, title, lang, dir, height, actions, t }) {
   const data = chartData(result, lang).slice(0, 12);
   const measures = mesuresOf(result);
   return <>
     <CardHeader title={title} action={actions} />
     <p className="sr-only">{summary(data, measures, lang)}</p>
-    <div className={`${height} w-full`} aria-hidden="true">
+    <div className={`${height} w-full`} aria-hidden="true" data-chart>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart accessibilityLayer={false} data={data} margin={{ top: 20, right: 16, bottom: 52, left: 24 }}>
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={64} />
-          <YAxis allowDecimals={false} orientation={dir === 'rtl' ? 'right' : 'left'} />
-          <Tooltip /><Legend />
-          {measures.map((measure, index) => <Bar key={measure.id} dataKey={measure.id} name={measureLabel(measure.id, lang)} fill={colorFor(index)} radius={[4, 4, 0, 0]} />)}
+          <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} angle={-20} textAnchor="end" height={64} />
+          <YAxis allowDecimals={false} orientation={dir === 'rtl' ? 'right' : 'left'} tick={{ fontSize: 10, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+          <Tooltip />
+          {measures.map((measure, index) => <Bar key={measure.id} dataKey={measure.id} name={measureLabel(measure.id, lang)} fill={colorFor(index)} radius={[4, 4, 0, 0]}>
+            {measures.length === 1 && <LabelList dataKey={measure.id} position="top" formatter={(value) => formatValue(value, measure.format || 'entier', lang)} style={{ fontSize: 10, fill: 'var(--ink-2)' }} />}
+          </Bar>)}
         </BarChart>
       </ResponsiveContainer>
     </div>
+    <ChartLegend t={t} items={measures.map((measure, index) => ({
+      label: measureLabel(measure.id, lang),
+      color: colorFor(index),
+      value: formatValue(data.reduce((sum, row) => sum + Number(row[measure.id] || 0), 0), measure.format || 'entier', lang),
+    }))} />
   </>;
 }
 
-function CourbeChart({ result, title, lang, dir, height, actions }) {
+function CourbeChart({ result, title, lang, dir, height, actions, t }) {
   const data = chartData(result, lang).slice(0, 40);
   const measures = mesuresOf(result);
   return <>
     <CardHeader title={title} action={actions} />
     <p className="sr-only">{summary(data, measures, lang)}</p>
-    <div className={`${height} w-full`} aria-hidden="true">
+    <div className={`${height} w-full`} aria-hidden="true" data-chart>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart accessibilityLayer={false} data={data} margin={{ top: 20, right: 16, bottom: 52, left: 24 }}>
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-          <YAxis allowDecimals={false} orientation={dir === 'rtl' ? 'right' : 'left'} />
-          <Tooltip /><Legend />
+          <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval="preserveStartEnd" />
+          <YAxis allowDecimals={false} orientation={dir === 'rtl' ? 'right' : 'left'} tick={{ fontSize: 10, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+          <Tooltip />
           {measures.map((measure, index) => <Line key={measure.id} type="monotone" dataKey={measure.id} name={measureLabel(measure.id, lang)} stroke={colorFor(index)} strokeWidth={2.5} dot={data.length < 15} />)}
         </LineChart>
       </ResponsiveContainer>
     </div>
+    <ChartLegend t={t} items={measures.map((measure, index) => ({
+      label: measureLabel(measure.id, lang),
+      color: colorFor(index),
+      value: formatValue(data.reduce((sum, row) => sum + Number(row[measure.id] || 0), 0), measure.format || 'entier', lang),
+    }))} />
   </>;
 }
 
@@ -129,7 +152,7 @@ function AnneauChart({ result, title, t, lang, actions }) {
   return <>
     <CardHeader title={title} action={actions} />
     <p className="sr-only">{data.map((row) => `${row.name}: ${row.value}`).join('; ')}</p>
-    <div className="h-56 w-full" aria-hidden="true" data-anneau-chart>
+    <div className="h-56 w-full" aria-hidden="true" data-anneau-chart data-chart>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart accessibilityLayer={false} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
           <Pie rootTabIndex={-1} dataKey="value" nameKey="name" data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={82} paddingAngle={2}>
@@ -139,29 +162,30 @@ function AnneauChart({ result, title, t, lang, actions }) {
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-x-0 top-0 grid h-56 place-items-center"><div className="text-center"><div className="text-2xl font-black text-ink"><bdi dir="ltr">{formatValue(total, 'entier', lang)}</bdi></div><div className="text-xs text-muted">{t('common.total')}</div></div></div>
     </div>
-    <ul className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2" aria-label={t('synthese.action.data')} data-anneau-legend>
-      {data.map((row, index) => <li key={`${row.name}-${index}`} className="flex min-w-0 items-center gap-2 text-xs text-ink2">
-        <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: colorFor(index) }} aria-hidden="true" />
-        <bdi className="min-w-0 flex-1 truncate">{row.name}</bdi>
-        <bdi dir="ltr" className="shrink-0 tabular-nums">{formatValue(row.value, 'entier', lang)} · {formatValue(total ? (row.value / total) * 100 : 0, 'pourcentage', lang)}</bdi>
-      </li>)}
-    </ul>
+    <div data-anneau-legend><ChartLegend t={t} className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2" items={data.map((row, index) => ({
+      label: row.name,
+      color: colorFor(index),
+      value: `${formatValue(row.value, 'entier', lang)} · ${formatValue(total ? (row.value / total) * 100 : 0, 'pourcentage', lang)}`,
+    }))} /></div>
   </>;
 }
 
 function MiniChart({ result, lang, t }) {
   const data = chartData(result, lang).slice(0, 12);
   const measures = mesuresOf(result);
-  return <div className="mb-3 h-36 w-full" aria-hidden="true">
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 6, right: 8, bottom: 6, left: 8 }}>
-        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} height={26} />
-        <YAxis allowDecimals={false} width={34} tick={{ fontSize: 9 }} />
-        <Tooltip />
-        {measures.map((measure, index) => <Bar key={measure.id} dataKey={measure.id} name={measureLabel(measure.id, lang)} fill={colorFor(index)} radius={[3, 3, 0, 0]} />)}
-      </BarChart>
-    </ResponsiveContainer>
+  return <div className="mb-3" data-chart>
+    <div className="h-36 w-full" aria-hidden="true">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 6, right: 8, bottom: 6, left: 8 }}>
+          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} height={26} />
+          <YAxis allowDecimals={false} width={34} tick={{ fontSize: 9, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+          <Tooltip />
+          {measures.map((measure, index) => <Bar key={measure.id} dataKey={measure.id} name={measureLabel(measure.id, lang)} fill={colorFor(index)} radius={[3, 3, 0, 0]} />)}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+    <ChartLegend t={t} className="mt-1 text-[11px]" items={measures.map((measure, index) => ({ label: measureLabel(measure.id, lang), color: colorFor(index) }))} />
     <p className="sr-only">{t('synthese.action.data')} : {summary(data, measures, lang)}</p>
   </div>;
 }
@@ -223,9 +247,9 @@ function RenderWidget({ bloc, result, t, lang, dir, actions }) {
   if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <TexteWidget bloc={bloc} lang={lang} t={t} />;
   if (bloc.type === 'kpi') return <KpiWidget result={result} title={title} lang={lang} actions={actions} />;
   if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} />;
-  if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} />;
+  if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
   if (bloc.type === 'anneau') return <AnneauChart result={result} title={title} t={t} lang={lang} actions={actions} />;
-  if (['barres', 'histogramme', 'carte_thermique', 'pareto', 'cascade', 'treemap', 'radar', 'nuage', 'entonnoir'].includes(bloc.type)) return <BarresChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} />;
+  if (['barres', 'histogramme', 'carte_thermique', 'pareto', 'cascade', 'treemap', 'radar', 'nuage', 'entonnoir'].includes(bloc.type)) return <BarresChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
   return <EmptyState title={title} description={t('synthese.visuelNonRendu', { visuel: bloc.type })} />;
 }
 
