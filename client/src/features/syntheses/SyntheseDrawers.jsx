@@ -1,8 +1,127 @@
-import { Download, Save } from 'lucide-react';
-import { BLOC_TYPES, GALERIE, formatDateShort } from '@anm/shared';
-import { Button, Card, Dialog, Drawer, Input, Select, SegmentedControl, Skeleton, Textarea } from '../../components/ui/index.js';
+import { useState } from 'react';
+import { Download, Save, Search, X, Plus, Trash2 } from 'lucide-react';
+import {
+  BLOC_TYPES, GALERIE, formatDateShort, MEASURES, CATALOGUE,
+} from '@anm/shared';
+import {
+  Button, Card, Dialog, Drawer, Input, Select, SegmentedControl, Skeleton, Textarea,
+} from '../../components/ui/index.js';
 import { Chip } from '../../components/ui/Chip.jsx';
 import WidgetCard from './WidgetCard.jsx';
+
+const COMPARAISON_OPTIONS = [
+  { value: 'aucune', labelFr: 'Aucune', labelAr: 'لا شيء' },
+  { value: 'periode_precedente', labelFr: 'Période précédente', labelAr: 'الفترة السابقة' },
+  { value: 'meme_periode_n-1', labelFr: 'Même période n−1', labelAr: 'نفس الفترة من السنة الماضية' },
+  { value: 'moyenne_4', labelFr: 'Moyenne 4 périodes', labelAr: 'متوسط 4 فترات' },
+  { value: 'periode_libre', labelFr: 'Période libre', labelAr: 'فترة مخصصة' },
+];
+
+const GESTION_MESURES = [
+  { group: 'cohorte', labelFr: 'Cohorte', labelAr: 'الدفعة', ids: ['recues', 'cohorte_non_traitees', 'cohorte_en_cours', 'cohorte_traitees', 'cohorte_pct_non_traitees', 'cohorte_pct_en_cours', 'cohorte_pct_traitees', 'taux_traitement'] },
+  { group: 'traitement', labelFr: 'Traitement', labelAr: 'المعالجة', ids: ['traitees_periode', 'taux_sla', 'nb_hors_sla', 'delai_moyen', 'delai_median', 'delai_p90', 'delai_min', 'delai_max'] },
+  { group: 'verification', labelFr: 'Vérification', labelAr: 'التحقق', ids: ['taux_confirmation', 'taux_infirmation', 'delai_verification_moyen'] },
+  { group: 'intervention', labelFr: 'Intervention', labelAr: 'التدخل', ids: ['delai_intervention_moyen'] },
+  { group: 'stock', labelFr: 'Stock', labelAr: 'المخزون', ids: ['stock_fin', 'stock_debut', 'variation_stock', 'taux_traitement_cumule', 'age_moyen_stock', 'age_max_stock', 'en_retard', 'urgentes_ouvertes'] },
+  { group: 'qualite', labelFr: 'Qualité', labelAr: 'الجودة', ids: ['taux_geolocalisation', 'taux_gps_confirme', 'nb_liens_distincts', 'nb_communes_touchees', 'nb_dairas_touchees', 'nb_recurrents', 'indice_recurrence'] },
+  { group: 'derivee', labelFr: 'Dérivées', labelAr: 'مشتقة', ids: ['pct_du_total', 'rang', 'pct_cumule'] },
+];
+
+function formatValue(value, format, lang) {
+  if (value == null) return '—';
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  const locale = lang === 'ar' ? 'ar-DZ' : 'fr-DZ';
+  if (format === 'pourcentage') return n.toLocaleString(locale, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (format === 'jours') return n.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return n.toLocaleString(locale);
+}
+
+function KpiMesuresSelector({ mesures, onChange, t, lang }) {
+  const [openSection, setOpenSection] = useState(null);
+  const [query, setQuery] = useState('');
+  const norm = query.trim().toLowerCase();
+  const filtered = norm
+    ? MEASURES.filter((m) => m.label_fr.toLowerCase().includes(norm) || m.label_ar.includes(norm))
+    : null;
+  const active = new Set(mesures.map((m) => m.id));
+
+  const toggle = (id) => {
+    if (active.has(id)) onChange(mesures.filter((m) => m.id !== id));
+    else if (mesures.length < 24) onChange([...mesures, { id }]);
+  };
+
+  const reorder = (from, to) => {
+    const next = [...mesures];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    onChange(next);
+  };
+
+  return <div className="grid gap-3" data-kpi-mesures-selector>
+    <Input placeholder={t('synthese.mesuresSearch')} value={query} onChange={(e) => setQuery(e.target.value)} />
+
+    {filtered ? (
+      <div className="flex flex-wrap gap-2">
+        {filtered.map((m) => (
+          <button key={m.id} type="button"
+            onClick={() => toggle(m.id)}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold transition ${active.has(m.id) ? 'border-brand-600 bg-brand-100 text-brand-800' : 'border-border bg-surface2 text-ink2 hover:border-brand-400'}`}>
+            {active.has(m.id) ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+            <bdi>{lang === 'ar' ? m.label_ar : m.label_fr}</bdi>
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div className="grid gap-2">
+        {GESTION_MESURES.map((section) => (
+          <div key={section.group} className="rounded-lg border border-border">
+            <button type="button" className="flex w-full items-center justify-between px-3 py-2 text-xs font-bold text-ink2 hover:bg-surface2"
+              onClick={() => setOpenSection(openSection === section.group ? null : section.group)}>
+              <span><bdi>{lang === 'ar' ? section.labelAr : section.labelFr}</bdi></span>
+              <span className="text-[11px]">{section.ids.filter((id) => active.has(id)).length}/{section.ids.length}</span>
+            </button>
+            {openSection === section.group && <div className="grid grid-cols-2 gap-1 px-2 pb-2">
+              {section.ids.map((id) => {
+                const m = MEASURES.find((x) => x.id === id);
+                if (!m) return null;
+                const isOn = active.has(id);
+                return <button key={id} type="button"
+                  onClick={() => toggle(id)}
+                  disabled={!isOn && mesures.length >= 24}
+                  className={`flex items-center gap-1 rounded px-2 py-1.5 text-start text-xs transition disabled:opacity-40 ${isOn ? 'bg-brand-100 font-bold text-brand-800' : 'text-ink2 hover:bg-surface2'}`}>
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${isOn ? 'bg-brand-600' : 'bg-border'}`} />
+                  <bdi>{lang === 'ar' ? m.label_ar : m.label_fr}</bdi>
+                </button>;
+              })}
+            </div>}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {mesures.length > 0 && <div className="mt-2">
+      <p className="mb-1 text-xs font-bold text-ink2">{t('synthese.mesuresSelected', { n: mesures.length })}</p>
+      <ol className="grid gap-1" data-kpi-mesures-list>
+        {mesures.map((m, index) => {
+          const meta = MEASURES.find((x) => x.id === m.id);
+          return <li key={m.id} className="flex items-center gap-2 rounded-md border border-border bg-surface2 px-2 py-1.5">
+            <span className="shrink-0 text-xs font-bold text-muted">{index + 1}</span>
+            <bdi className="min-w-0 flex-1 truncate text-xs text-ink">{meta ? (lang === 'ar' ? meta.label_ar : meta.label_fr) : m.id}</bdi>
+            <div className="flex shrink-0 gap-1">
+              <button type="button" onClick={() => reorder(index, index - 1)} disabled={index === 0}
+                className="rounded p-1 text-muted hover:bg-border disabled:opacity-30" aria-label="Monter">↑</button>
+              <button type="button" onClick={() => reorder(index, index + 1)} disabled={index === mesures.length - 1}
+                className="rounded p-1 text-muted hover:bg-border disabled:opacity-30" aria-label="Descendre">↓</button>
+              <button type="button" onClick={() => onChange(mesures.filter((x) => x.id !== m.id))}
+                className="rounded p-1 text-danger hover:bg-red-50" aria-label="Supprimer"><Trash2 className="h-3 w-3" /></button>
+            </div>
+          </li>;
+        })}
+      </ol>
+    </div>}
+  </div>;
+}
 
 export function WidgetGalleryDrawer({ open, onClose, query, onQuery, onAdd, t, lang }) {
   const normalized = query.trim().toLowerCase();
@@ -20,17 +139,107 @@ export function WidgetGalleryDrawer({ open, onClose, query, onQuery, onAdd, t, l
 }
 
 export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t, lang }) {
+  if (!bloc) return null;
+  const isKpi = bloc.type === 'kpi';
+  const requete = bloc.requete || {};
+  const mesures = requete.mesures || [];
+  const comparaison = requete.comparaison || 'aucune';
+  const objectifs = bloc.options?.objectifs || {};
+  const seuils = bloc.options?.seuils || {};
+  const filtres = requete.filtres || [];
+  const periode = requete.periode || { mode: 'herite' };
+
+  const updateRequete = (patch) => onPatch({ requete: { ...requete, ...patch } });
+  const updateMesures = (next) => updateRequete({ mesures: next });
+  const updateComparaison = (val) => updateRequete({ comparaison: val });
+  const updateObjectif = (id, val) => onPatch({ options: { ...bloc.options, objectifs: { ...objectifs, [id]: val } } });
+  const updateSeuil = (id, key, val) => onPatch({ options: { ...bloc.options, seuils: { ...seuils, [id]: { ...seuils[id], [key]: val } } } });
+  const updateFiltre = (index, field, val) => {
+    const next = filtres.map((f, i) => i === index ? { ...f, [field]: val } : f);
+    updateRequete({ filtres: next });
+  };
+  const addFiltre = () => updateRequete({ filtres: [...filtres, { champ: 'domaine', op: 'in', valeur: [] }] });
+  const removeFiltre = (index) => updateRequete({ filtres: filtres.filter((_, i) => i !== index) });
+  const updatePeriode = (patch) => updateRequete({ periode: { ...periode, ...patch } });
+
   return <Drawer open={open} onClose={onClose} title={t('synthese.inspecteur')} width="max-w-lg">
-    {bloc && <div className="grid gap-4">
+    <div className="grid gap-4">
       <Input label={t('synthese.titre')} value={bloc.titre || ''} onChange={(event) => onPatch({ titre: event.target.value })} />
       <Select label={t('synthese.visuel')} value={bloc.type} onChange={(event) => onPatch({ type: event.target.value })} options={BLOC_TYPES.map((type) => ({ value: type, label: typeLabel(type, lang) }))} />
       <div className="grid gap-4 sm:grid-cols-2"><Select label={t('synthese.widget.width')} value={bloc.options?.largeur || 'simple'} onChange={(event) => onPatch({ options: { ...bloc.options, largeur: event.target.value } })} options={[{ value: 'simple', label: t('synthese.widget.widthSimple') }, { value: 'double', label: t('synthese.widget.widthDouble') }, { value: 'pleine', label: t('synthese.widget.widthFull') }]} /><Select label={t('synthese.widget.height')} value={bloc.options?.hauteur || 'normale'} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur: event.target.value } })} options={[{ value: 'compacte', label: t('synthese.widget.heightCompact') }, { value: 'normale', label: t('synthese.widget.heightNormal') }, { value: 'grande', label: t('synthese.widget.heightTall') }]} /></div>
       <Select label={t('synthese.widget.heightMode')} value={bloc.options?.hauteur_mode || 'auto'} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur_mode: event.target.value } })} options={[{ value: 'auto', label: t('synthese.widget.heightAuto') }, { value: 'fixe', label: t('synthese.widget.heightFixed') }]} />
       {bloc.options?.hauteur_mode !== 'fixe' && <div className="grid gap-4 sm:grid-cols-2"><Input type="number" min="1" max="40" label={t('synthese.widget.heightMin')} value={bloc.options?.hauteur_min || 1} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur_min: Number(event.target.value) } })} /><Input type="number" min="1" max="40" label={t('synthese.widget.heightMax')} value={bloc.options?.hauteur_max || 40} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur_max: Number(event.target.value) } })} /></div>}
       <Select label={t('synthese.widget.printVisibility')} value={bloc.options?.masquer_impression ? 'masque' : 'visible'} onChange={(event) => onPatch({ options: { ...bloc.options, masquer_impression: event.target.value === 'masque' } })} options={[{ value: 'visible', label: t('synthese.widget.printVisible') }, { value: 'masque', label: t('synthese.widget.printHidden') }]} />
+
+      {isKpi && <>
+        <hr className="border-border" />
+        <div>
+          <p className="mb-2 text-sm font-bold text-ink">{t('synthese.mesuresLabel')}</p>
+          <KpiMesuresSelector mesures={mesures} onChange={updateMesures} t={t} lang={lang} />
+        </div>
+        <Select label={t('synthese.comparaison')} value={comparaison} onChange={(e) => updateComparaison(e.target.value)}
+          options={COMPARAISON_OPTIONS.map((c) => ({ value: c.value, label: lang === 'ar' ? c.labelAr : c.labelFr }))} />
+        <div>
+          <p className="mb-2 text-sm font-bold text-ink">{t('synthese.periodeLabel')}</p>
+          <SegmentedControl options={[
+            { value: 'herite', label: t('synthese.periodeHerite') },
+            { value: 'semaine', label: t('synthese.periodeSemaine') },
+            { value: 'mois', label: t('synthese.periodeMois') },
+            { value: 'plage', label: t('synthese.periodePlage') },
+            { value: 'glissant', label: t('synthese.periodeGlissant') },
+          ]} value={periode.mode} onChange={(mode) => updatePeriode({ mode })} />
+          {periode.mode === 'plage' && <div className="mt-2 grid gap-3 sm:grid-cols-2"><Input type="date" label={t('synthese.debut')} value={periode.debut || ''} onChange={(e) => updatePeriode({ debut: e.target.value })} /><Input type="date" label={t('synthese.fin')} value={periode.fin || ''} onChange={(e) => updatePeriode({ fin: e.target.value })} /></div>}
+          {periode.mode === 'glissant' && <div className="mt-2"><Input type="number" min="1" max="3660" label={t('synthese.jours')} value={periode.jours || 7} onChange={(e) => updatePeriode({ jours: Number(e.target.value) })} /></div>}
+        </div>
+        {mesures.length > 0 && <div>
+          <p className="mb-2 text-sm font-bold text-ink">{t('synthese.objectifsSeuils')}</p>
+          <div className="grid gap-2">
+            {mesures.map((m) => {
+              const meta = MEASURES.find((x) => x.id === m.id);
+              if (!meta) return null;
+              return <div key={m.id} className="grid gap-2 rounded-md border border-border p-2">
+                <p className="text-xs font-bold text-ink2"><bdi>{lang === 'ar' ? meta.label_ar : meta.label_fr}</bdi></p>
+                <div className="grid grid-cols-3 gap-2">
+                  <Input type="number" step="0.1" label={t('synthese.objectif')} value={objectifs[m.id] ?? ''} placeholder="—" onChange={(e) => updateObjectif(m.id, e.target.value === '' ? null : Number(e.target.value))} />
+                  <Input type="number" step="0.1" label={t('synthese.seuilAlerte')} value={seuils[m.id]?.alerte ?? ''} placeholder="—" onChange={(e) => updateSeuil(m.id, 'alerte', e.target.value === '' ? null : Number(e.target.value))} />
+                  <Input type="number" step="0.1" label={t('synthese.seuilCritique')} value={seuils[m.id]?.critique ?? ''} placeholder="—" onChange={(e) => updateSeuil(m.id, 'critique', e.target.value === '' ? null : Number(e.target.value))} />
+                </div>
+              </div>;
+            })}
+          </div>
+        </div>}
+        <div>
+          <p className="mb-2 text-sm font-bold text-ink">{t('synthese.filtresLabel')}</p>
+          {filtres.length === 0 && <p className="text-xs text-muted">{t('synthese.aucunFiltre')}</p>}
+          {filtres.map((f, index) => <div key={index} className="mb-2 grid gap-2 rounded-md border border-border p-2 sm:grid-cols-[1fr,1fr,2fr,auto]">
+            <Select value={f.champ} onChange={(e) => updateFiltre(index, 'champ', e.target.value)}
+              options={CATALOGUE ? Object.values(CATALOGUE.filtres).map((x) => ({ value: x.id, label: lang === 'ar' ? x.label_ar : x.label_fr })) : []} />
+            <Select value={f.op} onChange={(e) => updateFiltre(index, 'op', e.target.value)}
+              options={[{ value: 'in', label: 'in' }, { value: 'not_in', label: 'not_in' }, { value: 'eq', label: 'eq' }, { value: 'is_null', label: 'is_null' }]} />
+            <Input value={Array.isArray(f.valeur) ? f.valeur.join(', ') : String(f.valeur ?? '')} onChange={(e) => updateFiltre(index, 'valeur', e.target.value.split(',').map((v) => v.trim()).filter(Boolean))} />
+            <button type="button" onClick={() => removeFiltre(index)} className="self-end rounded p-2 text-danger hover:bg-red-50" aria-label="Supprimer"><Trash2 className="h-4 w-4" /></button>
+          </div>)}
+          <Button size="sm" variant="secondary" onClick={addFiltre}><Plus className="h-4 w-4" />{t('synthese.ajouterFiltre')}</Button>
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-bold text-ink">{t('synthese.prereglages')}</p>
+          <div className="flex flex-wrap gap-2">
+            {['recues-kpi', 'taux-traitement-kpi', 'stock-fin-kpi', 'delai-moyen-kpi', 'taux-sla-kpi'].map((id) => {
+              const item = GALERIE.find((g) => g.id === id);
+              if (!item || !item.requete) return null;
+              return <button key={id} type="button"
+                onClick={() => onPatch({ requete: { ...item.requete }, titre: lang === 'ar' ? item.titre_ar : item.titre_fr, options: { ...bloc.options, ...item.options } })}
+                className="rounded-full border border-border bg-surface2 px-3 py-1 text-xs font-bold text-ink2 hover:border-brand-400 hover:bg-brand-50">
+                {lang === 'ar' ? item.titre_ar : item.titre_fr}
+              </button>;
+            })}
+          </div>
+        </div>
+      </>}
+
       {bloc.type === 'texte' && <Textarea label={t('synthese.contenu')} value={bloc.options?.texte_fr || ''} onChange={(event) => onPatch({ options: { ...bloc.options, texte_fr: event.target.value } })} />}
       <div className="flex justify-end gap-2"><Button size="sm" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button><Button size="sm" onClick={onClose}>{t('common.appliquer')}</Button></div>
-    </div>}
+    </div>
   </Drawer>;
 }
 

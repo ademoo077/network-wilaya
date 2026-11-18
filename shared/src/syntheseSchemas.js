@@ -58,7 +58,7 @@ const COMPARAISONS = ['aucune', 'periode_precedente', 'meme_periode_n-1', 'moyen
 
 export const requeteSchema = z.object({
   dataset: z.enum(['anomalies']).optional(),
-  mesures: z.array(mesureRefSchema).min(1).max(4),
+  mesures: z.array(mesureRefSchema).min(1).max(24),
   dimensions: z.array(dimensionRefSchema).max(3).optional(),
   filtres: z.array(filtreRefSchema).max(30).optional(),
   periode: periodeSchema.optional(),

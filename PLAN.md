@@ -253,6 +253,9 @@ Références : prompt V10, `docs/SPEC_V8.md`, `PLAN.md`, `DECISIONS.md`, `AUDIT_
 - 2026-11-18 — Tag `avant-v10`, audit initial et plan. Migration V10 prévue en `013_studio_atelier.sql` (`008` déjà appliquée). Début de la phase 1.
 - 2026-11-18 — Phase 1 livrée : `shared/src/layout.js` (grille 12×40, conversion sections→grille, `decouperEnPages`, déplacement/redimensionnement), schémas `layout` additifs, `StudioGrid` (drag/resize souris+clavier, zoom 50–150 %, RTL), sauts de page CSS `break-before`. Modèles système resemés avec `layout`. Tests 130/139/140 + unitaires `layout`. `npm run qa` vert (621 Vitest, 11 E2E, 129 Playwright, styles/a11y OK).
 
+## Journal V11 — Phase 2 KPI
+- 2026-11-18 — Bloc KPI complet : bibliothèque mesures (FR/AR, catégories, favoris), sélection 24 mesures max, objectifs/seuils par mesure, filtres/périodes, ordre/groupes, mise en page auto-fit sans rognage, cinq préréglages ; scénario 143.
+
 ---
 
 # PLAN V11 — KPI, colonnes et impression organisée
@@ -266,9 +269,9 @@ Références : prompt V11, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `AUDIT_V10.md`, `AU
 - [x] Barre d'actions compacte en flux et `ErrorBoundary` local ; scénario 142
 
 ## Phase 2 — Bloc KPI complet
-- [ ] Bibliothèque de toutes les mesures autorisées, recherche FR/AR, catégories, favoris et aperçu
-- [ ] Bloc 1–24 KPI, réglages, comparaisons, objectifs, seuils, filtres/périodes et ordre/groupes
-- [ ] Mise en page auto-fit sans rognage et cinq préréglages ; scénario 143
+- [x] Bibliothèque de toutes les mesures autorisées, recherche FR/AR, catégories, favoris et aperçu
+- [x] Bloc 1–24 KPI, réglages, comparaisons, objectifs, seuils, filtres/périodes et ordre/groupes
+- [x] Mise en page auto-fit sans rognage et cinq préréglages ; scénario 143
 
 ## Phase 3 — Colonnes au choix
 - [ ] Schémas partagés, sélecteur complet, recherche, ordre, formats, totaux et visibilités écran/impression

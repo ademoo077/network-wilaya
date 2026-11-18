@@ -165,16 +165,46 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions }) {
   </>;
 }
 
-function KpiWidget({ result, title, lang, actions }) {
+function KpiWidget({ bloc, result, title, lang, actions }) {
   const measures = mesuresOf(result);
-  return <><CardHeader title={title} action={actions} /><div className="kpi-grid p-2">{measures.map((measure) => {
-    const variation = firstVariation(result, measure.id);
-    return <div key={measure.id} className="min-w-0 rounded-lg border border-border bg-surface2 p-3 text-start">
-      <p className="min-h-[2.4rem] text-xs font-bold leading-tight text-muted" data-kpi-label>{measureLabel(measure.id, lang)}</p>
-      <p className="mt-1 whitespace-nowrap text-2xl font-black tabular-nums text-ink sm:text-3xl" data-kpi-value><bdi dir="ltr">{formatValue(firstValue(result, measure.id), measure.format, lang)}</bdi></p>
-      {variation != null && <p className="mt-1 text-xs font-semibold text-brand-700"><bdi dir="ltr">{formatValue(variation, measure.format, lang)}</bdi></p>}
-    </div>;
-  })}</div></>;
+  const count = measures.length;
+  const objectifs = bloc.options?.objectifs || {};
+  const seuils = bloc.options?.seuils || {};
+  const compact = count > 12;
+  const dense = count > 6 && count <= 12;
+  const cols = compact ? 'sm:grid-cols-4 lg:grid-cols-6' : dense ? 'sm:grid-cols-3 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3';
+
+  const statusOf = (id, value) => {
+    const seuil = seuils[id];
+    if (!seuil || value == null) return null;
+    const n = Number(value);
+    if (seuil.critique != null && n <= seuil.critique) return 'critique';
+    if (seuil.alerte != null && n <= seuil.alerte) return 'alerte';
+    return 'ok';
+  };
+
+  const bgClass = (status) => {
+    if (status === 'critique') return 'border-danger/40 bg-red-50';
+    if (status === 'alerte') return 'border-amber-400/40 bg-amber-50';
+    return 'border-border bg-surface2';
+  };
+
+  return <><CardHeader title={title} action={actions} /><div className={`grid gap-2 p-2 ${cols}`} data-kpi-grid data-kpi-count={count}>
+    {measures.map((measure) => {
+      const value = firstValue(result, measure.id);
+      const variation = firstVariation(result, measure.id);
+      const objectif = objectifs[measure.id];
+      const status = statusOf(measure.id, value);
+      return <div key={measure.id} data-kpi-item data-kpi-status={status || ''} className={`min-w-0 rounded-lg border p-3 text-start transition ${bgClass(status)}`}>
+        <p className={`font-bold leading-tight ${compact ? 'text-[11px]' : 'text-xs'} text-muted`} data-kpi-label>{measureLabel(measure.id, lang)}</p>
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+          <p className={`font-black tabular-nums text-ink ${compact ? 'text-xl' : 'text-2xl sm:text-3xl'}`} data-kpi-value><bdi dir="ltr">{formatValue(value, measure.format, lang)}</bdi></p>
+          {objectif != null && <span className="text-[11px] font-semibold text-brand-600">/{formatValue(objectif, measure.format, lang)}</span>}
+        </div>
+        {variation != null && <p className={`mt-1 font-semibold text-brand-700 ${compact ? 'text-[10px]' : 'text-xs'}`}><bdi dir="ltr">{formatValue(variation, measure.format, lang)}</bdi></p>}
+      </div>;
+    })}
+  </div></>;
 }
 
 function TexteWidget({ bloc, lang, t }) {
@@ -191,7 +221,7 @@ function RenderWidget({ bloc, result, t, lang, dir, actions }) {
   const title = bloc.titre || typeLabel(bloc.type, lang);
   const height = heightClass(bloc);
   if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><CardHeader title={title} action={actions} /><TexteWidget bloc={bloc} lang={lang} t={t} /></>;
-  if (bloc.type === 'kpi') return <KpiWidget result={result} title={title} lang={lang} actions={actions} />;
+  if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} actions={actions} />;
   if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} />;
   if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
   if (bloc.type === 'anneau') return <AnneauChart result={result} title={title} t={t} lang={lang} actions={actions} />;

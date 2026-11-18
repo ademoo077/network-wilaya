@@ -49,8 +49,8 @@ describe('schémas V8 — requête', () => {
     expect(erreur({ ...base, mesures: [{ id: 'recues OR 1=1' }] }).message).toMatch(/Invalid enum value|invalide/i);
   });
 
-  it('limite à quatre mesures et refuse les doublons', () => {
-    const mesures = ['recues', 'traitees_periode', 'en_retard', 'urgentes_ouvertes'].map((id) => ({ id }));
+  it('limite à vingt-quatre mesures et refuse les doublons', () => {
+    const mesures = Array.from({ length: 24 }, (_, i) => ({ id: ['recues', 'traitees_periode', 'en_retard', 'urgentes_ouvertes', 'taux_sla', 'stock_fin', 'delai_moyen', 'delai_median', 'delai_p90', 'taux_confirmation', 'taux_infirmation', 'taux_geolocalisation', 'taux_gps_confirme', 'nb_recurrents', 'indice_recurrence', 'nb_communes_touchees', 'nb_dairas_touchees', 'delai_verification_moyen', 'delai_intervention_moyen', 'age_moyen_stock', 'age_max_stock', 'nb_hors_sla', 'taux_traitement', 'cohorte_non_traitees'][i] }));
     expect(erreur({ ...base, mesures: [...mesures, { id: 'taux_sla' }] })).toBeTruthy();
     expect(erreur({ ...base, mesures: [{ id: 'recues' }, { id: 'recues' }] }).message).toMatch(/présente deux fois/);
     expect(erreur({ ...base, mesures: [{ id: 'recues', alias: 'x' }, { id: 'en_retard', alias: 'x' }] }).message).toMatch(/Alias/);
