@@ -9,6 +9,7 @@ export * from './catalogue.js';
 export * from './statut.js';
 export * from './schemas.js';
 export * from './syntheseSchemas.js';
+export * from './layout.js';
 export * from './describe.js';
 export * from './widgets.js';
 export * from './geo.js';

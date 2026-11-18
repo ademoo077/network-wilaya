@@ -56,6 +56,16 @@
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
+/* Les infobulles Recharts héritent sinon de la couleur de série, trop claire. */
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value,
+.recharts-tooltip-label { color: var(--ink) !important; }
+
+@media screen and (max-width: 767px) {
+  .synthese-free-grid { display: flex !important; flex-direction: column; gap: 0.75rem; }
+  .synthese-free-grid > section { width: 100% !important; min-height: 0 !important; }
+}
+
 @media print {
   @page { size: A4; margin: 12mm; }
   html, body { background: var(--surface) !important; }

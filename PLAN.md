@@ -203,3 +203,52 @@ Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le t
 - 2026-11-17 — Graphiques et rendu professionnel : clés HTML avec totaux/pourcentages, valeurs sur barres simples, axes tokens, suppression de la limite 65 mm à l'impression et bouton « Aperçu A4 » pendant la création. Nouveau scénario dédié ; `npm run qa` vert (614 Vitest, 11 E2E API, 126 Playwright).
 - 2026-11-17 — « Synthèse hebdomadaire standard » s'ouvre désormais en pleine largeur (`max`) dans le Studio et la feuille autonome ; le choix manuel reste prioritaire. Scénarios 114 et plein écran adaptés sans affaiblissement.
 
+---
+
+# PLAN V10 — Studio de synthèses « façon atelier »
+
+Références : prompt V10, `docs/SPEC_V8.md`, `PLAN.md`, `DECISIONS.md`, `AUDIT_V10.md`. Le tag `avant-v10` marque l'état de départ (`5786eaf`). Chaque phase se termine par un résumé de cinq lignes maximum, puis un commit quand le gate est vert. Priorité : **P1 d'abord**, P2 ensuite.
+
+## Phase 1 — Grille libre, pagination et migration sections → grille
+- [x] Audit initial dans `AUDIT_V10.md` et décisions de numérotation/compatibilité
+- [x] `layout_json` 12 colonnes × 40 px avec positions `x, y, w, h`, déplacement/redimensionnement souris + clavier, magnétisme, guides, zoom 50–150 %, RTL
+- [x] `paginer()` déterministe dans `shared/` : aucun widget coupé, sauts forcés, A4/A3 portrait/paysage, mêmes pages écran/PDF
+- [x] Conversion fidèle des modèles système `sections` → grille ; éditions figées inchangées ; scénarios 130, 139, 140 (migration)
+
+## Phase 2 — Sélecteur et widgets
+- [ ] Fenêtre « Ajouter un widget » par cartes, tailles affichées, recherche, aperçu en direct, bouton Ajouter justifié
+- [ ] Actions widget et `ErrorBoundary` par widget, sans bloquer le projet
+- [ ] Radial, camembert et barres sans chevauchement (repli en légende) ; carte recadrée et hors-ligne ; scénarios 129, 136, 137
+
+## Phase 3 — Jeux de données
+- [ ] Gestionnaire, import CSV/XLSX, schéma, aperçu et profilage
+- [ ] Tables générées sûres et adaptateurs raccordés au moteur unique
+- [ ] Scénarios 132 et 133
+
+## Phase 4 — Filtres-widgets
+- [ ] Filtres texte, liste, composite, période et curseur
+- [ ] Portées, correspondance de champs, filtrage croisé et barre active
+- [ ] Scénario 134
+
+## Phase 5 — Couleurs et styles
+- [ ] Sélecteur visuel, hex validé, nom Tailwind, pipette et palettes
+- [ ] Règles par valeur, échelle continue, contraste AA et adaptation sombre
+- [ ] Style de projet, application par type et pinceau ; scénario 135
+
+## Phase 6 — Sorties de données
+- [ ] Vue des données d'un widget, lignes sources et export du jeu
+- [ ] Panier multi-feuilles, tâche longue et extracteur libre
+- [ ] Mêmes nombres qu'à l'écran, droits par rôle et audit ; scénario 138
+
+## Phase 7 — Aides et projets
+- [ ] Glisser un champ, suggestions, kits de démarrage et `Ctrl+K`
+- [ ] Enregistrer sous, mes projets, partage équipe et import/export JSON
+- [ ] Scénarios 131, 133 et 140
+
+## Phase 8 — Recette
+- [ ] Scénarios 129 à 141, régression 1 à 128, captures FR/AR × clair/sombre
+- [ ] README, `AUDIT_V10.md` final et `npm run qa` vert
+
+## Journal V10
+- 2026-11-18 — Tag `avant-v10`, audit initial et plan. Migration V10 prévue en `013_studio_atelier.sql` (`008` déjà appliquée). Début de la phase 1.
+- 2026-11-18 — Phase 1 livrée : `shared/src/layout.js` (grille 12×40, conversion sections→grille, `decouperEnPages`, déplacement/redimensionnement), schémas `layout` additifs, `StudioGrid` (drag/resize souris+clavier, zoom 50–150 %, RTL), sauts de page CSS `break-before`. Modèles système resemés avec `layout`. Tests 130/139/140 + unitaires `layout`. `npm run qa` vert (621 Vitest, 11 E2E, 129 Playwright, styles/a11y OK).

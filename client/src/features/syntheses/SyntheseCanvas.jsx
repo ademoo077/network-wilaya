@@ -1,20 +1,16 @@
-import { ChevronDown, ChevronUp, Clock, Edit, EyeOff, FileText, Plus, Printer, RotateCcw, RotateCw, Save, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { convertirEnGrille } from '@anm/shared';
+import { Clock, EyeOff, FileText, Plus, Printer, RotateCcw, RotateCw, Save } from 'lucide-react';
 import { Alert, Button, Card, EmptyState, Skeleton } from '../../components/ui/index.js';
 import { Chip } from '../../components/ui/Chip.jsx';
-import WidgetCard from './WidgetCard.jsx';
-
-// Grille réelle à 12 colonnes (SPEC V8 § 2) : simple = 4, double = 8, pleine = 12.
-// En dessous de 768 px chaque bloc occupe toute la ligne pour rester lisible.
-const WIDTH_CLASSES = {
-  simple: 'col-span-12 md:col-span-4',
-  double: 'col-span-12 md:col-span-8',
-  pleine: 'col-span-12',
-};
+import StudioGrid from './StudioGrid.jsx';
 
 export default function SyntheseCanvas({
   modele, mode, sourceId, alreadyFrozen, editor, blocs, activeBlocs, activeResults, maxWidgets,
-  t, lang, dir, typeLabel, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onPreview, onVoirFiches, embedded = false,
+  t, lang, dir, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onPreview, onVoirFiches, embedded = false,
 }) {
+  const [zoom, setZoom] = useState(100);
+  const layout = useMemo(() => convertirEnGrille(editor.currentDefinition), [editor.currentDefinition]);
   return <>
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -29,6 +25,12 @@ export default function SyntheseCanvas({
           <Button size="sm" variant="ghost" onClick={onAdd} disabled={blocs.length >= maxWidgets}>
             <Plus className="h-4 w-4" aria-hidden="true" />{t('synthese.ajouterWidget')}
           </Button>
+          <label className="flex items-center gap-1 text-xs text-muted">
+            <span className="sr-only">{t('synthese.zoom')}</span>
+            <select id="studio-zoom" className="rounded-md border border-border bg-surface px-1.5 py-1 text-xs" value={zoom} onChange={(event) => setZoom(Number(event.target.value))}>
+              {[50, 75, 100, 125, 150].map((value) => <option key={value} value={value}>{value} %</option>)}
+            </select>
+          </label>
           <Button size="sm" variant="ghost" disabled={!editor.canUndo} onClick={editor.undo}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />{t('synthese.annuler')}
           </Button>
@@ -61,27 +63,30 @@ export default function SyntheseCanvas({
       {editor.saveError.message || t('common.error')}
     </Alert>}
 
-    <div className="grid grid-cols-12 gap-4" data-synthese-grid>
-      {editor.evaluating && <div className="col-span-full"><Card className="p-8"><Skeleton className="h-24 w-full" /></Card></div>}
-      {activeBlocs.map((bloc) => {
-        const index = blocs.findIndex((item) => item.id === bloc.id);
-        const width = WIDTH_CLASSES[bloc.options?.largeur] || '';
-        const printVisibility = bloc.options?.masquer_impression ? 'print:hidden' : '';
-        return <section key={bloc.id} data-largeur={bloc.options?.largeur || 'simple'} data-bloc-type={bloc.type} className={`group relative min-w-0 break-inside-avoid ${width} ${printVisibility}`}>
-          {mode === 'personnaliser' && <div className="absolute -top-3 end-2 z-10 flex items-center gap-1 rounded-md border border-border bg-surface p-1 opacity-0 shadow-1 transition group-hover:opacity-100 group-focus-within:opacity-100 no-print">
-            <Button size="sm" variant="ghost" onClick={() => editor.moveBloc(bloc.id, -1)} disabled={index <= 0} title={t('synthese.monter')} aria-label={t('synthese.monter')}><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => editor.moveBloc(bloc.id, 1)} disabled={index >= blocs.length - 1} title={t('synthese.descendre')} aria-label={t('synthese.descendre')}><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => editor.removeBloc(bloc.id)} title={t('synthese.supprimer')} aria-label={t('synthese.supprimer')}><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => onEdit(bloc)} title={t('synthese.editer')} aria-label={t('synthese.editer')}><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-          </div>}
-          <WidgetCard bloc={bloc} result={activeResults[bloc.id]} t={t} lang={lang} dir={dir} onVoirFiches={onVoirFiches} />
-          {mode === 'personnaliser' && <div className="mt-2 text-center text-xs text-muted">{typeLabel(bloc.type, lang)} · {bloc.requete ? t('synthese.donneesVives') : t('synthese.miseEnPage')}</div>}
-        </section>;
-      })}
-      {blocs.length === 0 && <div className="col-span-full"><EmptyState title={t('synthese.aucunWidget')} description={t('synthese.aucunWidgetHelp')} action={
+    {editor.evaluating && <div className="mb-3" data-synthese-loading><Card className="p-8"><Skeleton className="h-24 w-full" /></Card></div>}
+    {blocs.length === 0
+      ? <EmptyState title={t('synthese.aucunWidget')} description={t('synthese.aucunWidgetHelp')} action={
         <Button size="sm" onClick={onAdd}><Plus className="h-4 w-4" aria-hidden="true" />{t('synthese.ajouterWidget')}</Button>
-      } /></div>}
-    </div>
+      } />
+      : <StudioGrid
+        layout={layout}
+        blocs={activeBlocs}
+        results={activeResults}
+        mode={mode}
+        t={t}
+        lang={lang}
+        dir={dir}
+        zoom={zoom}
+        onVoirFiches={onVoirFiches}
+        onEdit={onEdit}
+        onRemove={editor.removeBloc}
+        onDuplicate={editor.dupliquerBloc}
+        onMove={editor.moveWidget}
+        onResize={editor.resizeWidget}
+        onMoveBloc={editor.moveBloc}
+        onUndo={editor.undo}
+        onRedo={editor.redo}
+      />}
 
     {mode === 'personnaliser' && <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs text-muted no-print">
       <div className="flex flex-wrap items-center gap-3"><span>{t('synthese.nbWidgets', { count: blocs.length, max: maxWidgets })}</span>{editor.lastSavedAt && !editor.dirty && <span role="status" className="text-muted">{t('synthese.enregistree')}</span>}</div>

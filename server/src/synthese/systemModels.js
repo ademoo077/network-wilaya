@@ -7,7 +7,7 @@
  * plage au moment du calcul, ce qui garantit que la période choisie pilote
  * tous les blocs.
  */
-import { CATALOGUE, validerDefinition } from '@anm/shared';
+import { CATALOGUE, convertirEnGrille, validerDefinition } from '@anm/shared';
 
 const MAX_PERIODE = { mode: 'herite' };
 
@@ -167,8 +167,14 @@ export const SYSTEM_MODELS = [
   },
 ];
 
-/** Vérifie une fois pour toutes que les définitions livrées sont exploitables. */
-for (const model of SYSTEM_MODELS) validerDefinition(model.definition);
+/**
+ * V10 : la grille libre est dérivée des sections des modèles système. Le
+ * modèle conserve ses sections pour les éditions figées et les anciens clients.
+ */
+for (const model of SYSTEM_MODELS) {
+  model.definition = { ...model.definition, layout: convertirEnGrille(model.definition) };
+  validerDefinition(model.definition);
+}
 
 const UPSERT = `INSERT INTO syntheses_modeles
   (nom, description, proprietaire_id, portee, definition_json, schema_version, version, cle_systeme)

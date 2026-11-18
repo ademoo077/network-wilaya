@@ -11,6 +11,7 @@ import {
   CATALOGUE, DIMENSION_IDS, FILTER_IDS, GRANULARITE_IDS, MEASURE_IDS, OP_IDS,
   findDimension, measureCompatible,
 } from './catalogue.js';
+import { GRILLE_COLONNES, GRILLE_HAUTEUR } from './layout.js';
 
 const dimensionId = z.preprocess(
   (value) => (typeof value === 'string' ? value.replace(/^t\./, '') : value),
@@ -215,9 +216,30 @@ export const syntheseSectionSchema = z.object({
   colonnes: z.array(z.array(syntheseBlocSchema).max(60)).max(12),
 }).strict();
 
+export const syntheseLayoutWidgetSchema = z.object({
+  id: z.string().regex(/^[a-z0-9_-]{1,64}$/, 'Identifiant de widget invalide'),
+  x: z.number().int().min(0).max(GRILLE_COLONNES - 1),
+  y: z.number().int().min(0).max(400),
+  w: z.number().int().min(1).max(GRILLE_COLONNES),
+  h: z.number().int().min(1).max(40),
+  saut_page: z.boolean().optional(),
+}).strict().superRefine((widget, ctx) => {
+  if (widget.x + widget.w > GRILLE_COLONNES) {
+    ctx.addIssue({ code: 'custom', path: ['w'], message: 'Le widget dépasse les 12 colonnes' });
+  }
+});
+
+export const syntheseLayoutSchema = z.object({
+  schema_version: z.literal(1),
+  colonnes: z.literal(GRILLE_COLONNES).optional(),
+  hauteur_ligne: z.literal(GRILLE_HAUTEUR).optional(),
+  widgets: z.array(syntheseLayoutWidgetSchema).max(60),
+}).strict();
+
 export const syntheseDefinitionSchema = z.object({
   schema_version: z.literal(1),
   sections: z.array(syntheseSectionSchema).max(60),
+  layout: syntheseLayoutSchema.optional(),
 }).strict();
 
 /** Corps de création/mise à jour d’un modèle. Les modèles système ne sont pas créés par l’API. */
@@ -262,6 +284,30 @@ export function validerDefinition(definition) {
     const error = new Error('Un modèle est limité à 60 blocs');
     error.code = 'SYNTHESE_DEFINITION_INVALIDE';
     throw error;
+  }
+  if (result.data.layout) {
+    const ids = new Set();
+    for (const section of result.data.sections) {
+      for (const colonne of section.colonnes) {
+        for (const bloc of colonne) {
+          if (ids.has(bloc.id)) {
+            const error = new Error(`Bloc « ${bloc.id} » présent deux fois`);
+            error.code = 'SYNTHESE_DEFINITION_INVALIDE';
+            error.fields = { definition: 'sections' };
+            throw error;
+          }
+          ids.add(bloc.id);
+        }
+      }
+    }
+    for (const widget of result.data.layout.widgets) {
+      if (!ids.has(widget.id)) {
+        const error = new Error(`Widget « ${widget.id} » absent des blocs`);
+        error.code = 'SYNTHESE_DEFINITION_INVALIDE';
+        error.fields = { definition: 'layout' };
+        throw error;
+      }
+    }
   }
   return result.data;
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { convertirEnGrille, deplacerWidget, redimensionnerWidget } from '@anm/shared';
 import { api } from '../../api/client.js';
 import { useToast } from '../../components/ui/index.js';
 import { blocPositions, cloneDefinition, evaluerSpecs, specsOf } from './editorData.js';
@@ -189,6 +190,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     if (!section) return;
     const colonne = section.colonnes[0] || (section.colonnes[0] = []);
     colonne.push(bloc);
+    next.layout = convertirEnGrille(next);
     pushHistory(next);
     markDirty();
     void evaluate(next);
@@ -198,6 +200,56 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     const next = cloneDefinition(currentDefinition);
     for (const section of next.sections) {
       section.colonnes = section.colonnes.map((colonne) => colonne.filter((bloc) => bloc.id !== id));
+    }
+    if (next.layout) next.layout = convertirEnGrille(next);
+    pushHistory(next);
+    markDirty();
+    void evaluate(next);
+  }, [currentDefinition, pushHistory, evaluate, markDirty]);
+
+  const setLayout = useCallback((layout) => {
+    const next = cloneDefinition(currentDefinition);
+    next.layout = layout;
+    pushHistory(next);
+    markDirty();
+  }, [currentDefinition, pushHistory, markDirty]);
+
+  const moveWidget = useCallback((id, dx, dy) => {
+    const next = cloneDefinition(currentDefinition);
+    next.layout = deplacerWidget(next.layout || convertirEnGrille(next), id, dx, dy);
+    pushHistory(next);
+    markDirty();
+  }, [currentDefinition, pushHistory, markDirty]);
+
+  const resizeWidget = useCallback((id, dw, dh) => {
+    const next = cloneDefinition(currentDefinition);
+    next.layout = redimensionnerWidget(next.layout || convertirEnGrille(next), id, dw, dh);
+    pushHistory(next);
+    markDirty();
+  }, [currentDefinition, pushHistory, markDirty]);
+
+  const dupliquerBloc = useCallback((id) => {
+    const next = cloneDefinition(currentDefinition);
+    const layout = next.layout || convertirEnGrille(next);
+    const original = next.sections.flatMap((section) => section.colonnes.flat())
+      .find((bloc) => bloc.id === id);
+    if (!original) return;
+    let suffixe = 2;
+    let nouvelId = `${id}-copie`;
+    const ids = new Set(next.sections.flatMap((section) => section.colonnes.flat()).map((bloc) => bloc.id));
+    while (ids.has(nouvelId)) { nouvelId = `${id}-copie-${suffixe}`; suffixe += 1; }
+    const copie = { ...JSON.parse(JSON.stringify(original)), id: nouvelId };
+    for (const section of next.sections) {
+      for (const colonne of section.colonnes) {
+        const index = colonne.findIndex((bloc) => bloc.id === id);
+        if (index >= 0) { colonne.splice(index + 1, 0, copie); break; }
+      }
+    }
+    const source = layout.widgets.find((widget) => widget.id === id);
+    next.layout = convertirEnGrille(next);
+    if (source) {
+      const created = next.layout.widgets.find((widget) => widget.id === nouvelId);
+      if (created) { created.x = source.x; created.y = source.y + source.h + 1; created.w = source.w; created.h = source.h; }
     }
     pushHistory(next);
     markDirty();
@@ -212,7 +264,18 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     if (index < 0 || target < 0 || target >= positions.length) return;
     const from = positions[index];
     const to = positions[target];
+    const fromId = from.colonne[from.index]?.id;
+    const toId = to.colonne[to.index]?.id;
     [from.colonne[from.index], to.colonne[to.index]] = [to.colonne[to.index], from.colonne[from.index]];
+    if (next.layout) {
+      const a = next.layout.widgets.find((widget) => widget.id === fromId);
+      const b = next.layout.widgets.find((widget) => widget.id === toId);
+      if (a && b) {
+        const position = { x: a.x, y: a.y, w: a.w, h: a.h };
+        Object.assign(a, { x: b.x, y: b.y, w: b.w, h: b.h });
+        Object.assign(b, position);
+      }
+    }
     pushHistory(next);
     markDirty();
   }, [currentDefinition, pushHistory, markDirty]);
@@ -272,6 +335,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     modele, definition, currentDefinition, dirty, saving, saveError, lastSavedAt, evaluating, evaluationError,
     results, editions, editionsLoading,
     canUndo, canRedo, undo, redo, save, setBloc, addBloc, removeBloc, moveBloc,
+    setLayout, moveWidget, resizeWidget, dupliquerBloc,
     personnaliser, reinitialiser, loadEditions, createEdition, figereEdition, getEdition,
     cancelSave, setDirty, evaluate,
   };
