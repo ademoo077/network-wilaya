@@ -17,8 +17,12 @@ export class ErrorBoundary extends Component {
 
   render() {
     const { error } = this.state;
-    const { children } = this.props;
+    const { children, fallback } = this.props;
     if (!error) return children;
+    if (fallback) {
+      const reset = () => this.setState({ error: null });
+      return typeof fallback === 'function' ? fallback({ error, reset }) : fallback;
+    }
     return <ErrorFallback error={error} onReset={() => this.setState({ error: null })} />;
   }
 }

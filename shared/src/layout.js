@@ -5,6 +5,10 @@
  * (`sections[].colonnes[]`) sont convertis à la lecture ; aucune édition figée
  * n'est réécrite.
  */
+import { resoudrePlacement } from './layoutPlacement.js';
+
+export { layoutSansChevauchement, widgetsSeChevauchent } from './layoutPlacement.js';
+
 export const GRILLE_COLONNES = 12;
 export const GRILLE_HAUTEUR = 40;
 export const GRILLE_ECART = 4;
@@ -45,7 +49,7 @@ export function largeurWidget(bloc, fallback = 6) {
 }
 
 export function hauteurWidget(bloc) {
-  return borne(entier(bloc?.options?.hauteur, HAUTEURS[bloc?.type] || 4), 1, 40);
+  return borne(entier(bloc?.options?.hauteur_cellules, HAUTEURS[bloc?.type] || 4), 1, 40);
 }
 
 function repartirLargeurs(nombre) {
@@ -53,10 +57,6 @@ function repartirLargeurs(nombre) {
   const base = Math.floor(GRILLE_COLONNES / n);
   const reste = GRILLE_COLONNES - base * n;
   return Array.from({ length: n }, (_, index) => base + (index < reste ? 1 : 0));
-}
-
-function chevauche(a, b) {
-  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
 function normaliserWidget(widget, index) {
@@ -71,13 +71,14 @@ function normaliserWidget(widget, index) {
   };
 }
 
-function normaliserWidgets(widgets) {
+function normaliserWidgets(widgets, { compactage = true, prioritaire = null } = {}) {
   const seen = new Set();
-  return (widgets || []).map(normaliserWidget).filter((widget) => {
+  const uniques = (widgets || []).map(normaliserWidget).filter((widget) => {
     if (seen.has(widget.id)) return false;
     seen.add(widget.id);
     return true;
-  }).sort((a, b) => a.y - b.y || a.x - b.x);
+  });
+  return resoudrePlacement(uniques, { compactage, prioritaire });
 }
 
 export function normaliserLayout(definition, candidate) {
@@ -98,11 +99,13 @@ export function normaliserLayout(definition, candidate) {
     widgets.push({ id: bloc.id, x: 0, y, w: largeurWidget(bloc, GRILLE_COLONNES), h });
     y += h + 1;
   }
+  const compactage = candidate?.compactage !== false;
   return {
     schema_version: 1,
     colonnes: GRILLE_COLONNES,
     hauteur_ligne: GRILLE_HAUTEUR,
-    widgets,
+    ...(compactage ? {} : { compactage: false }),
+    widgets: normaliserWidgets(widgets, { compactage }),
   };
 }
 
@@ -146,11 +149,9 @@ export function deplacerWidget(layout, id, dx, dy) {
   if (!widget) return next;
   widget.x = borne(widget.x + entier(dx, 0), 0, GRILLE_COLONNES - widget.w);
   widget.y = Math.max(0, widget.y + entier(dy, 0));
-  for (const autre of next.widgets) {
-    if (autre.id === id || !chevauche(widget, autre)) continue;
-    autre.y = widget.y + widget.h;
-  }
-  next.widgets = normaliserWidgets(next.widgets);
+  const compactage = next.compactage !== false;
+  if (compactage) delete next.compactage;
+  next.widgets = normaliserWidgets(next.widgets, { compactage, prioritaire: id });
   return next;
 }
 
@@ -160,11 +161,30 @@ export function redimensionnerWidget(layout, id, dw, dh) {
   if (!widget) return next;
   widget.w = borne(widget.w + entier(dw, 0), 1, GRILLE_COLONNES - widget.x);
   widget.h = borne(widget.h + entier(dh, 0), 1, 40);
-  for (const autre of next.widgets) {
-    if (autre.id === id || !chevauche(widget, autre)) continue;
-    autre.y = widget.y + widget.h;
+  const compactage = next.compactage !== false;
+  if (compactage) delete next.compactage;
+  next.widgets = normaliserWidgets(next.widgets, { compactage, prioritaire: id });
+  return next;
+}
+
+/** Applique en une fois les hauteurs mesurées par le navigateur. */
+export function ajusterHauteursWidgets(layout, changements) {
+  const next = JSON.parse(JSON.stringify(layout));
+  let changed = false;
+  for (const changement of changements || []) {
+    const widget = next.widgets.find((item) => item.id === changement.id);
+    if (!widget) continue;
+    const min = borne(entier(changement.min, 1), 1, 40);
+    const max = borne(entier(changement.max, 40), min, 40);
+    const h = borne(entier(changement.h, widget.h), min, max);
+    if (h === widget.h) continue;
+    widget.h = h;
+    changed = true;
   }
-  next.widgets = normaliserWidgets(next.widgets);
+  if (!changed) return next;
+  const compactage = next.compactage !== false;
+  if (compactage) delete next.compactage;
+  next.widgets = normaliserWidgets(next.widgets, { compactage });
   return next;
 }
 

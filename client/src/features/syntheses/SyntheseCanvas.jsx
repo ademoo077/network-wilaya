@@ -31,6 +31,13 @@ export default function SyntheseCanvas({
               {[50, 75, 100, 125, 150].map((value) => <option key={value} value={value}>{value} %</option>)}
             </select>
           </label>
+          <label className="flex items-center gap-1 text-xs text-muted">
+            <span className="sr-only">{t('synthese.placement')}</span>
+            <select className="rounded-md border border-border bg-surface px-1.5 py-1 text-xs" value={layout.compactage === false ? 'libre' : 'compact'} onChange={(event) => editor.setLayout({ ...layout, compactage: event.target.value !== 'libre' })}>
+              <option value="compact">{t('synthese.placementCompact')}</option>
+              <option value="libre">{t('synthese.placementLibre')}</option>
+            </select>
+          </label>
           <Button size="sm" variant="ghost" disabled={!editor.canUndo} onClick={editor.undo}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />{t('synthese.annuler')}
           </Button>
@@ -60,7 +67,9 @@ export default function SyntheseCanvas({
       {editor.evaluationError.message || t('common.error')}
     </Alert>}
     {editor.saveError && <Alert variant="danger" title={t('synthese.erreurEnregistrement')} className="mb-4 no-print">
-      {editor.saveError.message || t('common.error')}
+      <p>{t('synthese.erreurEnregistrementAide')}</p>
+      {editor.saveError.code && editor.saveError.code !== 'VALIDATION' && <p className="mt-1 text-xs"><bdi>{editor.saveError.message}</bdi></p>}
+      <Button size="sm" variant="secondary" className="mt-3" onClick={onSave} loading={editor.saving}>{t('synthese.reessayerEnregistrement')}</Button>
     </Alert>}
 
     {editor.evaluating && <div className="mb-3" data-synthese-loading><Card className="p-8"><Skeleton className="h-24 w-full" /></Card></div>}
@@ -81,8 +90,10 @@ export default function SyntheseCanvas({
         onEdit={onEdit}
         onRemove={editor.removeBloc}
         onDuplicate={editor.dupliquerBloc}
+        onTogglePrint={(bloc) => editor.setBloc(bloc.id, { options: { ...bloc.options, masquer_impression: !bloc.options?.masquer_impression } })}
         onMove={editor.moveWidget}
         onResize={editor.resizeWidget}
+        onAutoResize={editor.resizeWidgetsToContent}
         onMoveBloc={editor.moveBloc}
         onUndo={editor.undo}
         onRedo={editor.redo}

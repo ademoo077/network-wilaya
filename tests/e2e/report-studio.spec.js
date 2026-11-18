@@ -225,7 +225,7 @@ test('114 — Studio : en-tête compact, aucun jargon, menu entier et largeur d�
   expect(errors.snapshot().consoleError).toEqual([]);
 });
 
-test('115 — Studio : les cinq actions de chaque widget sont présentes et fonctionnelles', async ({ page, baseURL }) => {
+test('115 — Studio : les actions compactes de chaque widget sont présentes et fonctionnelles', async ({ page, baseURL }) => {
   await authenticate(page, baseURL, 'operateur');
   const errors = collectErrors(page);
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -236,15 +236,21 @@ test('115 — Studio : les cinq actions de chaque widget sont présentes et fonc
 
   for (let index = 0; index < 3; index += 1) {
     const card = cards.nth(index);
-    for (const label of ['Voir la définition', 'Voir les données', 'Voir les fiches', 'Afficher en plein écran', 'Exporter ce widget en CSV', 'Exporter en PNG']) {
+    for (const label of ['Voir la définition', 'Afficher en plein écran', 'Exporter ce widget en CSV', 'Plus d’actions']) {
       await expect(card.getByRole('button', { name: label }), `${label} absent du widget ${index}`).toHaveCount(1);
     }
+    await card.getByRole('button', { name: 'Plus d’actions' }).click();
+    for (const label of ['Voir les données', 'Voir les fiches', 'Exporter en PNG', 'Exporter en JSON']) {
+      await expect(card.getByRole('menu').getByRole('button', { name: label }), `${label} absent du menu du widget ${index}`).toHaveCount(1);
+    }
+    await card.getByRole('button', { name: 'Plus d’actions' }).click();
   }
   const first = cards.first();
   await first.getByRole('button', { name: 'Voir la définition' }).click();
   await expect(page.getByRole('dialog', { name: /Voir la définition/ })).toBeVisible();
   await page.keyboard.press('Escape');
-  await first.getByRole('button', { name: 'Voir les données' }).click();
+  await first.getByRole('button', { name: 'Plus d’actions' }).click();
+  await first.getByRole('menu').getByRole('button', { name: 'Voir les données' }).click();
   await expect(page.getByRole('dialog', { name: /Voir les données/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await first.getByRole('button', { name: 'Afficher en plein écran' }).click();
@@ -255,11 +261,13 @@ test('115 — Studio : les cinq actions de chaque widget sont présentes et fonc
   const csv = page.waitForEvent('download');
   await first.getByRole('button', { name: 'Exporter ce widget en CSV' }).click();
   expect((await csv).suggestedFilename()).toMatch(/\.csv$/);
+  await first.getByRole('button', { name: 'Plus d’actions' }).click();
   const png = page.waitForEvent('download');
-  await first.getByRole('button', { name: 'Exporter en PNG' }).click();
+  await first.getByRole('menu').getByRole('button', { name: 'Exporter en PNG' }).click();
   expect((await png).suggestedFilename()).toMatch(/\.png$/);
 
-  await first.getByRole('button', { name: 'Voir les fiches' }).click();
+  await first.getByRole('button', { name: 'Plus d’actions' }).click();
+  await first.getByRole('menu').getByRole('button', { name: 'Voir les fiches' }).click();
   await expect(page).toHaveURL(/#\/anomalies/);
   expect(errors.snapshot().pageError).toEqual([]);
   expect(errors.snapshot().consoleError).toEqual([]);

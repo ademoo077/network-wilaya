@@ -49,19 +49,58 @@ function rejectsUnknownVersion(error) {
     || fields._ === "Unrecognized key(s) in object: 'version'";
 }
 
+function rejectsCompactage(error) {
+  if (error.status !== 400 || error.code !== 'VALIDATION') return false;
+  return Object.entries(error.fields || {}).some(([path, message]) => (
+    `${path} ${message}`.toLowerCase().includes('compactage')
+  ));
+}
+
+function withoutCompactage(body) {
+  const next = JSON.parse(JSON.stringify(body));
+  if (next.definition?.layout) delete next.definition.layout.compactage;
+  return next;
+}
+
+function rejectsWholeLayout(error) {
+  if (error.status !== 400 || error.code !== 'VALIDATION') return false;
+  const details = Object.entries(error.fields || {}).map(([path, message]) => `${path} ${message}`).join(' ').toLowerCase();
+  return details.includes('layout') && (details.includes('unrecognized') || details.includes('champ inconnu'));
+}
+
+function withoutLayout(body) {
+  const next = JSON.parse(JSON.stringify(body));
+  if (next.definition) delete next.definition.layout;
+  return next;
+}
+
 /** Un ancien processus serveur peut ne pas encore accepter le verrou `version`. */
 export async function updateModel(modele, definition) {
   const path = `/syntheses/modeles/${modele.id}`;
-  const body = { nom: modele.nom, description: modele.description, definition, version: modele.version };
-  let updated;
-  try {
-    updated = await api(path, { method: 'PUT', body });
-  } catch (error) {
-    // Un conflit ou une valeur de version invalide ne doit jamais désactiver le verrou.
-    if (body.version === undefined || !rejectsUnknownVersion(error)) throw error;
-    const { version: _version, ...legacyBody } = body;
-    updated = await api(path, { method: 'PUT', body: legacyBody });
+  let body = { nom: modele.nom, description: modele.description, definition, version: modele.version };
+  let updated = null;
+  for (let attempt = 0; attempt < 4 && !updated; attempt += 1) {
+    try {
+      updated = await api(path, { method: 'PUT', body });
+    } catch (error) {
+      // Compatibilité avec un processus serveur non redémarré après le build.
+      if (body.version !== undefined && rejectsUnknownVersion(error)) {
+        const { version: _version, ...legacyBody } = body;
+        body = legacyBody;
+        continue;
+      }
+      if (body.definition?.layout?.compactage !== undefined && rejectsCompactage(error)) {
+        body = withoutCompactage(body);
+        continue;
+      }
+      if (body.definition?.layout && rejectsWholeLayout(error)) {
+        body = withoutLayout(body);
+        continue;
+      }
+      throw error;
+    }
   }
+  if (!updated) throw new Error('Enregistrement indisponible');
   await rememberModel(updated.item || updated);
   return updated;
 }

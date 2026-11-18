@@ -252,3 +252,49 @@ Références : prompt V10, `docs/SPEC_V8.md`, `PLAN.md`, `DECISIONS.md`, `AUDIT_
 ## Journal V10
 - 2026-11-18 — Tag `avant-v10`, audit initial et plan. Migration V10 prévue en `013_studio_atelier.sql` (`008` déjà appliquée). Début de la phase 1.
 - 2026-11-18 — Phase 1 livrée : `shared/src/layout.js` (grille 12×40, conversion sections→grille, `decouperEnPages`, déplacement/redimensionnement), schémas `layout` additifs, `StudioGrid` (drag/resize souris+clavier, zoom 50–150 %, RTL), sauts de page CSS `break-before`. Modèles système resemés avec `layout`. Tests 130/139/140 + unitaires `layout`. `npm run qa` vert (621 Vitest, 11 E2E, 129 Playwright, styles/a11y OK).
+
+---
+
+# PLAN V11 — KPI, colonnes et impression organisée
+
+Références : prompt V11, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `AUDIT_V10.md`, `AUDIT_V11.md`, `DECISIONS.md`. Le tag `avant-v11` pointe sur `dd30f1e`. La migration demandée `009_impression.sql` est remplacée par l'additive `013_impression.sql`, car `009–012` sont déjà appliquées. Chaque phase finit par un gate vert, un résumé de cinq lignes maximum et un commit.
+
+## Phase 1 — Géométrie d'écran et actions compactes
+- [x] Tests géométriques partagés et navigateur : 50 dispositions, intersections, rognage et barre d'actions
+- [x] Normalisation transitive, compactage vertical et mode libre ; ajout/suppression/déplacement/redimensionnement sûrs
+- [x] Hauteur automatique mesurée, bornes et indicateur du mode fixe
+- [x] Barre d'actions compacte en flux et `ErrorBoundary` local ; scénario 142
+
+## Phase 2 — Bloc KPI complet
+- [ ] Bibliothèque de toutes les mesures autorisées, recherche FR/AR, catégories, favoris et aperçu
+- [ ] Bloc 1–24 KPI, réglages, comparaisons, objectifs, seuils, filtres/périodes et ordre/groupes
+- [ ] Mise en page auto-fit sans rognage et cinq préréglages ; scénario 143
+
+## Phase 3 — Colonnes au choix
+- [ ] Schémas partagés, sélecteur complet, recherche, ordre, formats, totaux et visibilités écran/impression
+- [ ] Priorités P1/P2/P3, préréglages/vues et exclusion des champs sensibles selon le rôle
+- [ ] Ajustement impression : densité, masquage, paysage et bandes ; scénarios 144–145
+
+## Phase 4 — Pipeline d'impression dédié
+- [ ] Migration `013_impression.sql`, références uniques et réglages immuables des éditions
+- [ ] Mesure hors écran, bandes, `paginer()` pur et pages statiques multi-format sans contrôles
+- [ ] Route `#/imprimer/:id`, garde/en-têtes/pieds/filigrane/sommaire/annexe/signature ; scénarios 147–149
+
+## Phase 5 — Concepteur et PDF
+- [ ] Aperçu avec miniatures, zoom, avertissements et réglages/préréglages persistants
+- [ ] PDF serveur Chromium, repli navigateur, noms de fichiers et drapeau de préparation
+- [ ] Couleur/gris/N&B et économique ; scénarios 146, 150, 151 et 153
+
+## Phase 6 — Snapshots, stress et formats
+- [ ] Réimpression des éditions figées depuis leurs snapshots sans mutation
+- [ ] A3 paysage, Lettre, RTL/AR, tableaux 500 lignes, 30 KPI et budgets de performance
+- [ ] Scénarios 152 et 154
+
+## Phase 7 — Recette
+- [ ] Scénarios 142–155 et régression 1–141, clair/sombre, FR/AR, responsive et F5
+- [ ] Captures, quatre PDF d'exemple, README et audit final
+- [ ] `npm run qa` intégral vert
+
+## Journal V11
+- 2026-11-18 — Socle V10 phase 1 figé par `dd30f1e`, tag `avant-v11`, audit réel et plan V11. La prochaine migration disponible est `013`.
+- 2026-11-18 — Phase 1 : collisions transitives + compactage, hauteur `ResizeObserver`, actions compactes/menu et repli d'erreur local. Le filigrane géant devient une bannière discrète ; l'autosave tolère un serveur ancien sans afficher « Modèle invalide ». Scénario 142, 627 Vitest, 11 E2E API, 131 Playwright, styles et contrastes verts.

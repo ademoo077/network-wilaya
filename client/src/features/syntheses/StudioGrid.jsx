@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Copy, Edit, GripVertical, Trash2 } from 'lucide-react';
-import { decouperEnPages, GRILLE_COLONNES, GRILLE_ECART, GRILLE_HAUTEUR } from '@anm/shared';
-import { Button } from '../../components/ui/index.js';
-import WidgetCard from './WidgetCard.jsx';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ajusterHauteursWidgets, decouperEnPages, GRILLE_COLONNES, GRILLE_ECART,
+  GRILLE_HAUTEUR,
+} from '@anm/shared';
+import StudioWidget from './StudioWidget.jsx';
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -10,23 +11,52 @@ function clamp(value, min, max) {
 
 export default function StudioGrid({
   layout, blocs, results, mode, t, lang, dir, zoom = 100,
-  onVoirFiches, onEdit, onRemove, onDuplicate, onMove, onResize, onMoveBloc,
-  onUndo, onRedo,
+  onVoirFiches, onEdit, onRemove, onDuplicate, onTogglePrint, onMove, onResize, onMoveBloc,
+  onAutoResize, onUndo, onRedo,
 }) {
   const gridRef = useRef(null);
+  const pendingMeasures = useRef(new Map());
+  const measureFrame = useRef(null);
+  const autoResizeRef = useRef(onAutoResize);
   const [drag, setDrag] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [measuredHeights, setMeasuredHeights] = useState({});
+  autoResizeRef.current = onAutoResize;
   const byId = useMemo(() => new Map(blocs.map((bloc) => [bloc.id, bloc])), [blocs]);
-  const positions = useMemo(() => new Map(layout.widgets.map((widget) => [widget.id, widget])), [layout]);
+  const displayLayout = useMemo(() => ajusterHauteursWidgets(layout, Object.entries(measuredHeights)
+    .filter(([id]) => byId.get(id)?.options?.hauteur_mode !== 'fixe')
+    .map(([id, value]) => ({ id, ...value }))), [layout, measuredHeights, byId]);
+  const positions = useMemo(() => new Map(displayLayout.widgets.map((widget) => [widget.id, widget])), [displayLayout]);
   const pageStarts = useMemo(() => {
-    const { pages } = decouperEnPages(layout);
+    const { pages } = decouperEnPages(displayLayout);
     const starts = new Map();
     for (const page of pages) {
       const first = page.widgets[0];
       if (first && page.index > 1) starts.set(first.id, page.index);
     }
     return starts;
-  }, [layout]);
+  }, [displayLayout]);
+
+  useEffect(() => () => {
+    if (measureFrame.current) cancelAnimationFrame(measureFrame.current);
+  }, []);
+
+  const mesurer = useCallback((id, h, min, max) => {
+    setMeasuredHeights((current) => {
+      const previous = current[id];
+      if (previous?.h === h && previous?.min === min && previous?.max === max) return current;
+      return { ...current, [id]: { h, min, max } };
+    });
+    if (mode !== 'personnaliser' || !onAutoResize) return;
+    pendingMeasures.current.set(id, { id, h, min, max });
+    if (measureFrame.current) cancelAnimationFrame(measureFrame.current);
+    measureFrame.current = requestAnimationFrame(() => {
+      measureFrame.current = null;
+      const changes = [...pendingMeasures.current.values()];
+      pendingMeasures.current.clear();
+      autoResizeRef.current?.(changes);
+    });
+  }, [mode, onAutoResize]);
 
   const lire = (id) => {
     if (preview?.id === id) return { ...positions.get(id), ...preview.rect };
@@ -85,16 +115,6 @@ export default function StudioGrid({
     setPreview(null);
   };
 
-  const coinRedimensionnement = (event, widget) => {
-    if (mode !== 'personnaliser') return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const coin = 24;
-    if (event.clientX < rect.right - coin || event.clientY < rect.bottom - coin) return;
-    const interactif = event.target.closest?.('button, a, input, select, textarea');
-    if (interactif && interactif.getAttribute('aria-label') !== t('synthese.redimensionner')) return;
-    demarrer(event, widget, 'resize');
-  };
-
   const clavier = (event, widget) => {
     if (mode !== 'personnaliser') return;
     const key = event.key.toLowerCase();
@@ -123,7 +143,7 @@ export default function StudioGrid({
     else onMove(widget.id, dx, dy);
   };
 
-  const widgets = [...layout.widgets].sort((a, b) => a.y - b.y || a.x - b.x);
+  const widgets = [...displayLayout.widgets].sort((a, b) => a.y - b.y || a.x - b.x);
   return <div
     ref={gridRef}
     className="synthese-free-grid relative grid grid-cols-12 gap-1"
@@ -141,60 +161,17 @@ export default function StudioGrid({
       const bloc = byId.get(widget.id);
       if (!bloc) return null;
       const position = lire(widget.id);
-      const largeur = bloc.options?.largeur || (position.w >= 10 ? 'pleine' : position.w >= 7 ? 'double' : 'simple');
-      return <section
+      return <StudioWidget
         key={widget.id}
-        data-widget-id={widget.id}
-        data-x={position.x}
-        data-y={position.y}
-        data-w={position.w}
-        data-h={position.h}
-        data-largeur={largeur}
-        data-bloc-type={bloc.type}
-        data-drag={drag?.id === widget.id ? drag.kind : undefined}
-        data-preview-w={preview?.id === widget.id ? preview.rect.w : undefined}
-        data-page-start={pageStarts.has(widget.id) ? pageStarts.get(widget.id) : undefined}
-        role="group"
-        tabIndex={0}
-        aria-label={bloc.titre || bloc.type}
-        className={`group relative min-w-0 break-inside-avoid rounded-lg ${mode === 'personnaliser' ? 'outline outline-1 outline-transparent focus:outline-brand-500' : ''} ${drag?.id === widget.id ? 'z-20 ring-2 ring-brand-500' : ''}`}
-        style={{ gridColumn: `${position.x + 1} / span ${position.w}`, gridRow: `${position.y + 1} / span ${position.h}`, breakBefore: pageStarts.has(widget.id) ? 'page' : undefined }}
-        onKeyDown={(event) => clavier(event, widget)}
-        onPointerDown={mode === 'personnaliser' ? (event) => coinRedimensionnement(event, position) : undefined}
-        onPointerMove={mode === 'personnaliser' ? deplacer : undefined}
-        onPointerUp={mode === 'personnaliser' ? terminer : undefined}
-        onPointerCancel={mode === 'personnaliser' ? terminer : undefined}
-      >
-        {mode === 'personnaliser' && <>
-          <button
-            type="button"
-            className="absolute start-1 top-1 z-20 flex h-6 w-6 cursor-move items-center justify-center rounded-md border border-border bg-surface text-muted shadow-1 no-print"
-            aria-label={t('synthese.deplacer')}
-            title={t('synthese.deplacer')}
-            onPointerDown={(event) => demarrer(event, position, 'move')}
-            onPointerMove={deplacer}
-            onPointerUp={terminer}
-            onPointerCancel={terminer}
-          ><GripVertical className="h-3.5 w-3.5" aria-hidden="true" /></button>
-          <div className="pointer-events-none absolute -top-3 end-2 z-20 flex items-center gap-1 rounded-md border border-border bg-surface p-1 opacity-0 shadow-1 transition group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 no-print">
-            <Button size="sm" variant="ghost" onClick={() => onMoveBloc(widget.id, -1)} title={t('synthese.monter')} aria-label={t('synthese.monter')}><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => onMoveBloc(widget.id, 1)} title={t('synthese.descendre')} aria-label={t('synthese.descendre')}><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => onDuplicate(widget.id)} title={t('synthese.dupliquer')} aria-label={t('synthese.dupliquer')}><Copy className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => onEdit(bloc)} title={t('synthese.editer')} aria-label={t('synthese.editer')}><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-            <Button size="sm" variant="ghost" onClick={() => onRemove(widget.id)} title={t('synthese.supprimer')} aria-label={t('synthese.supprimer')}><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-          </div>
-        </>}
-        <div className="min-w-0">
-          <WidgetCard bloc={bloc} result={results[bloc.id]} t={t} lang={lang} dir={dir} onVoirFiches={onVoirFiches} />
-        </div>
-        {mode === 'personnaliser' && <button
-          type="button"
-          className="absolute bottom-0 end-0 z-30 h-5 w-5 cursor-nwse-resize rounded-ss-md border-s border-t border-border bg-surface no-print"
-          aria-label={t('synthese.redimensionner')}
-          title={t('synthese.redimensionner')}
-        />}
-        {mode === 'personnaliser' && <div className="pointer-events-none mt-2 text-center text-xs text-muted no-print">{bloc.type} · {position.w} × {position.h}</div>}
-      </section>;
+        widget={widget} position={position} bloc={bloc} result={results[bloc.id]}
+        mode={mode} t={t} lang={lang} dir={dir}
+        pageStart={pageStarts.get(widget.id)} dragging={drag?.id === widget.id ? drag.kind : null}
+        onVoirFiches={onVoirFiches} onEdit={onEdit} onRemove={onRemove}
+        onDuplicate={onDuplicate} onTogglePrint={onTogglePrint} onMoveBloc={onMoveBloc} onKeyDown={clavier}
+        onPointerMove={deplacer} onPointerUp={terminer}
+        onMovePointerDown={(event, rect, kind = 'move') => demarrer(event, rect, kind)}
+        onMeasure={mesurer}
+      />;
     })}
     {preview && <div className="pointer-events-none absolute inset-y-0 w-px bg-brand-500" data-guide style={{ insetInlineStart: `${(preview.rect.x / GRILLE_COLONNES) * 100}%` }} />}
   </div>;

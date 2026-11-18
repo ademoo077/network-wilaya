@@ -233,6 +233,7 @@ export const syntheseLayoutSchema = z.object({
   schema_version: z.literal(1),
   colonnes: z.literal(GRILLE_COLONNES).optional(),
   hauteur_ligne: z.literal(GRILLE_HAUTEUR).optional(),
+  compactage: z.boolean().optional(),
   widgets: z.array(syntheseLayoutWidgetSchema).max(60),
 }).strict();
 

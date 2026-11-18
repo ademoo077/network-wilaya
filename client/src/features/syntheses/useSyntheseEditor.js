@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { convertirEnGrille, deplacerWidget, redimensionnerWidget } from '@anm/shared';
+import {
+  ajusterHauteursWidgets, convertirEnGrille, deplacerWidget, normaliserLayout,
+  redimensionnerWidget,
+} from '@anm/shared';
 import { api } from '../../api/client.js';
 import { useToast } from '../../components/ui/index.js';
+import { useI18n } from '../../i18n/index.jsx';
 import { blocPositions, cloneDefinition, evaluerSpecs, specsOf } from './editorData.js';
 import { personalizeModel, rememberModel, updateModel } from './syntheseActions.js';
 export { evaluerSpecs, flattenBlocs, specsOf } from './editorData.js';
@@ -10,6 +14,7 @@ const AUTO_SAVE_MS = 800;
 const MAX_HISTORY = 60;
 export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {}) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -69,9 +74,12 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const replaceDefinition = useCallback((nextDefinition) => {
     documentRevision.current += 1;
     const next = cloneDefinition(nextDefinition || { schema_version: 1, sections: [] });
+    const before = JSON.stringify(next.layout || null);
+    next.layout = convertirEnGrille(next);
+    const normalized = before !== JSON.stringify(next.layout);
     setHistory([next]);
     setHIndex(0);
-    setDirty(false);
+    setDirty(normalized);
     setSaveError(null);
     setAutosaveBlocked(false);
     setLastSavedAt(null);
@@ -150,14 +158,14 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
       if (scope === documentRevision.current && modeleRef.current?.id === currentModele.id) {
         setSaveError(error);
         setAutosaveBlocked(true);
-        push(error.message || String(error), 'danger');
+        push(t('synthese.erreurEnregistrement'), 'danger');
       }
       throw error;
     } finally {
       savingRef.current = false;
       setSaving(false);
     }
-  }, [modele, currentDefinition, onModeleChange, push]);
+  }, [modele, currentDefinition, onModeleChange, push, t]);
 
   useEffect(() => {
     if (!dirty || autosaveBlocked || !modeleRef.current || saving || evaluating) return undefined;
@@ -209,7 +217,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
 
   const setLayout = useCallback((layout) => {
     const next = cloneDefinition(currentDefinition);
-    next.layout = layout;
+    next.layout = normaliserLayout(next, layout);
     pushHistory(next);
     markDirty();
   }, [currentDefinition, pushHistory, markDirty]);
@@ -224,6 +232,22 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const resizeWidget = useCallback((id, dw, dh) => {
     const next = cloneDefinition(currentDefinition);
     next.layout = redimensionnerWidget(next.layout || convertirEnGrille(next), id, dw, dh);
+    if (dh) {
+      const bloc = next.sections.flatMap((section) => section.colonnes.flat()).find((item) => item.id === id);
+      if (bloc) bloc.options = { ...bloc.options, hauteur_mode: 'fixe' };
+    }
+    pushHistory(next);
+    markDirty();
+  }, [currentDefinition, pushHistory, markDirty]);
+
+  const resizeWidgetsToContent = useCallback((changements) => {
+    const next = cloneDefinition(currentDefinition);
+    const current = next.layout || convertirEnGrille(next);
+    const autoIds = new Set(next.sections.flatMap((section) => section.colonnes.flat())
+      .filter((bloc) => bloc.options?.hauteur_mode !== 'fixe').map((bloc) => bloc.id));
+    const layout = ajusterHauteursWidgets(current, changements.filter((item) => autoIds.has(item.id)));
+    if (JSON.stringify(layout) === JSON.stringify(current)) return;
+    next.layout = layout;
     pushHistory(next);
     markDirty();
   }, [currentDefinition, pushHistory, markDirty]);
@@ -335,7 +359,7 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     modele, definition, currentDefinition, dirty, saving, saveError, lastSavedAt, evaluating, evaluationError,
     results, editions, editionsLoading,
     canUndo, canRedo, undo, redo, save, setBloc, addBloc, removeBloc, moveBloc,
-    setLayout, moveWidget, resizeWidget, dupliquerBloc,
+    setLayout, moveWidget, resizeWidget, resizeWidgetsToContent, dupliquerBloc,
     personnaliser, reinitialiser, loadEditions, createEdition, figereEdition, getEdition,
     cancelSave, setDirty, evaluate,
   };

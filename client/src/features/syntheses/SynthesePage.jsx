@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Printer, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, FilePenLine, Printer, ShieldAlert } from 'lucide-react';
 import { useApiQuery } from '../../hooks/useApiQuery.js';
 import { useI18n } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -265,9 +265,6 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
 
   return (
     <main className={`page-container grid ${embedded ? 'px-2 py-4 sm:px-3' : 'min-h-dvh'}`} data-synthese-page data-synthese-state={snapshotEdition ? 'edition' : mode === 'personnaliser' ? 'personnalisation' : 'lecture'} aria-busy={editor.evaluating || undefined}>
-      {brouillon && <div className="no-print fixed inset-0 z-[50] pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-12deg] text-[8vw] text-brand-100/10 font-black select-none">BROUILLON</div>
-      </div>}
       <div className="flex min-w-0 flex-col h-full">
         {!embedded && <div className="no-print"><PageHeader
           eyebrow={t('synthese.eyebrow')}
@@ -302,6 +299,11 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
           {validModeleId && modeleQuery.isSuccess && !remoteModele && <EmptyState title={t('synthese.modeleIntrouvable')} description={t('synthese.modeleIntrouvableHelp')} />}
           {validModeleId && modeleQuery.isPending && !modele && <div className="grid place-items-center min-h-[40vh]"><Skeleton className="h-10 w-48" /></div>}
           {modele && <div className={`mx-auto w-full ${activeWidth === 'print' ? 'max-w-[794px]' : activeWidth === 'max' ? 'max-w-none' : 'max-w-[1280px]'}`} data-display-width={activeWidth}>
+            {brouillon && <div className="no-print mb-3 flex items-center gap-3 rounded-xl border border-border bg-surface2 px-4 py-3 shadow-1" role="note" aria-label={t('synthese.brouillonActif')} data-draft-banner>
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-100 text-brand-800"><FilePenLine className="h-5 w-5" aria-hidden="true" /></span>
+              <div className="min-w-0 flex-1"><p className="font-bold text-ink">{t('synthese.brouillonActif')}</p><p className="text-xs leading-relaxed text-muted">{t('synthese.brouillonHelp')}</p></div>
+              <span className="shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-brand-700">{t('synthese.brouillon')}</span>
+            </div>}
             <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
               onPrint={() => setPrintOpen(true)}

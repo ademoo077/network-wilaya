@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  GRILLE_COLONNES, convertirEnGrille, decouperEnPages, deplacerWidget,
-  redimensionnerWidget,
+  GRILLE_COLONNES, ajusterHauteursWidgets, convertirEnGrille, decouperEnPages,
+  deplacerWidget, normaliserLayout, redimensionnerWidget,
 } from '../src/layout.js';
 import { validerDefinition } from '../src/syntheseSchemas.js';
 
@@ -14,6 +14,20 @@ const definition = {
     { id: 'territoire', colonnes: [[bloc('table', 'tableau', { largeur: 'double' })]] },
   ],
 };
+
+function intersections(widgets) {
+  return widgets.flatMap((a, index) => widgets.slice(index + 1).filter((b) => (
+    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+  )).map((b) => [a.id, b.id]));
+}
+
+function aleatoire(seed) {
+  let value = seed >>> 0;
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return value / 0x100000000;
+  };
+}
 
 describe('grille V10 — conversion sections → grille', () => {
   it('convertit les largeurs historiques sans chevauchement', () => {
@@ -71,6 +85,104 @@ describe('grille V10 — déplacement et redimensionnement', () => {
   it('borne la largeur et la hauteur', () => {
     const next = redimensionnerWidget(layout, 'a', 20, -10);
     expect(next.widgets.find((widget) => widget.id === 'a')).toMatchObject({ w: 12, h: 1 });
+  });
+
+  it('propage les collisions à tous les voisins après un déplacement', () => {
+    const colonne = {
+      schema_version: 1,
+      widgets: [
+        { id: 'a', x: 0, y: 0, w: 6, h: 4 },
+        { id: 'b', x: 0, y: 4, w: 6, h: 4 },
+        { id: 'c', x: 0, y: 8, w: 6, h: 4 },
+      ],
+    };
+    const next = deplacerWidget(colonne, 'a', 0, 4);
+    expect(next.widgets.find((widget) => widget.id === 'a').y).toBe(4);
+    expect(intersections(next.widgets)).toEqual([]);
+    expect(next.widgets.find((widget) => widget.id === 'b').y).not.toBe(4);
+    expect(next.widgets.map((widget) => widget.y).sort((a, b) => a - b)).toEqual([0, 4, 8]);
+  });
+
+  it('adapte la hauteur mesurée, respecte les bornes et écarte la suite', () => {
+    const next = ajusterHauteursWidgets(layout, [{ id: 'a', h: 9, min: 3, max: 8 }]);
+    expect(next.widgets.find((widget) => widget.id === 'a').h).toBe(8);
+    expect(intersections(next.widgets)).toEqual([]);
+  });
+});
+
+describe('grille V11 — normalisation et compactage', () => {
+  it('normalise 50 projets aléatoires sans aucune intersection', () => {
+    for (let seed = 1; seed <= 50; seed += 1) {
+      const random = aleatoire(seed);
+      const blocs = Array.from({ length: 20 }, (_, index) => bloc(`w-${index}`, 'texte'));
+      const projet = { schema_version: 1, sections: [{ id: 's', colonnes: [blocs] }] };
+      const candidate = {
+        schema_version: 1,
+        widgets: blocs.map((item) => {
+          const w = 1 + Math.floor(random() * 12);
+          return {
+            id: item.id,
+            x: Math.floor(random() * (13 - w)),
+            y: Math.floor(random() * 18),
+            w,
+            h: 1 + Math.floor(random() * 12),
+          };
+        }),
+      };
+      const result = normaliserLayout(projet, candidate);
+      expect(intersections(result.widgets), `seed ${seed}`).toEqual([]);
+    }
+  });
+
+  it('compacte les espaces verticaux par défaut', () => {
+    const projet = {
+      schema_version: 1,
+      sections: [{ id: 's', colonnes: [[bloc('a', 'texte'), bloc('b', 'texte')]] }],
+    };
+    const result = normaliserLayout(projet, {
+      schema_version: 1,
+      widgets: [
+        { id: 'a', x: 0, y: 12, w: 6, h: 3 },
+        { id: 'b', x: 0, y: 30, w: 6, h: 3 },
+      ],
+    });
+    expect(result.widgets.find((widget) => widget.id === 'a').y).toBe(0);
+    expect(result.widgets.find((widget) => widget.id === 'b').y).toBe(3);
+  });
+
+  it('conserve les espaces en mode libre tout en supprimant les collisions', () => {
+    const projet = {
+      schema_version: 1,
+      sections: [{ id: 's', colonnes: [[bloc('a', 'texte'), bloc('b', 'texte')]] }],
+    };
+    const result = normaliserLayout(projet, {
+      schema_version: 1,
+      compactage: false,
+      widgets: [
+        { id: 'a', x: 0, y: 12, w: 6, h: 3 },
+        { id: 'b', x: 0, y: 12, w: 6, h: 3 },
+      ],
+    });
+    expect(result.compactage).toBe(false);
+    expect(result.widgets.find((widget) => widget.id === 'a').y).toBe(12);
+    expect(intersections(result.widgets)).toEqual([]);
+  });
+
+  it('compacte après la suppression d’un widget', () => {
+    const projet = {
+      schema_version: 1,
+      sections: [{ id: 's', colonnes: [[bloc('b', 'texte')]] }],
+      layout: {
+        schema_version: 1,
+        widgets: [
+          { id: 'a', x: 0, y: 0, w: 12, h: 4 },
+          { id: 'b', x: 0, y: 10, w: 12, h: 4 },
+        ],
+      },
+    };
+    const result = convertirEnGrille(projet);
+    expect(result.widgets).toHaveLength(1);
+    expect(result.widgets[0]).toMatchObject({ id: 'b', y: 0 });
   });
 });
 

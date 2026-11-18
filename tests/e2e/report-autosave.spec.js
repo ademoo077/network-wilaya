@@ -4,7 +4,7 @@ import { authenticate } from './helpers.js';
 
 const widgets = (definition) => definition.sections.flatMap((section) => section.colonnes.flat());
 const savedStatus = (page) => page.getByRole('status').filter({ hasText: /enregistrée/i });
-const saveAlert = (page) => page.getByRole('alert').filter({ hasText: /Échec de l’enregistrement/ });
+const saveAlert = (page) => page.getByRole('alert').filter({ hasText: /Enregistrement à reprendre/ });
 
 async function personalizeReport(page) {
   await page.goto('/#/rapport?semaine=2026-11-15');
@@ -49,6 +49,33 @@ test('Rapport — autosave accepte le refus Zod réel d’un serveur sans versio
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Ma synthèse hebdomadaire' })).toBeVisible();
   await expect(page.locator('[data-testid^="widget-"]')).toHaveCount(4);
+});
+
+test('Rapport — un serveur déjà démarré ignore le nouveau mode de compactage sans afficher Modèle invalide', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const requests = [];
+  await page.route('**/api/syntheses/modeles/*', (route) => {
+    if (route.request().method() !== 'PUT') return route.continue();
+    const body = route.request().postDataJSON();
+    requests.push(body);
+    if (requests.length === 1) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({
+      error: { code: 'VALIDATION', message: 'Modèle invalide', fields: { 'definition.layout': "Unrecognized key(s) in object: 'compactage'" } },
+    }) });
+    if (requests.length === 2) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({
+      error: { code: 'VALIDATION', message: 'Modèle invalide', fields: { definition: "Unrecognized key(s) in object: 'layout'" } },
+    }) });
+    return route.continue();
+  });
+  await personalizeReport(page);
+  await page.getByLabel('Placement des widgets').selectOption('libre');
+  await expect(savedStatus(page)).toBeVisible({ timeout: 10_000 });
+  expect(requests).toHaveLength(3);
+  expect(requests[0].definition.layout.compactage).toBe(false);
+  expect(requests[1].definition.layout.compactage).toBeUndefined();
+  expect(requests[1].definition.layout).toBeTruthy();
+  expect(requests[2].definition.layout).toBeUndefined();
+  await expect(saveAlert(page)).toHaveCount(0);
+  await expect(page.getByText('Modèle invalide', { exact: true })).toHaveCount(0);
 });
 
 for (const refusal of [

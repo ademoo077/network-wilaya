@@ -12,6 +12,15 @@ function download(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function safeName(value, fallback = 'widget') {
+  return String(value || fallback).replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') || fallback;
+}
+
+export function downloadWidgetJson({ title, bloc, result }) {
+  const body = JSON.stringify({ schema_version: 1, bloc, resultat: result || null }, null, 2);
+  download(new Blob([body], { type: 'application/json;charset=utf-8' }), `${safeName(title)}.json`);
+}
+
 /** Export PNG autonome : le contenu du widget est dessiné depuis les résultats, sans HTML externe. */
 export function downloadWidgetPng({ title, result, lang }) {
   const canvas = document.createElement('canvas');

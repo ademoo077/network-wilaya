@@ -1,6 +1,9 @@
 import { test, expect } from './fixture.js';
 import { authenticate, collectErrors } from './helpers.js';
-import { expectAccessible, expectNoOverflow } from './geometry.js';
+import {
+  expectAccessible, expectCompactWidgetActions, expectNoOverflow,
+  expectNoWidgetClipping, expectNoWidgetIntersections,
+} from './geometry.js';
 
 async function ouvrirCopie(page) {
   await page.goto('/#/syntheses');
@@ -52,7 +55,9 @@ test('130 — grille libre : souris, clavier, annulation, RTL et rechargement', 
   const resizeStart = await resize.boundingBox();
   await page.mouse.move(resizeStart.x + 2, resizeStart.y + 2);
   await page.mouse.down();
+  await expect(widget).toHaveAttribute('data-drag', 'resize');
   await page.mouse.move(resizeStart.x + 2 + cell, resizeStart.y + 2 + 44);
+  await expect.poll(() => widget.getAttribute('data-w')).not.toBe(String(initial.w));
   await page.mouse.up();
   const apres = await widget.evaluate((element) => ({
     x: Number(element.dataset.x), y: Number(element.dataset.y), w: Number(element.dataset.w), h: Number(element.dataset.h),
@@ -64,6 +69,9 @@ test('130 — grille libre : souris, clavier, annulation, RTL et rechargement', 
   await expect(page.getByText(/enregistrée/i)).toBeVisible({ timeout: 15_000 });
   await page.reload();
   await page.locator('[data-widget-id="anneau-statuts"]').waitFor({ state: 'visible', timeout: 30_000 });
+  await expect(page.locator('[data-draft-banner]')).toBeVisible();
+  await expect(page.getByText('BROUILLON', { exact: true })).toHaveCount(0);
+  await expect(page.locator('[data-draft-banner]')).not.toHaveCSS('position', 'fixed');
   await expect(page.locator('[data-widget-id="anneau-statuts"]')).toHaveAttribute('data-x', String(apres.x));
   await expect(page.locator('[data-widget-id="anneau-statuts"]')).toHaveAttribute('data-y', String(apres.y));
   await expect(page.locator('[data-widget-id="anneau-statuts"]')).toHaveAttribute('data-w', String(apres.w));
@@ -132,4 +140,69 @@ test('140 — migration sections → grille : mêmes blocs et largeurs pour les 
   expect(widths[0]).toBeGreaterThan(gridWidth * 0.95);
   expect(widths[1]).toBeGreaterThan((gridWidth / 3) * 0.9);
   expect(widths[2]).toBeGreaterThan((gridWidth * 2) / 3 * 0.9);
+});
+
+test('142 — normalisation, hauteur automatique et actions compactes sans recouvrement', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL, 'operateur');
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await ouvrirCopie(page);
+
+  await page.evaluate(async () => {
+    const id = Number(location.hash.match(/syntheses\/(\d+)/)?.[1]);
+    const response = await fetch(`/api/syntheses/modeles/${id}`);
+    const { item } = await response.json();
+    item.definition.layout = {
+      ...item.definition.layout,
+      compactage: true,
+      widgets: item.definition.layout.widgets.map((widget) => ({ ...widget, x: 0, y: 0 })),
+    };
+    const saved = await fetch(`/api/syntheses/modeles/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.__ANM_CSRF__ },
+      body: JSON.stringify({ nom: item.nom, description: item.description, version: item.version, definition: item.definition }),
+    });
+    if (!saved.ok) throw new Error(`PUT modèle: ${saved.status}`);
+  });
+  await page.reload();
+  await page.locator('[data-widget-id="anneau-statuts"]').waitFor({ state: 'visible', timeout: 30_000 });
+  await expect.poll(() => page.locator('[data-synthese-loading]').count()).toBe(0);
+  await expectNoWidgetIntersections(page);
+  await expectNoWidgetClipping(page);
+  await expectCompactWidgetActions(page);
+
+  const ring = page.locator('[data-widget-id="anneau-statuts"]');
+  const before = await page.locator('[data-widget-id]').evaluateAll((widgets) => Object.fromEntries(widgets.map((widget) => [widget.dataset.widgetId, Number(widget.dataset.y)])));
+  const grid = page.locator('[data-synthese-grid]');
+  const row = await grid.evaluate((element) => parseFloat(getComputedStyle(element).gridAutoRows) + parseFloat(getComputedStyle(element).rowGap || '4'));
+  const ringY = Number(await ring.getAttribute('data-y'));
+  const handle = ring.getByRole('button', { name: 'Déplacer le widget' });
+  const box = await handle.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - ringY * row);
+  await page.mouse.up();
+  await expectNoWidgetIntersections(page);
+  const after = await page.locator('[data-widget-id]').evaluateAll((widgets) => Object.fromEntries(widgets.map((widget) => [widget.dataset.widgetId, Number(widget.dataset.y)])));
+  expect(Object.keys(before).some((id) => id !== 'anneau-statuts' && before[id] !== after[id]), 'Aucun voisin ne s’est écarté').toBe(true);
+
+  const more = ring.getByRole('button', { name: 'Plus d’actions' });
+  await more.click();
+  const menu = ring.getByRole('menu');
+  for (const label of ['Voir les données', 'Voir les fiches', 'Dupliquer le widget', 'Exporter ce widget en CSV', 'Exporter en PNG', 'Exporter en JSON', 'Masquer à l’impression']) {
+    await expect(menu.getByRole('button', { name: label })).toBeVisible();
+  }
+  await more.click();
+  await expect(menu).toHaveCount(0);
+  const kpi = page.locator('[data-widget-id="kpi-executif"]');
+  const kpiHeight = Number(await kpi.getAttribute('data-h'));
+  await kpi.focus();
+  for (let index = 1; index < kpiHeight; index += 1) await page.keyboard.press('Shift+ArrowUp');
+  await expect(kpi).toHaveAttribute('data-height-mode', 'fixed');
+  await expect(kpi.getByRole('status').filter({ hasText: 'Contenu masqué' })).toBeVisible();
+  await expectNoWidgetIntersections(page);
+  await expectNoWidgetClipping(page);
+  await expectAccessible(page);
+  expect(errors.snapshot().pageError).toEqual([]);
+  expect(errors.snapshot().consoleError).toEqual([]);
 });
