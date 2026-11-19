@@ -31,7 +31,8 @@ test('C11 / 48 — cartes compactes et activité décrite', async ({ page }) => 
   await page.goto('/#/');
   await expect(page.locator('main h1')).toContainText('Bonjour');
   await expectCompactCards(page);
-  await expect(page.getByText(/3 modifications/).first()).toBeVisible();
+  // V12 : l'auto-affectation ajoute un champ `agent_id` à l'action d'initialisation.
+  await expect(page.getByText(/4 modifications/).first()).toBeVisible();
   await expect(page.locator('[data-status-legend]').first()).toBeVisible();
 });
 test('C12 / 49 — filtre de période réactif sans disparition du titre', async ({ page }) => {

@@ -1,303 +1,54 @@
-# PLAN — Plateforme de suivi des anomalies (points noirs) — V4
+# PLAN V12 — Phase par phase
 
-**Référence unique** : `docs/SPEC.md` (v4.0). **État initial** : code V1/V2/V3 non conforme (voir `AUDIT.md`), base legacy archivée.
+## Phase 1 — Audit, correctifs D1–D5, retrait Vérification, Sans suite, catalogue, migration 010
+1. Créer `AUDIT_V12.md` (audit de l'existant V11 + cause + correctif + test pour D1–D5)
+2. Créer `DECISIONS.md` (décisions structurantes V12)
+3. Migration SQL `013_agents_photos.sql` (tables affectations_agents, colonnes anomalies, users.agent_id, pieces_jointes.role, miniatures, EXIF, etc.)
+4. Supprimer colonne Vérification de la liste (UI + filtres + onglet + actions groupées) ; onglets : Tout, Non traitées, En cours, Traitées, Urgentes, En retard, Non affectées, Mes anomalies
+5. Formulaire création : champ Vérification retiré ; statut initial = Non traité ; section "Options avancées" (statut, dates) visible seulement admin
+6. Paramètre `exiger_verification` = 0 (fixé, masqué) ; règle métier : passage en cours/traité ne demande plus vérification
+7. Action « Sans suite » (motif obligatoire, admin/opérateur) → `verification='infirmee'` (exclue stats par défaut, option inclure sans-suite)
+8. Catalogue : mesures vérification dépréciées (non proposées, lisibles pour éditions figées) ; nouvelles mesures : `non_affectees`, `delai_prise_en_charge`, `charge_agent`, `taux_traitement_par_agent`, `taux_photo_avant`, `taux_photo_apres`
+9. Correctifs D1–D5 : i18n `import.button` ; pastille Statut visible ; Référence nowrap + largeurs ; en-têtes homogènes ; suppression onglet/colonne Vérification
+10. Tests : scénarios 156 + précédents verts ; `npm run qa` vert
 
-Légende : `[x]` fait et vérifié · `[ ]` à faire.
+## Phase 2 — Agents & affectation automatique par daïra
+1. Modèle `affectations_agents` (titulaire/suppléant, unicité titulaire actif par daïra, historique)
+2. Service unique `affecterAgent(anomalie)` : auto à création/import, suppléant si titulaire inactif, non affectée si aucun, réaffectation si daïra change (non traitée), conservation si traitée
+3. Surcharge manuelle avec motif → `agent_source='manuel'` (non écrasée par auto) ; avertissement rétablissement
+4. Changement titulaire/supplaéant (admin) : aperçu + confirmation explicite
+5. Écran admin `#/admin/agents` : 14 daïras, titulaire/supplaéant, charge, anomalies ouvertes, import CSV, aperçu, historique, gestion agents (créer, désactiver, lier compte)
+6. Onglet « Mes anomalies » (filtre agent lié au compte) + cloche « Nouvelle anomalie affectée »
+7. Outil admin « Affecter les anomalies existantes » (aperçu puis confirmation)
+7. Tests : scénarios 157–162
 
-## Phase 1 — Socle
-- [x] Sauvegarde `data/`+`backups/`, tag `v-avant-v4`, `AUDIT.md`, plan, décisions
-- [ ] Workspaces npm `shared` / `server` / `client`, scripts Windows, `.env` auto
-- [ ] `shared/` : normalize, url, gps, dates, percent, statut, schemas zod, constants
-- [ ] DB : `001_init.sql`, `schema_migrations`, pragmas, taxonomie idempotente 70/156
-- [ ] Serveur Express, sessions maison + CSRF, helmet § 7, rate limit, `/api/health`
-- [ ] Admin initial + `admin:reset`, sauvegarde auto quotidienne
-- [ ] Tests unitaires `shared` verts, login/logout vérifiés par exécution
+## Phase 3 — Photos avant / après
+1. `pieces_jointes.role IN ('avant','apres','autre')`, `principale`, `legende`, `prise_le`, `gps_lat/lng`, `miniature_chemin`
+2. Upload : MIME + signature binaire jpg/png/webp ≤ 5 Mo ; ≤ 5 avant, ≤ 5 après ; miniatures 320px serveur ; EXIF extrait (date/GPS → suggestion) puis purgé du fichier servi ; route authentifiée `/api/photos/:id/{thumb|file}` ; inclus dans backup/restore
+3. Création : zone Photo avant (drag-drop, multi, capture mobile, collage, vignettes, légende, principale, suppression, lecture EXIF navigateur)
+4. Passage « Traité » : dialogue avec sélecteur photo après (choisir parmi photos anomalie en les marquant « après » OU upload/photo) ; obligatoire par défaut (`photo_apres_obligatoire=1`) ; case « Sans photo » + motif obligatoire
+5. Fiche : bloc Avant/Après comparateur à curseur, légendes, dates, téléchargement, plein écran ; historique photos
+6. Liste : colonne Photos (2 vignettes ou icônes + compteur) ; ⚠ si traitée sans photo après
+7. Synthèses/impression : widget Avant/Après, KPI `taux_photo_avant/apres` ; PDF vignettes, Excel liens
+8. Tests : scénarios 163, 164, 167
 
-## Phase 2 — Référentiels & assistant
-- [ ] `/ref/*` CRUD, `/ref/bootstrap`, `/setup/status`, `/ref/bulk-territoire`
-- [ ] Utilisateurs, paramètres, assistant 4 étapes, import CSV référentiels
-- [ ] Tests référentiels/territoire verts
+## Phase 4 — Page à la création (réseaux sociaux V9)
+1. Source : combobox recherche normalisée (arabe/latin) sur nom, URL, identifiant, commune ; pastille réseau/nature/commune
+2. Suggestion auto depuis URL publication (slug/identifiant connu) ; suggestion commune/daïra depuis page (puce "Suggérée — appliquer ?")
+3. "+ Ajouter cette page" : tiroir pré-rempli (réseau/nature détectés, nom, URL page déduite, commune anomalie) ; contrôle doublon live ; "Enregistrer et sélectionner" / "Annuler" ; page créée sélectionnée auto
+4. Droits : admin crée tout ; opérateur crée pages/groupes (statut "à vérifier", file "À qualifier" admin), pas profil ; profil respect protection V9
+5. Enregistrement `source_reseau_id` ; stats anomalies par page/réseau
+6. Sans V9 : table `reseaux_sources` minimale (V9 § B2)
+7. Tests : scénario 165
 
-## Phase 3 — Anomalies (serveur)
-- [ ] `validerEtat` unique, transitions, verrou optimiste, historique
-- [ ] Doublons lien/strict, recherche normalisée, pièces jointes, corbeille, bulk
-- [ ] CHECK SQL + matrice de tests d'intégration
-
-## Phase 4 — Statistiques & rapport (serveur)
-- [ ] `stats.js` SQL, `statutAu`, plus grand reste, comparaison S−1
-- [ ] Snapshots versionnés, export xlsx/csv
-- [ ] Tests : semaine vide, ÷0, infirmées exclues, cohérence, perf 50 000 < 300 ms
-
-## Phase 5 — Design system & shell
-- [ ] Tokens, composants `ui/`, thèmes, i18n FR/AR + RTL, `check:styles`
-- [ ] Shell (sidebar, topbar, recherche, menu utilisateur), login, 404
-
-## Phase 6 — Pages anomalies
-- [ ] Saisie/modification, liste + filtres + bulk + tiroir, fiche + chronologie
-- [ ] Scénarios 2–9
-
-## Phase 7 — Tableau de bord, carte, rapport
-- [ ] Dashboard complet, carte + repli hors-ligne, rapport A4 + Excel + figer
-- [ ] Scénarios 10–12
-
-## Phase 8 — Administration, import/export, sauvegardes
-- [ ] 7 onglets admin, import avec aperçu, sauvegarde/restauration sécurisées
-- [ ] Scénarios 13, 16
-
-## Phase 9 — Finition & recette
-- [ ] Accessibilité, responsive, performance, E2E, 17 scénarios, README/docs
-- [ ] Vérification finale complète (install/build/test/lint/styles/a11y/e2e)
-
-## Journal
-- 2026-11-08 : audit, sauvegarde, tag, base V4.
+## Phase 5 — Intégrations catalogue/Lab/impression, recette finale
+1. Mesures dépréciées non proposées (lisibles éditions figées) ; nouvelles mesures exactes
+2. Widget Avant/Après (paires traitées période, nb/page réglable, tailles explicites, jamais coupées impression)
+3. KPI `taux_photo_apres`, `non_affectees`, `charge_agent`
+4. Recette finale : captures FR/AR × clair/sombre × 390/768/1024/1440 ; géométrie liste (rien tronqué) ; rechargement dur sans blanc
+5. README + `AUDIT_V12.md` complet
+6. `npm run qa` vert ; scénarios 156–168 verts
 
 ---
 
-# PLAN V5 — GPS intelligent et statistiques détaillées
-
-Référence complémentaire : `docs/SPEC_V5.md`. Les exigences V4 non modifiées restent applicables.
-
-## Phase V5.1 — Audit et migration
-- [x] Lire intégralement les spécifications V4 et V5 ; auditer l'état réel dans `AUDIT_V5.md`
-- [x] Sauvegarder `data/` et `backups/` hors dépôt ; établir la base de tests V4 (123 tests verts)
-- [x] Tester `002_v5.sql` sur une copie, puis sur la base sauvegardée ; intégrité et clés étrangères vertes
-- [x] Créer les tables/colonnes V5 et les neuf paramètres avec valeurs sûres
-- [x] Importer idempotemment 9 groupes et rattacher 70/70 catégories sans écraser les modifications admin
-- [x] Chaîne de qualité complète verte ; commit de phase et tag annoté `v4-avant-v5`
-
-## Phase V5.2 — Moteur partagé
-- [x] `smartPaste` : normalisation, extraction/déballage/classification des URL et texte restant
-- [x] Coordonnées décimales/DMS/liens de carte, chiffres arabes, précision, choix de positions
-- [x] Dates TikTok/Instagram avec garde-fous et tests aller-retour
-- [x] `geo.js` : Haversine, boîtes, grille, Polygon/MultiPolygon avec trous
-- [x] Au moins 30 vecteurs unitaires, build/lint/styles/a11y verts, commit
-
-## Phase V5.3 — Géolocalisation serveur
-- [x] `/tools/parse-paste`, `/geo/locate`, `/anomalies/nearby` avec permissions/limites
-- [x] Déduction polygone puis voisinage ; import GeoJSON avec aperçu/validation/audit
-- [x] Champs GPS V5, `lie_a_id`, doublon géographique et compte des répétitions
-- [x] Tests polygone, voisinage, proximité, sécurité et commit
-
-## Phase V5.4 — Collage intelligent UI
-- [x] Zone Coller globale, puces modifiables, application non destructive et annulation
-- [x] Mini-carte déplaçable, sources GPS, HTTPS expliqué, EXIF navigateur, proches
-- [x] Scénarios 18–26 : composants et API livrés (vérification navigateur automatisée non exécutée faute de navigateurs Playwright installés ; logique couverte par tests partagés/serveur et E2E API) ; commit
-
-## Phase V5.5 — Statistiques détaillées serveur
-- [x] Entonnoir (infirmées incluses), délais moyenne/médiane/P90, distributions, SLA et ancienneté en SQL
-- [x] Flux, moyenne mobile MM4, objectif, ventilations, récurrence et qualité
-- [x] Faits marquants déterministes FR/AR et rapport hebdomadaire enrichi (`detail`, `faits`)
-- [x] Tests de bornes (2/3, 7/8, 14/15, 30/31), monotonie, cohérence et performance 50 000 lignes (< 300 ms) ; commit
-
-## Phase V5.6 — Tableau de bord et rapport
-- [ ] Blocs et graphiques détaillés, heatmap, rapport A4 cinq pages et Excel multi-feuilles
-- [ ] Cohérence dashboard/rapport/export/résumé ; scénarios 27–28 verts ; commit
-
-## Phase V5.7 — Améliorations P1
-- [ ] Type d'abord, récents, duplication, brouillon et raccourcis
-- [ ] Onglets comptés, vues enregistrées, itinéraire/message EPIC
-- [ ] Page À faire, cloche, Administration Santé et `https:setup`
-- [ ] Scénarios 30–31 verts et commit
-
-## Phase V5.8 — P2
-- [ ] Résolution distante avec garde SSRF, réception/WhatsApp et rapport libre/auto
-- [ ] Palette, bon d'intervention, 2FA, export complet et mode terrain
-- [ ] Scénario 29 et tests P2 verts ; commit
-
-## Phase V5.9 — Recette
-- [ ] 32 scénarios, seed/purge, états vides, captures FR/AR clair/sombre et responsive
-- [ ] Installation/build/tests/lint/styles/a11y/E2E verts, README et audits finaux, commit
-
-## Journal V5
-- 2026-11-08 — Phase 1 : copie externe, migration testée sur copie puis appliquée, intégrité OK, 9 groupes/70 catégories, build vert, 18 fichiers/128 tests verts, lint/styles/contrastes verts.
-- 2026-11-08 — Phase 2 : analyseur hors-ligne et géométrie partagés, 51 vecteurs smart-paste + 12 géométrie, 20 fichiers/192 tests verts, build/lint/styles/contrastes verts.
-- 2026-11-08 — Phase 3 : parse/locate/nearby, polygones + voisinage, import GeoJSON audité, GPS V5 et répétitions ; garde SSRF testée ; 22 fichiers/230 tests verts.
-- 2026-11-08 — Phase 4 : SmartPasteZone, mini-carte déplaçable/géométrie/proches, EXIF navigateur, badge/source GPS, suggestion/doublon géographique, lien répété, HTTPS expliqué, admin limites (aperçu/import), `/geo/limit/:communeId`, script `scripts/e2e.js` ; build, 22 fichiers/230 tests, lint, styles, a11y tokens et E2E verts.
-- 2026-11-09 — Phase 5 : `GET /api/stats/detail` (entonnoir, délais, SLA, ancienneté, tendance 12 semaines/MM4, objectif, 8 ventilations, jour/heure, récurrence, qualité, 10 faits), rapport hebdomadaire enrichi ; index partiels de performance (migration 003), 50 000 lignes en 213 ms ; 23 fichiers/245 tests, build, lint, styles, a11y et 11 scénarios E2E verts.
-
----
-
-# PLAN V8.2 — Widgets statistiques et tableaux au choix, dans la synthèse
-
-Référence : prompt V8.2 + `docs/SPEC_V8.md` + `AUDIT_V8.md`. Le tableau de bord n’est **pas** modifié. `#/rapport?semaine=` reste fonctionnel.
-
-## Phase 1 — Socle widgets, narration et audit
-- [x] Vérifier catalogue (38 mesures / 30 dimensions / 30 filtres), moteur whitelisté, cache et évaluation par lot
-- [x] Audit de la page Synthèse (`AUDIT_V8.md`, constats R1–R7 avec causes)
-- [x] Schémas zod `syntheseSectionSchema` + `syntheseWidgetSchema` (alias de bloc) ; blocs texte sans requête
-- [x] `shared/src/describe.js` : `describeRequete` / `describeFiltres` / `describeFiltre` FR + AR, 5 tests
-- [x] 8 modèles système validés et semés idempotemment (prod + navigateur), 4 tests, copies préservées
-- [ ] Visuel recommandé + `POST /widgets/apercu` (phase 3)
-
-## Phase 2 — Mode Personnaliser
-- [ ] Sections/colonnes (3·4·6·8·9·12), DnD souris + clavier, inspecteur, copy-on-write, autosave 800 ms, annuler/rétablir ≥ 50, pagination visible
-
-## Phase 3 — Assistant et galerie
-- [ ] Assistant 3 étapes avec aperçu réel, visuel recommandé, phrase `decrire()` ; galerie ≥ 35 widgets validés
-
-## Phase 4 — Widgets tableau
-- [ ] Tableau agrégé (totaux/« Autres » dédiés) + liste de fiches (colonnes, tri, 200 lignes) ; impression paginée avec en-têtes répétés
-
-## Phase 5 — Filtres et transparence
-- [ ] Filtres globaux/propres, badge, légende imprimée, ⓘ, annexe méthodologique, « Voir les fiches »
-
-## Phase 6 — Éditions et exports
-- [ ] Générer/figer (immuable, versionnée), PDF A4/A3, Excel multi-feuilles, CSV, bibliothèque de widgets favoris
-
-## Phase 7 — Recette
-- [ ] Scénarios 85–96, régression 1–84, captures FR/AR × clair/sombre, README, QA verte
-
-## Journal V8.2
-- 2026-11-16 — Phase 1 : audit R1–R7, `describe.js` (5 tests), schémas widget/section, 8 modèles système idempotents (4 tests). Vitest ciblé vert. Suite : mode Personnaliser.
-
----
-
-# PLAN V9 — Studio corrigé et base des réseaux sociaux
-
-Références : prompt V9, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `DECISIONS.md`. Le tag `avant-v9` marque l’état de départ. Chaque phase se termine par un résumé de cinq lignes maximum.
-
-## Phase 1 — Audit et Partie A (L1–L10)
-- [x] `AUDIT_V9.md` : causes et correctifs L1–L10, état réel des parties B/C
-- [x] Grille 12 colonnes, largeurs portées par le modèle système (KPI 12, anneau 4, daïra 8)
-- [x] KPI sans troncature, anneau entier avec légende, tableau sans scroll ni pagination inutile
-- [x] Largeur d’affichage (Écran large / Fidèle à l’impression / Plein écran), barre compacte, en-tête compact, aucun jargon, menu non rogné
-- [x] Barre d’actions des widgets (ⓘ, données, fiches, plein écran, CSV/PNG), étiquette système unique
-- [x] Scénarios 113–115 (géométrie, axe, FR/AR, clair/sombre) et `npm run qa` vert ; commit de phase
-
-## Phase 2 — Socle réseaux sociaux (déjà livré, à vérifier)
-- [x] Migration additive `011_reseaux_sociaux.sql` (au lieu de 007, déjà appliquée), `shared/`, permissions, audit
-- [x] Lecture/export pour tous les rôles, écritures admin, verrou optimiste, soft delete
-- [x] Reprendre les tests de schéma/normalisation manquants et documenter l’écart de route/migration dans `AUDIT_V9.md` / `DECISIONS.md`
-
-## Phase 3 — Import et qualification
-- [x] Assistant d’import enrichi : en-tête tolérant, hyperliens, paires, téléphones refusés, aperçu, annulation, idempotence
-- [x] Rapprochement territorial et conflits explicites conservés (aucune commune inventée ; création du référentiel restée explicite hors import)
-- [x] File « À qualifier » avec P/R/G/C/I et annulation Z ; cinq onglets et panneaux Imports/Qualité ; scénarios 116–119
-
-## Phase 4 — Interface `#/reseaux-sociaux`
-- [x] Ajout manuel et en lot, édition, fusion, corbeille, historique, contrôle manuel, onglet Qualité
-- [x] Scénarios 120–121 et 126
-
-## Phase 5 — Statistiques et catalogue
-- [ ] Jeux `sources`/`couverture`, ≥ 14 widgets, modèle système n°9, cohérence annuaire/Lab/export
-- [ ] Scénarios 122 et 124
-
-## Phase 6 — Données personnelles et intégrations
-- [ ] Masquage des profils par rôle, audit de consultation, aucun bouton Veille sur un profil, exports
-- [ ] Suggestion de source dans le formulaire anomalie, filtre source, revue annuelle ; scénarios 123 et 125
-
-## Phase 7 — P2/P3
-- [ ] Import « stat semestrielle » et POINTS hebdomadaires ; scénario 127
-
-## Phase 8 — Recette
-- [ ] Captures FR/AR × clair/sombre, README, `AUDIT_V9.md` final, `npm run qa` vert, scénarios 113–128
-
-## Journal V9
-- 2026-11-17 — Tag `avant-v9`, audit initial et plan. Début de la phase 1.
-- 2026-11-17 — Phase 1 livrée : L1–L10 corrigés, 7 tests dédiés (dont 4 variantes FR/AR × clair/sombre), `npm run qa` vert (115 Playwright).
-- 2026-11-17 — Phases 2–3 livrées : import tolérant et annulable, refus contact/Feuil1, compteurs qualité SQL, cinq onglets `#/reseaux` et file P/R/G/C/I avec Z. 17 scénarios du répertoire verts.
-- 2026-11-17 — Phase 4 livrée : ajout par lot (≤ 100), fusion contrôlée, corbeille/restauration, contrôle manuel et historique audité ; migration additive `012`, 28 tests serveur, scénarios 120/121/126 et `npm run qa` vert (614 Vitest, 11 E2E API, 124 Playwright).
-- 2026-11-17 — Studio : « Plein écran », barre compacte masquant menu et topbar, retour à la semaine courante ; contrats de migration alignés sur `001–012`. Scénario dédié FR/AR à 390/1440 px et `npm run qa` vert.
-- 2026-11-17 — Synthèse — confort général et impression : aperçu A4 fidèle, sections de réglages et réinitialisation, largeurs de blocs respectées sur la feuille, accès à l'impression depuis le canevas, état accessible de la page. Nouveau scénario Studio et `npm run qa` vert (614 Vitest, 11 E2E API, 125 Playwright).
-- 2026-11-17 — Correction compression : les actions des cartes étroites se replient au lieu de déborder ; le scénario 113 contrôle l'absence de débordement interne de toutes les cartes.
-- 2026-11-17 — Graphiques et rendu professionnel : clés HTML avec totaux/pourcentages, valeurs sur barres simples, axes tokens, suppression de la limite 65 mm à l'impression et bouton « Aperçu A4 » pendant la création. Nouveau scénario dédié ; `npm run qa` vert (614 Vitest, 11 E2E API, 126 Playwright).
-- 2026-11-17 — « Synthèse hebdomadaire standard » s'ouvre désormais en pleine largeur (`max`) dans le Studio et la feuille autonome ; le choix manuel reste prioritaire. Scénarios 114 et plein écran adaptés sans affaiblissement.
-
----
-
-# PLAN V10 — Studio de synthèses « façon atelier »
-
-Références : prompt V10, `docs/SPEC_V8.md`, `PLAN.md`, `DECISIONS.md`, `AUDIT_V10.md`. Le tag `avant-v10` marque l'état de départ (`5786eaf`). Chaque phase se termine par un résumé de cinq lignes maximum, puis un commit quand le gate est vert. Priorité : **P1 d'abord**, P2 ensuite.
-
-## Phase 1 — Grille libre, pagination et migration sections → grille
-- [x] Audit initial dans `AUDIT_V10.md` et décisions de numérotation/compatibilité
-- [x] `layout_json` 12 colonnes × 40 px avec positions `x, y, w, h`, déplacement/redimensionnement souris + clavier, magnétisme, guides, zoom 50–150 %, RTL
-- [x] `paginer()` déterministe dans `shared/` : aucun widget coupé, sauts forcés, A4/A3 portrait/paysage, mêmes pages écran/PDF
-- [x] Conversion fidèle des modèles système `sections` → grille ; éditions figées inchangées ; scénarios 130, 139, 140 (migration)
-
-## Phase 2 — Sélecteur et widgets
-- [ ] Fenêtre « Ajouter un widget » par cartes, tailles affichées, recherche, aperçu en direct, bouton Ajouter justifié
-- [ ] Actions widget et `ErrorBoundary` par widget, sans bloquer le projet
-- [ ] Radial, camembert et barres sans chevauchement (repli en légende) ; carte recadrée et hors-ligne ; scénarios 129, 136, 137
-
-## Phase 3 — Jeux de données
-- [ ] Gestionnaire, import CSV/XLSX, schéma, aperçu et profilage
-- [ ] Tables générées sûres et adaptateurs raccordés au moteur unique
-- [ ] Scénarios 132 et 133
-
-## Phase 4 — Filtres-widgets
-- [ ] Filtres texte, liste, composite, période et curseur
-- [ ] Portées, correspondance de champs, filtrage croisé et barre active
-- [ ] Scénario 134
-
-## Phase 5 — Couleurs et styles
-- [ ] Sélecteur visuel, hex validé, nom Tailwind, pipette et palettes
-- [ ] Règles par valeur, échelle continue, contraste AA et adaptation sombre
-- [ ] Style de projet, application par type et pinceau ; scénario 135
-
-## Phase 6 — Sorties de données
-- [ ] Vue des données d'un widget, lignes sources et export du jeu
-- [ ] Panier multi-feuilles, tâche longue et extracteur libre
-- [ ] Mêmes nombres qu'à l'écran, droits par rôle et audit ; scénario 138
-
-## Phase 7 — Aides et projets
-- [ ] Glisser un champ, suggestions, kits de démarrage et `Ctrl+K`
-- [ ] Enregistrer sous, mes projets, partage équipe et import/export JSON
-- [ ] Scénarios 131, 133 et 140
-
-## Phase 8 — Recette
-- [ ] Scénarios 129 à 141, régression 1 à 128, captures FR/AR × clair/sombre
-- [ ] README, `AUDIT_V10.md` final et `npm run qa` vert
-
-## Journal V10
-- 2026-11-18 — Tag `avant-v10`, audit initial et plan. Migration V10 prévue en `013_studio_atelier.sql` (`008` déjà appliquée). Début de la phase 1.
-- 2026-11-18 — Phase 1 livrée : `shared/src/layout.js` (grille 12×40, conversion sections→grille, `decouperEnPages`, déplacement/redimensionnement), schémas `layout` additifs, `StudioGrid` (drag/resize souris+clavier, zoom 50–150 %, RTL), sauts de page CSS `break-before`. Modèles système resemés avec `layout`. Tests 130/139/140 + unitaires `layout`. `npm run qa` vert (621 Vitest, 11 E2E, 129 Playwright, styles/a11y OK).
-
-## Journal V11 — Phase 2 KPI
-- 2026-11-18 — Bloc KPI complet : bibliothèque mesures (FR/AR, catégories, favoris), sélection 24 mesures max, objectifs/seuils par mesure, filtres/périodes, ordre/groupes, mise en page auto-fit sans rognage, cinq préréglages ; scénario 143.
-
----
-
-# PLAN V11 — KPI, colonnes et impression organisée
-
-Références : prompt V11, `docs/SPEC_V8.md`, `AUDIT_V9.md`, `AUDIT_V10.md`, `AUDIT_V11.md`, `DECISIONS.md`. Le tag `avant-v11` pointe sur `dd30f1e`. La migration demandée `009_impression.sql` est remplacée par l'additive `013_impression.sql`, car `009–012` sont déjà appliquées. Chaque phase finit par un gate vert, un résumé de cinq lignes maximum et un commit.
-
-## Phase 1 — Géométrie d'écran et actions compactes
-- [x] Tests géométriques partagés et navigateur : 50 dispositions, intersections, rognage et barre d'actions
-- [x] Normalisation transitive, compactage vertical et mode libre ; ajout/suppression/déplacement/redimensionnement sûrs
-- [x] Hauteur automatique mesurée, bornes et indicateur du mode fixe
-- [x] Barre d'actions compacte en flux et `ErrorBoundary` local ; scénario 142
-
-## Phase 2 — Bloc KPI complet
-- [x] Bibliothèque de toutes les mesures autorisées, recherche FR/AR, catégories, favoris et aperçu
-- [x] Bloc 1–24 KPI, réglages, comparaisons, objectifs, seuils, filtres/périodes et ordre/groupes
-- [x] Mise en page auto-fit sans rognage et cinq préréglages ; scénario 143
-
-## Phase 3 — Colonnes au choix
-- [ ] Schémas partagés, sélecteur complet, recherche, ordre, formats, totaux et visibilités écran/impression
-- [ ] Priorités P1/P2/P3, préréglages/vues et exclusion des champs sensibles selon le rôle
-- [ ] Ajustement impression : densité, masquage, paysage et bandes ; scénarios 144–145
-
-## Phase 4 — Pipeline d'impression dédié
-- [ ] Migration `013_impression.sql`, références uniques et réglages immuables des éditions
-- [ ] Mesure hors écran, bandes, `paginer()` pur et pages statiques multi-format sans contrôles
-- [ ] Route `#/imprimer/:id`, garde/en-têtes/pieds/filigrane/sommaire/annexe/signature ; scénarios 147–149
-
-## Phase 5 — Concepteur et PDF
-- [ ] Aperçu avec miniatures, zoom, avertissements et réglages/préréglages persistants
-- [ ] PDF serveur Chromium, repli navigateur, noms de fichiers et drapeau de préparation
-- [ ] Couleur/gris/N&B et économique ; scénarios 146, 150, 151 et 153
-
-## Phase 6 — Snapshots, stress et formats
-- [ ] Réimpression des éditions figées depuis leurs snapshots sans mutation
-- [ ] A3 paysage, Lettre, RTL/AR, tableaux 500 lignes, 30 KPI et budgets de performance
-- [ ] Scénarios 152 et 154
-
-## Phase 7 — Recette
-- [ ] Scénarios 142–155 et régression 1–141, clair/sombre, FR/AR, responsive et F5
-- [ ] Captures, quatre PDF d'exemple, README et audit final
-- [ ] `npm run qa` intégral vert
-
-## Journal V11
-- 2026-11-18 — Socle V10 phase 1 figé par `dd30f1e`, tag `avant-v11`, audit réel et plan V11. La prochaine migration disponible est `013`.
-- 2026-11-18 — Phase 1 : collisions transitives + compactage, hauteur `ResizeObserver`, actions compactes/menu et repli d'erreur local. Le filigrane géant devient une bannière discrète ; l'autosave tolère un serveur ancien sans afficher « Modèle invalide ». Scénario 142, 627 Vitest, 11 E2E API, 131 Playwright, styles et contrastes verts.
+Ordre d'exécution : Phase 1 → validation → Phase 2 → validation → Phase 3 → validation → Phase 4 → validation → Phase 5 → livraison.

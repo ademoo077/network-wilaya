@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Download, FilterX, ListX, Plus } from 'lucide-react';
+import { Download, FilterX, ListX, Upload } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { anomalyAction } from '@anm/shared';
 import { download, queryString } from '../../api/client.js';
@@ -16,24 +17,27 @@ import AnomalyPreview from './AnomalyPreview.jsx';
 import AnomalyTable from './AnomalyTable.jsx';
 import AnomalyActionDialog from './AnomalyActionDialog.jsx';
 import BulkStatusDialog from './BulkStatusDialog.jsx';
+import ImportAnomaliesDialog from './ImportAnomaliesDialog.jsx';
 import QuickViews from './QuickViews.jsx';
 import SavedViews from '../views/SavedViews.jsx';
 import { useAnomalyMutation, usePendingAnomalies } from './useAnomalyMutation.js';
 
-const filterLabels = { q: 'common.search', statut: 'field.status', verification: 'field.verification', domaine: 'field.category',
+const filterLabels = { q: 'common.search', statut: 'field.status', domaine: 'field.category',
   type: 'field.type', daira: 'field.daira', commune: 'field.commune', epic: 'field.epic', agent: 'field.agent',
   plateforme: 'field.platform', priorite: 'field.priority', from: 'field.from', to: 'field.to', gps: 'field.gps',
   include_infirmees: 'dashboard.includeDenied', ouvertes: 'dashboard.openStock', retard: 'list.late',
-  verification_retard: 'work.verification', sla_depassee: 'work.urgent', incompletes: 'work.incomplete', sans_photo: 'work.noPhoto', sans_agent: 'field.agent' };
+  sla_depassee: 'work.urgent', incompletes: 'work.incomplete', sans_photo: 'work.noPhoto', sans_agent: 'field.agent' };
 
 export default function AnomaliesPage() {
   const { t } = useI18n(); const { user } = useAuth(); const { refs } = useRefs(); const { push } = useToast();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams(); const signature = searchParams.toString();
   const filters = useMemo(() => Object.fromEntries(new URLSearchParams(signature).entries()), [signature]);
   const q = useDebounced(filters.q || '');
   const query = useApiQuery(`/anomalies${queryString({ ...filters, q })}`); const data = query.data;
   const [selected, setSelected] = useState([]); const [preview, setPreview] = useState(null); const [bulk, setBulk] = useState(null);
   const [action, setAction] = useState(null); const [exporting, setExporting] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
   const { mutate } = useAnomalyMutation(); const pending = usePendingAnomalies();
   const writable = user.role !== 'lecteur';
   useEffect(() => { setSelected([]); }, [signature]);
@@ -57,6 +61,8 @@ export default function AnomaliesPage() {
     if (item[field] === value) return;
     const plan = anomalyAction(item, field, value);
     if (plan.blocked) { push(t(`action.${plan.blocked}`), 'warning'); return; }
+    // V12 : le passage « traité » passe toujours par le dialogue photo après / dispense.
+    if (field === 'statut' && value === 'traite') { setAction({ item, field, value }); return; }
     if (plan.needsInput) setAction({ item, field, value });
     else mutate({ item, field, body: plan.body });
   }, [mutate, push, t]);
@@ -69,7 +75,7 @@ export default function AnomaliesPage() {
   return <div className="page-container">
     <PageHeader title={t('anomalies.title')} description={t('anomalies.count', { count: data?.total || 0 })} actions={<>
       {['csv', 'xlsx'].map((format) => <Button key={format} variant="secondary" loading={exporting === format} disabled={Boolean(exporting)} onClick={() => exportFile(format)}><Download className="h-4 w-4" />{format === 'csv' ? 'CSV' : 'Excel'}</Button>)}
-      {writable && <Button as={Link} to="/anomalies/nouvelle"><Plus className="h-4 w-4" />{t('nav.new')}</Button>}</>} />
+      {writable && <Button variant="secondary" aria-label={t('import.button')} onClick={() => setImportOpen(true)}><Upload className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{t('import.button')}</span></Button>}</>} />
     <SavedViews filters={{ ...filters, q }} apply={applyFilters} />
     <QuickViews filters={{ ...filters, q }} update={update} />
     <AnomalyFilters filters={filters} setFilter={setFilter} refs={refs} />
@@ -90,5 +96,6 @@ export default function AnomaliesPage() {
     <AnomalyPreview item={preview ? data?.items?.find((row) => row.id === preview.id) || preview : null} onClose={() => setPreview(null)} />
     {bulk && <BulkStatusDialog open ids={bulk.ids} initialStatus={bulk.statut} onClose={() => setBulk(null)} onDone={() => query.refetch()} />}
     {action && <AnomalyActionDialog item={action.item} action={action} onClose={() => setAction(null)} />}
+    {importOpen && <ImportAnomaliesDialog open onClose={() => setImportOpen(false)} refs={refs} onImported={() => { query.refetch(); queryClient.invalidateQueries({ queryKey: ['stats'] }); }} />}
   </div>;
 }

@@ -1,4 +1,4 @@
-import { PLATEFORMES, PRIORITES, STATUTS, VERIFICATIONS } from '@anm/shared';
+import { PLATEFORMES, PRIORITES, STATUTS } from '@anm/shared';
 import { Card, Checkbox, Combobox, Input, Select } from '../../components/ui/index.js';
 import { useI18n } from '../../i18n/index.jsx';
 import { refOptions } from './helpers.js';
@@ -7,7 +7,7 @@ export default function AnomalyFilters({ filters, setFilter, refs }) {
   const { t, lang } = useI18n();
   const domain = refs.domaines.find((item) => String(item.id) === String(filters.domaine));
   const daira = refs.dairas.find((item) => String(item.id) === String(filters.daira));
-  const enums = [['statut', 'field.status', STATUTS, 'status'], ['verification', 'field.verification', VERIFICATIONS, 'verification'],
+  const enums = [['statut', 'field.status', STATUTS, 'status'],
     ['plateforme', 'field.platform', PLATEFORMES, 'platform'], ['priorite', 'field.priority', PRIORITES, 'priority']];
   const referenceFields = [['domaine', 'field.category', refs.domaines], ['type', 'field.type', domain?.types ?? []],
     ['daira', 'field.daira', refs.dairas], ['commune', 'field.commune', daira?.communes ?? []],
@@ -16,7 +16,7 @@ export default function AnomalyFilters({ filters, setFilter, refs }) {
     <Input className="sm:col-span-2" type="search" label={t('common.search')} value={filters.q || ''} onChange={(event) => setFilter('q', event.target.value)} />
     {enums.map(([key, label, values, prefix]) => <Select key={key} label={t(label)} placeholder={t('common.all')} value={filters[key] || ''}
       options={values.map((value) => ({ value, label: t(`${prefix}.${value}`) }))}
-      onChange={(event) => setFilter(key, event.target.value, key === 'verification' && event.target.value === 'infirmee' ? { include_infirmees: 1 } : {})} />)}
+      onChange={(event) => setFilter(key, event.target.value)} />)}
     {referenceFields.map(([key, label, items]) => <Combobox key={key} label={t(label)} placeholder={t('common.all')} value={filters[key] || ''}
       options={refOptions(items, lang)} onChange={(value) => setFilter(key, value, key === 'domaine' ? { type: '' } : key === 'daira' ? { commune: '' } : {})} />)}
     <Select label={t('field.gps')} placeholder={t('common.all')} value={filters.gps || ''}

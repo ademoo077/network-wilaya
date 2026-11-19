@@ -2,14 +2,14 @@ import { Router } from 'express';
 import multer from 'multer';
 import {
   anomalieCreateSchema, anomaliePatchSchema, anomalieQuerySchema, statutChangeSchema,
-  verificationChangeSchema, bulkStatutSchema, importCommitSchema, zodFields,
+  verificationChangeSchema, bulkStatutSchema, importCommitSchema, importPreviewOptionsSchema, zodFields,
+  sansSuiteSchema,
   nearbyQuerySchema, duplicateAnomalyValues,
 } from '@anm/shared';
 import { getDb } from '../db/index.js';
 import { requireAuth, requireAdmin, requireWrite } from '../middleware/auth.js';
 import { asyncHandler, badRequest } from '../utils/errors.js';
 import { audit } from '../services/audit.js';
-import { getBoolParam } from '../services/settings.js';
 import { getAnomalie, listAnomalies, getHistorique, listCorbeille } from '../services/anomalyRead.js';
 import {
   createAnomalie, updateAnomalie, deleteAnomalie, restoreAnomalie, bulkStatut, checkLink,
@@ -18,7 +18,7 @@ import { exportAnomalies } from '../services/export.js';
 import {
   previewImport, commitImport, importTemplate, importErrorsCsv,
 } from '../services/importAnomalies.js';
-import { savePiece } from '../services/attachments.js';
+import { listPieces, savePiece } from '../services/attachments.js';
 import { nearbyAnomalies } from '../services/geoLocation.js';
 import { anomalyCounts } from '../services/anomalyCounts.js';
 import { anomalyMap } from '../services/anomalyMap.js';
@@ -26,7 +26,7 @@ import { anomalyMap } from '../services/anomalyMap.js';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 
-const settings = () => ({ exigerVerification: getBoolParam(getDb(), 'exiger_verification', true) });
+const settings = () => ({ exigerVerification: false });
 const parse = (schema, body) => {
   const result = schema.safeParse(body);
   if (!result.success) throw badRequest('Données invalides', zodFields(result.error));
@@ -42,12 +42,12 @@ router.get('/', requireAuth, (req, res) => {
   if (isTrash && req.user.role !== 'admin') {
     return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Corbeille réservée aux administrateurs' } });
   }
-  const result = isTrash ? listCorbeille(db, params) : listAnomalies(db, params);
+  const result = isTrash ? listCorbeille(db, params) : listAnomalies(db, params, req.user);
   res.json(result);
 });
 
 router.get('/counts', requireAuth, (req, res) => {
-  res.json({ item: anomalyCounts(getDb(), parse(anomalieQuerySchema, req.query)) });
+  res.json({ item: anomalyCounts(getDb(), parse(anomalieQuerySchema, req.query), req.user) });
 });
 
 router.get('/map', requireAuth, (req, res) => {
@@ -83,7 +83,8 @@ router.get('/import/template', requireAuth, (req, res) => {
 
 router.post('/import/preview', requireWrite, upload.single('file'), asyncHandler(async (req, res) => {
   if (!req.file) throw badRequest('Fichier CSV ou XLSX requis');
-  const result = await previewImport(getDb(), req.file, req.user, settings());
+  const options = parse(importPreviewOptionsSchema, req.body || {});
+  const result = await previewImport(getDb(), req.file, req.user, settings(), options);
   res.json({ item: result });
 }));
 
@@ -159,6 +160,14 @@ router.post('/:id/verification', requireWrite, (req, res) => {
   res.json({ item });
 });
 
+router.post('/:id/sans-suite', requireWrite, (req, res) => {
+  const data = parse(sansSuiteSchema, req.body);
+  // « Sans suite » = vérification infirmée, statut non traité, motif obligatoire.
+  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), { ...data, verification: 'infirmee' }, req.user.id, settings());
+  audit(req, 'ANOMALIE_SANS_SUITE', { entite: 'anomalies', entiteId: item.id, details: { motif: data.motif, champs: changes.map((c) => c.champ) } });
+  res.json({ item });
+});
+
 router.delete('/:id', requireAdmin, (req, res) => {
   const result = deleteAnomalie(getDb(), Number(req.params.id), req.user.id, req.body?.motif || null);
   audit(req, 'ANOMALIE_DELETE', { entite: 'anomalies', entiteId: result.id });
@@ -173,13 +182,16 @@ router.post('/:id/restore', requireAdmin, (req, res) => {
 
 router.post('/:id/pieces', requireWrite, upload.single('file'), asyncHandler(async (req, res) => {
   if (!req.file) throw badRequest('Fichier requis');
-  const item = await savePiece(getDb(), Number(req.params.id), req.file, req.user.id);
+  const item = await savePiece(getDb(), Number(req.params.id), req.file, req.user.id, {
+    role: req.body.role, legende: req.body.legende, prise_le: req.body.prise_le,
+    principale: req.body.principale === '1' || req.body.principale === true,
+    gps_lat: req.body.gps_lat, gps_lng: req.body.gps_lng,
+  });
   res.status(201).json({ item });
 }));
 
 router.get('/:id/pieces', requireAuth, (req, res) => {
-  const items = getDb().prepare('SELECT id, nom_original, mime, taille, created_at FROM pieces_jointes WHERE anomalie_id = ? ORDER BY id').all(Number(req.params.id));
-  res.json({ items });
+  res.json({ items: listPieces(getDb(), Number(req.params.id)) });
 });
 
 export default router;

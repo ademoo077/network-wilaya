@@ -10,7 +10,7 @@ function clamp(value, min, max) {
 }
 
 export default function StudioGrid({
-  layout, blocs, results, mode, t, lang, dir, zoom = 100,
+  layout, blocs, results, mode, t, lang, dir, zoom = 100, role = 'operateur',
   onVoirFiches, onEdit, onRemove, onDuplicate, onTogglePrint, onMove, onResize, onMoveBloc,
   onAutoResize, onUndo, onRedo,
 }) {
@@ -171,6 +171,7 @@ export default function StudioGrid({
         onPointerMove={deplacer} onPointerUp={terminer}
         onMovePointerDown={(event, rect, kind = 'move') => demarrer(event, rect, kind)}
         onMeasure={mesurer}
+        role={role}
       />;
     })}
     {preview && <div className="pointer-events-none absolute inset-y-0 w-px bg-brand-500" data-guide style={{ insetInlineStart: `${(preview.rect.x / GRILLE_COLONNES) * 100}%` }} />}

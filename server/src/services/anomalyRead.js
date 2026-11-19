@@ -11,6 +11,10 @@ export const ANOMALIE_SELECT = `
          ag.full_name AS agent_nom, ag.matricule AS agent_matricule,
          u.full_name AS saisi_par_nom, u.username AS saisi_par_username,
          (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id) AS pieces_count,
+          (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'avant') AS photos_avant_count,
+          (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'apres') AS photos_apres_count,
+          (SELECT p.id FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'avant' ORDER BY p.principale DESC, p.id LIMIT 1) AS photo_avant_id,
+          (SELECT p.id FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'apres' ORDER BY p.principale DESC, p.id LIMIT 1) AS photo_apres_id,
          (SELECT COUNT(*) FROM anomalies r WHERE r.lie_a_id = a.id AND r.deleted_at IS NULL) AS repetitions_count,
          parent.reference AS lie_a_reference
   FROM anomalies a
@@ -44,10 +48,10 @@ export function getAnomalieRaw(db, id) {
   return db.prepare('SELECT * FROM anomalies WHERE id = ?').get(id);
 }
 
-export function listAnomalies(db, params = {}) {
+export function listAnomalies(db, params = {}, user = null) {
   const page = Number(params.page) || 1;
   const pageSize = Math.min(Number(params.pageSize) || PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX);
-  const { clause, values } = buildFilters(params, { trash: params.trash });
+  const { clause, values } = buildFilters(params, { trash: params.trash, user });
   const total = db.prepare(`SELECT COUNT(*) AS c FROM anomalies a ${clause}`).get(values).c;
   const rows = db.prepare(`${ANOMALIE_SELECT} ${clause} ${orderBy(params.sort, params.dir)}
                            LIMIT @limit OFFSET @offset`)

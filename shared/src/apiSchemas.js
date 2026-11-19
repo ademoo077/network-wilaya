@@ -24,6 +24,17 @@ export const anomalyMapSchema = z.object({ items: z.array(z.object({ id: z.numbe
   statut: z.enum(STATUTS), gps: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
 }).passthrough()), missing: z.number().nonnegative(), total: z.number().nonnegative() });
 const items = z.object({ items: z.array(z.object({}).passthrough()) }).passthrough();
+const photoPairPieceSchema = z.object({
+  id: z.number().int().positive(), anomalie_id: z.number().int().positive(),
+  role: z.enum(['avant', 'apres', 'autre']), thumb_url: z.string().nullable(), url: z.string(),
+}).passthrough();
+export const photoPairsSchema = z.object({
+  items: z.array(z.object({
+    anomalie_id: z.number().int().positive(), reference: z.string(),
+    date_traitement: z.string().nullable(),
+    avant: photoPairPieceSchema, apres: photoPairPieceSchema,
+  }).passthrough()),
+}).passthrough();
 export const veilleElementSchema = z.object({
   id: z.number(), texte: z.string(), statut: z.string(), priorite: z.string(),
   score: z.number(), confiance: z.string().nullable().optional(),
@@ -139,6 +150,36 @@ export const syntheseEditionSchema = z.object({
 }).passthrough();
 export const syntheseEditionListSchema = z.object({ items: z.array(syntheseEditionSchema) }).passthrough();
 
+const importPreviewRow = z.object({
+  ligne: z.number().int().positive(), statut: z.enum(['ok', 'warning', 'error']),
+  messages: z.array(z.string()).default([]),
+  raw: z.object({}).passthrough(),
+  resolved: z.object({
+    date: z.string().nullable().optional(), statut: z.enum(STATUTS),
+    statut_source: z.enum(STATUTS).nullable().optional(),
+    categorie: z.string().nullable().optional(), type: z.string().nullable().optional(),
+    daira: z.string().nullable().optional(), commune: z.string().nullable().optional(),
+    type_approx: z.boolean().optional(),
+  }).passthrough(),
+  data: z.object({}).passthrough().optional(),
+}).passthrough();
+
+export const anomaliesImportPreviewSchema = z.object({ item: z.object({
+  importId: z.string().min(8), fileName: z.string(), sheetName: z.string().nullable().optional(),
+  summary: z.object({
+    total: z.number().int().nonnegative(), ok: z.number().int().nonnegative(),
+    warning: z.number().int().nonnegative(), error: z.number().int().nonnegative(),
+  }).passthrough(),
+  rows: z.array(importPreviewRow),
+}).passthrough() });
+
+export const anomaliesImportResultSchema = z.object({ item: z.object({
+  importId: z.string(), created: z.number().int().nonnegative(), skipped: z.number().int().nonnegative(),
+  errors: z.array(z.object({ ligne: z.number(), messages: z.array(z.string()) }).passthrough()),
+  summary: z.object({}).passthrough(),
+}).passthrough() });
+
+
 export function responseContract(path) {
   const route = path.split('?')[0];
   if (['/auth/me', '/auth/login'].includes(route)) return [authResponseSchema, null];
@@ -150,6 +191,7 @@ export function responseContract(path) {
   if (/^\/reseaux-sociaux\/\d+\/historique$/.test(route)) return [compteSocialHistoryListSchema, { items: [], total: 0 }];
   if (/\/reseaux-sociaux\/\d+\/(?:restaurer|controle)$/.test(route)) return [compteSocialActionResultSchema, { item: null }];
   if (/^\/reseaux-sociaux\/\d+$/.test(route)) return [compteSocialItemSchema, { item: null }];
+  if (route === '/photos/paires') return [photoPairsSchema, { items: [] }];
   if (route === '/setup/status') return [z.object({ referentielTerritorialVide: z.boolean() }).passthrough(), null];
   if (route === '/anomalies') return [anomalyListSchema, emptyAnomalyList];
   if (route === '/veille/elements') return [veilleElementListSchema, { items: [], total: 0, page: 1, pageSize: 25 }];

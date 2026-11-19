@@ -100,12 +100,14 @@ describe('Transitions de vérification et de statut', () => {
     id = res.body.item.id;
   });
 
-  it('refuse « en cours » sans vérification confirmée', async () => {
+  it('autorise « en cours » sans vérification (V12)', async () => {
     const res = await transition(id, {
       version, statut: 'en_cours', epic_id: refs.epicId, date_intervention: day(-2),
     });
-    expect(res.status).toBe(422);
-    expect(res.body.error.code).toBe('VERIFICATION_REQUISE');
+    expect(res.status).toBe(200);
+    expect(res.body.item.statut).toBe('en_cours');
+    expect(res.body.item.verification).toBe('a_verifier');
+    version = res.body.item.version;
   });
 
   it('confirme avec agent puis passe en cours puis traité', async () => {
@@ -122,11 +124,18 @@ describe('Transitions de vérification et de statut', () => {
     expect(inProgress.body.item.date_traitement).toBeNull();
     version = inProgress.body.item.version;
 
-    const done = await transition(id, {
+    const sansPhoto = await transition(id, {
       version, statut: 'traite', date_traitement: day(-1),
+    });
+    expect(sansPhoto.status).toBe(422);
+    expect(sansPhoto.body.error.code).toBe('PHOTO_APRES_REQUISE');
+
+    const done = await transition(id, {
+      version, statut: 'traite', date_traitement: day(-1), sans_photo_motif: 'Photo impossible sur site',
     });
     expect(done.status).toBe(200);
     expect(done.body.item.statut).toBe('traite');
+    expect(done.body.item.sans_photo_motif).toBe('Photo impossible sur site');
     expect(done.body.item.date_intervention).toBe(day(-2));
     expect(done.body.item.date_traitement).toBe(day(-1));
     version = done.body.item.version;

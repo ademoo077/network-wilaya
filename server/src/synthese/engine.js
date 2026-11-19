@@ -84,6 +84,22 @@ const SIMPLE_SQL = {
     num: 'SUM(CASE WHEN a.lie_a_id IS NOT NULL THEN 1 ELSE 0 END)',
     den: 'COUNT(*)',
   },
+  // V12 — affectation des agents et photos avant/après.
+  non_affectees: "SUM(CASE WHEN {{statusAt}} <> 'traite' AND a.agent_id IS NULL THEN 1 ELSE 0 END)",
+  delai_prise_en_charge: 'AVG(CASE WHEN a.agent_affecte_le IS NOT NULL THEN julianday(a.agent_affecte_le) - julianday(a.date_signalement) END)',
+  charge_agent: "ROUND(1.0 * SUM(CASE WHEN {{statusAt}} <> 'traite' AND a.agent_id IS NOT NULL THEN 1 ELSE 0 END) / NULLIF((SELECT COUNT(*) FROM agents WHERE actif = 1), 0))",
+  taux_traitement_par_agent: {
+    num: 'SUM(CASE WHEN a.agent_id IS NOT NULL THEN 1 ELSE 0 END)',
+    den: 'COUNT(*)',
+  },
+  taux_photo_avant: {
+    num: "SUM(CASE WHEN EXISTS (SELECT 1 FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'avant') THEN 1 ELSE 0 END)",
+    den: 'COUNT(*)',
+  },
+  taux_photo_apres: {
+    num: "SUM(CASE WHEN EXISTS (SELECT 1 FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'apres') THEN 1 ELSE 0 END)",
+    den: 'COUNT(*)',
+  },
 };
 
 const RANKED_SQL = {

@@ -144,9 +144,13 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     setSaving(true);
     setSaveError(null);
     try {
-      const updated = await updateModel(currentModele, def);
+      // Un modèle système n'est jamais modifié : la première écriture crée (ou retrouve)
+      // la copie personnelle, puis y enregistre la définition éditée (aucune perte).
+      let cible = currentModele;
+      if (cible.portee === 'systeme') cible = await personalizeModel(cible);
+      const updated = await updateModel(cible, def);
       const next = updated.item || updated;
-      if (scope !== documentRevision.current || modeleRef.current?.id !== currentModele.id) return next;
+      if (scope !== documentRevision.current || modeleRef.current?.id !== cible.id) return next;
       modeleRef.current = next;
       // Les modifications faites pendant le PUT restent à enregistrer avec la nouvelle version.
       setDirty(revision !== editRevision.current);
@@ -190,7 +194,8 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     if (!changed) return;
     pushHistory(next);
     markDirty();
-  }, [currentDefinition, pushHistory, markDirty]);
+    void evaluate(next);
+  }, [currentDefinition, pushHistory, markDirty, evaluate]);
 
   const addBloc = useCallback((sectionId, bloc) => {
     const next = cloneDefinition(currentDefinition);

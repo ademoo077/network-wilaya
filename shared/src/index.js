@@ -13,6 +13,8 @@ export * from './layout.js';
 export * from './describe.js';
 export * from './widgets.js';
 export * from './kpis.js';
+export * from './columns.js';
+export * from './widgetStyle.js';
 export * from './geo.js';
 export * from './smartPaste.js';
 export * from './apiSchemas.js';

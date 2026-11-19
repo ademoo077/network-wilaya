@@ -16,13 +16,18 @@ export const PRIORITES = ['normale', 'haute', 'urgente'];
 export const GPS_SOURCES = ['manuel', 'lien_carte', 'lien_court', 'legende', 'exif', 'appareil', 'carte', 'voisinage'];
 export const CONTENU_TYPES = ['reel', 'video', 'post', 'story', 'short', 'photo', 'direct', 'autre'];
 
+// V12 — photos avant/après : 5 maximum par rôle, pas de dépassement global.
+export const PHOTO_ROLES = ['avant', 'apres', 'autre'];
+export const MAX_PIECES_PAR_ROLE = 5;
+
 export const REF_ENTITIES = ['domaines', 'types', 'dairas', 'communes', 'epics', 'agents'];
 
 export const DEFAULT_PARAMS = {
   nom_cellule: 'Cellule technique de numérisation',
   week_start_day: '0',
   delai_retard_jours: '7',
-  exiger_verification: '1',
+  exiger_verification: '0',
+  photo_apres_obligatoire: '1',
   tile_url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
   backup_retention_days: '30',
   gps_bbox: '36.40,2.50,36.95,3.40',
@@ -48,7 +53,7 @@ export const DEFAULT_PARAMS = {
 };
 
 export const PUBLIC_PARAMS = [
-  'nom_cellule', 'week_start_day', 'tile_url', 'gps_bbox', 'delai_retard_jours',
+  'nom_cellule', 'week_start_day', 'tile_url', 'gps_bbox', 'delai_retard_jours', 'photo_apres_obligatoire',
   'rayon_doublon_m', 'objectif_taux_traitement', 'sla_urgente_j', 'sla_haute_j',
   'sla_normale_j', 'delai_verification_cible_j', 'https_actif', 'enrichissement_en_ligne', 'enrichissement_metadonnees', 'resolution_liens',
   'veille_activee', 'veille_conservation_jours',

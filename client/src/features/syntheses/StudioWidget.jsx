@@ -12,7 +12,7 @@ export default function StudioWidget({
   widget, position, bloc, result, mode, t, lang, dir, pageStart, dragging,
   onVoirFiches, onEdit, onRemove, onDuplicate, onTogglePrint, onMoveBloc,
   onKeyDown, onPointerMove, onPointerUp,
-  onMovePointerDown, onMeasure,
+  onMovePointerDown, onMeasure, role = 'operateur',
 }) {
   const contentRef = useRef(null);
   const auto = bloc.options?.hauteur_mode !== 'fixe';
@@ -44,7 +44,7 @@ export default function StudioWidget({
   >
     <div ref={contentRef} data-widget-content className="min-w-0" style={!auto ? { height: `${baseHauteur}px`, overflow: 'hidden' } : undefined}>
       <WidgetCard
-        bloc={bloc} result={result} t={t} lang={lang} dir={dir} onVoirFiches={onVoirFiches}
+        bloc={bloc} result={result} t={t} lang={lang} dir={dir} onVoirFiches={onVoirFiches} role={role}
         editorActions={editor ? {
           onMoveStart: (event) => onMovePointerDown(event, position, 'move'),
           onResizeStart: (event) => onMovePointerDown(event, position, 'resize'),

@@ -10,7 +10,7 @@ describe('galerie de widgets V8.2', () => {
   it('propose au moins 35 widgets prêts à l’emploi, ids uniques', () => {
     expect(GALERIE.length).toBeGreaterThanOrEqual(35);
     expect(new Set(GALERIE.map((widget) => widget.id)).size).toBe(GALERIE.length);
-    expect(GALERIE.length).toBe(42);
+    expect(GALERIE.length).toBe(43);
   });
 
   it('valide chaque requête contre le catalogue, sans SQL libre', () => {

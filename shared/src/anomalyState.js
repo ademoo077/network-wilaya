@@ -14,7 +14,7 @@ export function needsAnomalyReason(values, previous) {
 /** État final commun au navigateur, aux services et aux actions optimistes. */
 export function validateAnomalyState(state, options = {}) {
   const today = options.today || todayAlgiers(); const previous = options.previous || null;
-  const motif = clean(options.motif); const exiger = options.exigerVerification !== false;
+  const motif = clean(options.motif); const exiger = options.exigerVerification === true; // V12 : vérification non exigée par défaut
   const out = { ...state, verification: state.verification || 'a_verifier', statut: state.statut || 'non_traite',
     epic_id: state.epic_id || null, agent_id: state.agent_id || null, intervenant_autre: clean(state.intervenant_autre),
     date_publication: state.date_publication || null, date_signalement: state.date_signalement || today,
@@ -72,7 +72,6 @@ export function anomalyAction(item, field, value) {
       if (!item.date_verification) { fields.push('date_verification'); body.date_verification = todayAlgiers(); }
     }
   } else if (value !== 'non_traite') {
-    if (item.verification !== 'confirmee') blocked = 'VERIFICATION_REQUISE';
     if (!item.epic_id && !item.intervenant_autre) fields.push('epic_id', 'intervenant_autre');
     if (!item.date_intervention) { fields.push('date_intervention'); body.date_intervention = todayAlgiers(); }
     if (value === 'traite' && !item.date_traitement) { fields.push('date_traitement'); body.date_traitement = todayAlgiers(); }

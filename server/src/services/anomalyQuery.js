@@ -28,6 +28,7 @@ export function buildFilters(params = {}, options = {}) {
   if (params.to) { where.push(`${table}.date_signalement <= @to`); values.to = params.to; }
   if (params.gps === 'absent') where.push(`${table}.gps_lat IS NULL`);
   if (params.gps === 'present') where.push(`${table}.gps_lat IS NOT NULL AND ${table}.gps_lng IS NOT NULL`);
+  if (params.mes && options.user?.agent_id) { where.push(`${table}.agent_id = @mesAgentId`); values.mesAgentId = options.user.agent_id; }
   addQueueFilters(params, table, where, values);
   if (params.date_traitement_from) { where.push(`${table}.date_traitement >= @dtFrom`); values.dtFrom = params.date_traitement_from; }
   if (params.date_traitement_to) { where.push(`${table}.date_traitement <= @dtTo`); values.dtTo = params.date_traitement_to; }

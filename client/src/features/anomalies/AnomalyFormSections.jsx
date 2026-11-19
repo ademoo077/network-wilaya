@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { CONTENU_TYPES, PLATEFORMES, PRIORITES, STATUTS, VERIFICATIONS, formNeedsReason, todayAlgiers } from '@anm/shared';
+import { CONTENU_TYPES, PLATEFORMES, PRIORITES, STATUTS, formNeedsReason, todayAlgiers } from '@anm/shared';
 import { Card, CardHeader, Combobox, Input, Select, SegmentedControl, Textarea, Alert, Button } from '../../components/ui/index.js';
 import { refLabel, useI18n } from '../../i18n/index.jsx';
 import { refOptions } from './helpers.js';
@@ -53,24 +53,23 @@ export function ClassificationSection({ model }) {
   </Section>;
 }
 export function ProcessingSection({ model, editing }) {
-  const { t } = useI18n(); const { state, set, errors, refs, lang } = model; const form = state.values;
+  const { t } = useI18n(); const { state, set, errors, refs, lang, user } = model; const form = state.values;
+  // V12 : la section « Options avancées » (statut, dates) n'est proposée qu'à l'administrateur à la création.
   const needsReason = formNeedsReason(form, state.original);
-  const permitted = form.verification === 'confirmee' && form.agent_id && (form.epic_id || form.intervenant_autre.trim());
+  const permitted = Boolean(form.agent_id) && (form.epic_id || form.intervenant_autre.trim());
   const processing = form.statut !== 'non_traite';
   const agent = refs.agents.find((item) => String(item.id) === form.agent_id);
   const [open, setOpen] = useState(Boolean(editing) || needsReason);
   useEffect(() => { if (editing || needsReason) setOpen(true); }, [editing, needsReason]);
+  if (!editing && user?.role !== 'admin') return null;
   return <details data-card data-advanced className="min-w-0 rounded-lg border border-border bg-surface shadow-1" open={open}
     onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-4 font-bold hover:bg-surface2">
       <span>{t('form.advanced')}</span><ChevronDown className="advanced-chevron h-5 w-5 shrink-0" aria-hidden="true" />
     </summary>
     <div className="grid items-start gap-4 border-t border-border p-5 sm:grid-cols-2">
-      <Select id="verification" label={t('field.verification')} value={form.verification} error={errors.verification}
-        options={VERIFICATIONS.map((value) => ({ value, label: t(`verification.${value}`), disabled: value === 'infirmee' && processing }))} onChange={(event) => set('verification', event.target.value)} />
-      <div><Combobox id="agent_id" label={t('field.agent')} placeholder={t('form.agentSearch')} required={form.verification !== 'a_verifier'} value={form.agent_id} error={errors.agent_id} options={refOptions(refs.agents, lang, { includeInactive: true })} onChange={(value) => set('agent_id', String(value))} />
+      <div><Combobox id="agent_id" label={t('field.agent')} placeholder={t('form.agentSearch')} value={form.agent_id} error={errors.agent_id} options={refOptions(refs.agents, lang, { includeInactive: true })} onChange={(value) => set('agent_id', String(value))} />
         {agent && <p className="mt-1.5 flex flex-wrap gap-x-2 text-xs text-muted"><bdi>{agent.grade}</bdi><bdi className="break-all">{agent.email}</bdi></p>}</div>
-      {form.verification !== 'a_verifier' && <Input id="date_verification" label={t('field.verificationDate')} type="date" max={todayAlgiers()} value={form.date_verification} error={errors.date_verification} onChange={(event) => set('date_verification', event.target.value)} />}
       <InterventionField refs={refs} values={form} value={form.epic_id} error={errors.epic_id} onChange={(value) => set('epic_id', value)} />
       {!form.epic_id && <Input id="intervenant_autre" label={t('field.otherParty')} value={form.intervenant_autre} error={errors.intervenant_autre} onChange={(event) => set('intervenant_autre', event.target.value)} />}
       <Select id="statut" className="sm:col-span-2" label={t('field.status')} value={form.statut} error={errors.statut} hint={t('form.statusHelp')}

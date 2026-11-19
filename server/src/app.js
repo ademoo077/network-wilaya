@@ -31,6 +31,7 @@ import workRoutes from './routes/work.js';
 import veilleRoutes from './routes/veille.js';
 import synthesesRoutes from './routes/syntheses.js';
 import reseauxSociauxRoutes from './routes/reseauxSociaux.js';
+import affectationsRoutes from './routes/affectations.js';
 import { setupStatus } from './services/refs.js';
 
 const distDir = config.clientDist;
@@ -114,6 +115,7 @@ export function createApp() {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/anomalies', anomaliesRoutes);
   app.use('/api/pieces', piecesRoutes);
+  app.use('/api/photos', piecesRoutes);
   app.use('/api/stats', statsRoutes);
   app.use('/api/reports', reportsRoutes);
   app.use('/api/tools', toolsRoutes);
@@ -126,6 +128,7 @@ export function createApp() {
   app.use('/api/veille', veilleRoutes);
   app.use('/api/syntheses', synthesesRoutes);
   app.use('/api/reseaux-sociaux', reseauxSociauxRoutes);
+  app.use('/api', affectationsRoutes);
   app.use('/api/admin', adminRoutes);
   app.get('/api/setup/status', (_req, res) => res.json(setupStatus(getDb())));
 

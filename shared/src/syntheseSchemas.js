@@ -12,6 +12,7 @@ import {
   findDimension, measureCompatible,
 } from './catalogue.js';
 import { GRILLE_COLONNES, GRILLE_HAUTEUR } from './layout.js';
+import { validerStyleBloc } from './widgetStyle.js';
 
 const dimensionId = z.preprocess(
   (value) => (typeof value === 'string' ? value.replace(/^t\./, '') : value),
@@ -185,7 +186,7 @@ export const BLOC_TYPES = [
   'kpi', 'tableau', 'barres', 'lignes', 'anneau', 'courbe', 'aire', 'pareto',
   'histogramme', 'cascade', 'carte_thermique', 'radar', 'nuage', 'treemap',
   'entonnoir', 'texte', 'liste_fiches', 'classement', 'chronologie',
-  'separateur', 'signature', 'legende', 'annexe',
+  'separateur', 'signature', 'legende', 'annexe', 'avant_apres',
 ];
 
 /** Blocs de mise en page : ils n’exécutent aucune requête. */
@@ -287,7 +288,22 @@ export function validerDefinition(definition) {
     throw error;
   }
   if (result.data.layout) {
-    const ids = new Set();
+    // Style de bloc : alignement, densité et accent (valeurs fermées, catalogue V11).
+  for (const section of result.data.sections) {
+    for (const colonne of section.colonnes) {
+      for (const bloc of colonne) {
+        try {
+          validerStyleBloc(bloc);
+        } catch (error) {
+          const erreur = new Error(error.message);
+          erreur.code = 'SYNTHESE_DEFINITION_INVALIDE';
+          erreur.fields = { definition: 'style' };
+          throw erreur;
+        }
+      }
+    }
+  }
+  const ids = new Set();
     for (const section of result.data.sections) {
       for (const colonne of section.colonnes) {
         for (const bloc of colonne) {

@@ -21,7 +21,7 @@ export function useFormSubmit({ current, dispatch, draftKey, id, userId }) {
     });
     dispatch({ type: 'UI', patch: { persisted: item } });
     for (const file of state.files) {
-      const body = new FormData(); body.append('file', file);
+      const body = new FormData(); body.append('file', file); body.append('role', 'avant');
       await api(`/anomalies/${item.id}/pieces`, { method: 'POST', body });
       dispatch({ type: 'UI', patch: { files: current.current.files.filter((entry) => entry !== file), piecesCount: (current.current.piecesCount || 0) + 1 } });
     }

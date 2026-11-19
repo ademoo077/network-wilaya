@@ -48,7 +48,7 @@ describe('API Synthèses — catalogue et requêtes', () => {
     const res = await agent.get('/api/syntheses/catalogue');
     expect(res.status).toBe(200);
     expect(res.body.version).toBe('8.0.0');
-    expect(res.body.mesures).toHaveLength(38);
+    expect(res.body.mesures).toHaveLength(44);
     expect(res.body.dimensions).toHaveLength(30);
     expect(res.body.filtres).toHaveLength(30);
     const recues = res.body.mesures.find((item) => item.id === 'recues');

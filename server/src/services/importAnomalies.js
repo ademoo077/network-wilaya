@@ -2,13 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { parse as parseCsv } from 'csv-parse/sync';
-import { normalize, normaliserUrl, parseGps, MAX_IMPORT_ROWS } from '@anm/shared';
+import { normalize, normaliserUrl, parseGps, isFuture, todayAlgiers, MAX_IMPORT_ROWS } from '@anm/shared';
 import { config } from '../config/index.js';
 import { getParams } from './settings.js';
 import { createAnomalie } from './anomalies.js';
 import { findDuplicateMatches } from './anomalyRead.js';
 import { badRequest, business, AppError } from '../utils/errors.js';
 import { uuid } from '../utils/crypto.js';
+import {
+  buildReferenceIndex, cellText, comparisonKey, mapImportStatut,
+  parseImportDate, resolveCommune, resolveDaira, resolveType,
+} from './importMapping.js';
 
 export const IMPORT_COLUMNS = [
   'lien_url', 'date_signalement', 'categorie', 'type', 'daira', 'commune', 'gps', 'adresse',
@@ -16,67 +20,122 @@ export const IMPORT_COLUMNS = [
 ];
 
 const HEADER_ALIASES = {
-  lien: 'lien_url', url: 'lien_url', lien_url: 'lien_url',
-  date_signalement: 'date_signalement', signalement: 'date_signalement',
-  categorie: 'categorie', domaine: 'categorie', category: 'categorie',
-  type: 'type', daira: 'daira', commune: 'commune', gps: 'gps', adresse: 'adresse',
-  priorite: 'priorite', verification: 'verification', agent: 'agent', statut: 'statut',
+  lien: 'lien_url', liens: 'lien_url', url: 'lien_url', lien_url: 'lien_url',
+  lien_de_publication: 'lien_url', liens_de_publication: 'lien_url', publication: 'lien_url',
+  date: 'date_signalement', dates: 'date_signalement', date_signalement: 'date_signalement',
+  date_de_signalement: 'date_signalement', signalement: 'date_signalement',
+  categorie: 'categorie', categories: 'categorie', domaine: 'categorie', domaines: 'categorie', category: 'categorie',
+  type: 'type', types: 'type', type_anomalie: 'type', types_anomalies: 'type', type_d_anomalie: 'type',
+  anomalie: 'type', anomalies: 'type',
+  ca: 'ca', circonscription: 'ca', circonscription_administrative: 'ca',
+  daira: 'daira', commune: 'commune', communes: 'commune',
+  gps: 'gps', coordonnees: 'gps', adresse: 'adresse', adresse_texte: 'adresse',
+  priorite: 'priorite', verification: 'verification', agent: 'agent', agent_nom: 'agent',
+  statut: 'statut', status: 'statut', etat: 'statut', traitement: 'statut',
   epic: 'epic', date_intervention: 'date_intervention', date_traitement: 'date_traitement',
-  observations: 'observations',
+  observations: 'observations', observation: 'observations', remarques: 'observations', commentaire: 'observations',
 };
+
+const HEADER_SCAN_ROWS = 12;
+
+const VERIF_MAP = {
+  a_verifier: 'a_verifier', 'a_vérifier': 'a_verifier', averifier: 'a_verifier',
+  confirmee: 'confirmee', 'confirmée': 'confirmee', infirmee: 'infirmee', 'infirmée': 'infirmee',
+};
+const PRIORITE_MAP = { normale: 'normale', haute: 'haute', urgente: 'urgente' };
 
 function cleanKey(value) {
   return normalize(String(value || '')).replace(/\s+/g, '_');
 }
 
-function cellValue(value) {
-  if (value === null || value === undefined) return '';
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === 'object') {
-    if (Array.isArray(value.richText)) return value.richText.map((r) => r.text).join('');
-    if (value.text) return value.text;
-    if (value.result !== undefined) return value.result;
-    return '';
+function headerMap(values) {
+  const map = {};
+  const canonical = [];
+  values.forEach((value, index) => {
+    const key = cleanKey(cellText(value));
+    if (!key) return;
+    const name = HEADER_ALIASES[key];
+    if (!name || map[name] !== undefined) return;
+    map[name] = index;
+    canonical.push(name);
+  });
+  return { map, canonical };
+}
+
+function scoreHeader(canonical) {
+  if (!canonical.includes('lien_url')) return 0;
+  let score = canonical.length;
+  if (canonical.includes('type') || canonical.includes('categorie')) score += 6;
+  if (canonical.includes('commune')) score += 2;
+  return score;
+}
+
+function detectSheetHeader(sheet) {
+  const lastRow = Math.min(Math.max(Number(sheet.rowCount) || 0, 1), HEADER_SCAN_ROWS);
+  const lastCol = Math.max(Number(sheet.columnCount) || 0, 1);
+  let best = null;
+  for (let rowNumber = 1; rowNumber <= lastRow; rowNumber += 1) {
+    const row = sheet.getRow(rowNumber);
+    const values = [];
+    for (let col = 1; col <= lastCol; col += 1) values.push(row.getCell(col).value);
+    const { map, canonical } = headerMap(values);
+    const score = scoreHeader(canonical);
+    if (score > 0 && (!best || score > best.score)) best = { map, rowNumber, score };
   }
-  return String(value).trim();
+  return best;
+}
+
+async function readWorkbook(file) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(file.buffer);
+  let selection = null;
+  for (const sheet of workbook.worksheets) {
+    const header = detectSheetHeader(sheet);
+    if (!header) continue;
+    if (!selection || header.score > selection.header.score) selection = { sheet, header };
+  }
+  if (!selection) return { rows: [], sheetName: null };
+  const { sheet, header } = selection;
+  const rows = [];
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber <= header.rowNumber) return;
+    const values = {};
+    for (const [name, index] of Object.entries(header.map)) values[name] = cellText(row.getCell(index + 1).value);
+    if (Object.values(values).some((value) => value !== '')) rows.push({ values, ligne: rowNumber });
+  });
+  return { rows, sheetName: sheet.name };
+}
+
+function readCsv(file) {
+  const text = file.buffer.toString('utf8').replace(/^\uFEFF/, '');
+  const table = parseCsv(text, { skip_empty_lines: true, relax_column_count: true, trim: true });
+  let header = null;
+  for (let index = 0; index < Math.min(table.length, HEADER_SCAN_ROWS); index += 1) {
+    const { map, canonical } = headerMap(table[index]);
+    const score = scoreHeader(canonical);
+    if (score > 0 && (!header || score > header.score)) header = { map, rowNumber: index + 1, score };
+  }
+  if (!header) return { rows: [], sheetName: null };
+  const rows = [];
+  for (let index = header.rowNumber; index < table.length; index += 1) {
+    const values = {};
+    for (const [name, column] of Object.entries(header.map)) values[name] = cellText(table[index][column]);
+    if (Object.values(values).some((value) => value !== '')) rows.push({ values, ligne: index + 1 });
+  }
+  return { rows, sheetName: null };
+}
+
+/** Lit un fichier d'import et renvoie les lignes avec leur numéro d'origine. */
+export async function readImportFile(file) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const parsed = ext === '.xlsx' || ext === '.xls' ? await readWorkbook(file) : readCsv(file);
+  if (parsed.rows.length > MAX_IMPORT_ROWS) throw badRequest(`Maximum ${MAX_IMPORT_ROWS} lignes par import`);
+  return parsed;
 }
 
 export async function parseImportFile(file) {
-  const ext = path.extname(file.originalname || '').toLowerCase();
-  let rows;
-  if (ext === '.xlsx' || ext === '.xls') {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(file.buffer);
-    const sheet = workbook.worksheets[0];
-    if (!sheet) return [];
-    const headers = [];
-    sheet.getRow(1).eachCell({ includeEmpty: true }, (cell, col) => { headers[col - 1] = cleanKey(cellValue(cell.value)); });
-    rows = [];
-    sheet.eachRow((row, index) => {
-      if (index === 1) return;
-      const obj = {};
-      headers.forEach((header, i) => { if (header) obj[HEADER_ALIASES[header] || header] = cellValue(row.getCell(i + 1).value); });
-      if (Object.values(obj).some((v) => v !== '')) rows.push(obj);
-    });
-  } else {
-    const text = file.buffer.toString('utf8').replace(/^\uFEFF/, '');
-    const parsed = parseCsv(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true });
-    rows = parsed.map((raw) => {
-      const obj = {};
-      for (const [key, value] of Object.entries(raw)) obj[HEADER_ALIASES[cleanKey(key)] || cleanKey(key)] = cellValue(value);
-      return obj;
-    });
-  }
-  if (rows.length > MAX_IMPORT_ROWS) throw badRequest(`Maximum ${MAX_IMPORT_ROWS} lignes par import`);
-  return rows;
-}
-
-function isoDate(value) {
-  const text = String(value || '').trim();
-  if (!text) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
-  const m = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  return m ? `${m[3]}-${m[2]}-${m[1]}` : text;
+  const { rows } = await readImportFile(file);
+  return rows.map((row) => row.values);
 }
 
 function codeOf(value, mapping, fallback = null) {
@@ -85,131 +144,235 @@ function codeOf(value, mapping, fallback = null) {
   return mapping[key] || null;
 }
 
-const STATUT_MAP = {
-  non_traite: 'non_traite', non_traite_: 'non_traite', 'non_traité': 'non_traite', non_traitee: 'non_traite',
-  en_cours: 'en_cours', encours: 'en_cours', traite: 'traite', 'traité': 'traite', traitee: 'traite',
-};
-const VERIF_MAP = {
-  a_verifier: 'a_verifier', 'a_vérifier': 'a_verifier', averifier: 'a_verifier',
-  confirmee: 'confirmee', 'confirmée': 'confirmee', infirmee: 'infirmee', 'infirmée': 'infirmee',
-};
-const PRIORITE_MAP = { normale: 'normale', haute: 'haute', urgente: 'urgente' };
-
-function buildMaps(db) {
-  const maps = { domaines: new Map(), types: new Map(), dairas: new Map(), communes: new Map(), epics: new Map(), agents: new Map() };
-  for (const d of db.prepare('SELECT id, name_ar, name_fr FROM domaines').all()) {
-    maps.domaines.set(normalize(d.name_ar), d.id);
-    if (d.name_fr) maps.domaines.set(normalize(d.name_fr), d.id);
+function buildEntityMaps(db) {
+  const epics = new Map();
+  const agents = new Map();
+  for (const epic of db.prepare('SELECT id, name, sigle FROM epics WHERE actif = 1').all()) {
+    epics.set(normalize(epic.name), epic.id);
+    if (epic.sigle) epics.set(normalize(epic.sigle), epic.id);
   }
-  for (const t of db.prepare('SELECT id, domaine_id, name_ar, name_fr FROM types_anomalie').all()) {
-    maps.types.set(`${t.domaine_id}|${normalize(t.name_ar)}`, t.id);
-    if (t.name_fr) maps.types.set(`${t.domaine_id}|${normalize(t.name_fr)}`, t.id);
+  for (const agent of db.prepare('SELECT id, full_name, matricule FROM agents WHERE actif = 1').all()) {
+    agents.set(normalize(agent.full_name), agent.id);
+    if (agent.matricule) agents.set(normalize(agent.matricule), agent.id);
   }
-  for (const d of db.prepare('SELECT id, name_fr, name_ar FROM dairas').all()) {
-    maps.dairas.set(normalize(d.name_fr), d.id);
-    if (d.name_ar) maps.dairas.set(normalize(d.name_ar), d.id);
-  }
-  for (const c of db.prepare('SELECT id, daira_id, name_fr, name_ar FROM communes').all()) {
-    maps.communes.set(`${c.daira_id}|${normalize(c.name_fr)}`, c.id);
-    if (c.name_ar) maps.communes.set(`${c.daira_id}|${normalize(c.name_ar)}`, c.id);
-  }
-  for (const e of db.prepare('SELECT id, name, sigle FROM epics').all()) {
-    maps.epics.set(normalize(e.name), e.id);
-    if (e.sigle) maps.epics.set(normalize(e.sigle), e.id);
-  }
-  for (const a of db.prepare('SELECT id, full_name, matricule FROM agents').all()) {
-    maps.agents.set(normalize(a.full_name), a.id);
-    if (a.matricule) maps.agents.set(normalize(a.matricule), a.id);
-  }
-  return maps;
+  return { epics, agents };
 }
 
-function buildCandidate(db, row, maps, bbox) {
+function addressText(row, extra) {
+  return [...(row.adresse ? [row.adresse] : []), ...extra].filter(Boolean).join(' — ').slice(0, 500) || null;
+}
+
+function buildCandidate(db, row, refs, bbox, options = {}) {
   const errors = [];
+  const warnings = [];
+  const today = options.today || todayAlgiers();
+  const strict = Boolean(comparisonKey(row.categorie));
+
   const lien = String(row.lien_url || '').trim();
   const parsedUrl = normaliserUrl(lien);
   if (!parsedUrl.ok) errors.push('Lien invalide (URL http(s) attendue)');
-  const domaineId = maps.domaines.get(normalize(row.categorie));
-  if (!domaineId) errors.push(`Catégorie inconnue : ${row.categorie || '—'}`);
-  const typeId = domaineId ? maps.types.get(`${domaineId}|${normalize(row.type)}`) : null;
-  if (!typeId) errors.push(`Type inconnu ou hors catégorie : ${row.type || '—'}`);
-  const dairaId = maps.dairas.get(normalize(row.daira));
-  if (!dairaId) errors.push(`Daïra inconnue : ${row.daira || '—'}`);
-  const communeId = dairaId ? maps.communes.get(`${dairaId}|${normalize(row.commune)}`) : null;
-  if (!communeId) errors.push(`Commune inconnue ou hors daïra : ${row.commune || '—'}`);
+
+  const typeResult = resolveType(refs.types, row.type, row.categorie, { strict });
+  if (typeResult.error) errors.push(typeResult.error);
+  const type = typeResult.type || null;
+  if (type && typeResult.approx) {
+    const label = `« ${type.domainLabel} / ${type.label} »`;
+    warnings.push(row.type
+      ? `Type « ${row.type} » classé en ${label} — à vérifier`
+      : `Type absent — classé en ${label}`);
+  }
+
+  let daira = resolveDaira(refs.dairas, row.daira || row.ca);
+  let commune = resolveCommune(refs.communes, row.commune, daira?.id);
+  const extraAddress = [];
+  if (!commune && row.ca) {
+    const fromCa = resolveCommune(refs.communes, row.ca);
+    if (fromCa) {
+      commune = fromCa;
+      warnings.push(`CA « ${row.ca} » interprétée comme commune`);
+    }
+  }
+  if (row.ca && !daira) {
+    warnings.push(`CA inconnue : ${row.ca} (conservée dans l'adresse)`);
+    extraAddress.push(`CA : ${row.ca}`);
+  }
+  if (commune) {
+    if (!daira) {
+      daira = refs.dairas.find((item) => Number(item.id) === Number(commune.daira_id)) || null;
+      if (daira) warnings.push(`Daïra déduite de la commune : ${daira.label}`);
+    } else if (Number(daira.id) !== Number(commune.daira_id)) {
+      const actual = refs.dairas.find((item) => Number(item.id) === Number(commune.daira_id));
+      warnings.push(`CA « ${row.ca || row.daira} » ignorée : la commune « ${commune.label} » dépend de « ${actual?.label || '—'} »`);
+      daira = actual || daira;
+    }
+  }
+  if (!commune) errors.push(`Commune inconnue ou hors daïra : ${row.commune || row.ca || '—'}`);
+  if (!daira) errors.push(`Daïra inconnue : ${row.daira || row.ca || '—'}`);
+
   const gps = parseGps(row.gps, { bbox });
-  if (!gps.ok) errors.push(gps.error === 'LIEN_COURT_NON_RESOLU' ? 'Lien court non résolu — collez les coordonnées' : 'GPS invalide');
-  const statut = codeOf(row.statut, STATUT_MAP, 'non_traite');
-  if (row.statut && !codeOf(row.statut, STATUT_MAP)) errors.push(`Statut inconnu : ${row.statut}`);
-  const verification = codeOf(row.verification, VERIF_MAP, 'a_verifier');
+  if (!gps.ok) {
+    warnings.push(gps.error === 'LIEN_COURT_NON_RESOLU'
+      ? 'Lien court non résolu — coordonnées ignorées'
+      : 'GPS invalide — coordonnées ignorées');
+  }
+
+  const rawDate = String(row.date_signalement || '').trim();
+  const parsedDate = parseImportDate(row.date_signalement);
+  if (parsedDate.error) warnings.push(parsedDate.error);
+  let dateSignalement = parsedDate.date;
+  if (dateSignalement && isFuture(dateSignalement, today)) {
+    warnings.push(`Date future (${dateSignalement}) remplacée par la date du jour`);
+    dateSignalement = today;
+  }
+  if (!dateSignalement) {
+    dateSignalement = today;
+    if (!rawDate) warnings.push('Date de signalement absente — date du jour utilisée');
+  }
+
+  const statutInfo = mapImportStatut(row.statut);
+  if (statutInfo.error) warnings.push(statutInfo.error);
+  let statut = statutInfo.statut || 'non_traite';
+  let verification = codeOf(row.verification, VERIF_MAP, 'a_verifier');
   if (row.verification && !codeOf(row.verification, VERIF_MAP)) errors.push(`Vérification inconnue : ${row.verification}`);
   const priorite = codeOf(row.priorite, PRIORITE_MAP, 'normale');
-  const agentId = row.agent ? maps.agents.get(normalize(row.agent)) : null;
+
+  let agentId = row.agent ? refs.entities.agents.get(normalize(row.agent)) : null;
   if (row.agent && !agentId) errors.push(`Agent inconnu : ${row.agent}`);
-  const epicId = row.epic ? maps.epics.get(normalize(row.epic)) : null;
+  let epicId = row.epic ? refs.entities.epics.get(normalize(row.epic)) : null;
   if (row.epic && !epicId) errors.push(`EPIC inconnu : ${row.epic}`);
+  agentId = agentId || options.agent_id || null;
+  epicId = epicId || options.epic_id || null;
+
+  const parsedIntervention = parseImportDate(row.date_intervention);
+  if (parsedIntervention.error) warnings.push(parsedIntervention.error);
+  const parsedTraitement = parseImportDate(row.date_traitement);
+  if (parsedTraitement.error) warnings.push(parsedTraitement.error);
+  let dateIntervention = parsedIntervention.date;
+  let dateTraitement = parsedTraitement.date;
+  let dateVerification = null;
+  let statutSourceApplique = statut;
+
+  if (statut !== 'non_traite') {
+    const intervenant = epicId || row.intervenant_autre;
+    if (!agentId || !intervenant) {
+      warnings.push(`Statut « ${row.statut} » non appliqué : agent de vérification et EPIC requis — ligne importée « Non traitée »`);
+      statut = 'non_traite';
+      dateIntervention = null;
+      dateTraitement = null;
+    } else {
+      verification = 'confirmee';
+      dateVerification = dateVerification || dateSignalement;
+      dateIntervention = dateIntervention || dateSignalement;
+      if (statut === 'traite') dateTraitement = dateTraitement || dateSignalement;
+      warnings.push(`Statut « ${row.statut} » appliqué avec la date du signalement — à vérifier`);
+    }
+  }
+
+  const notes = [];
+  if (row.observations) notes.push(row.observations);
+  if (type && typeResult.approx && row.type) notes.push(`Type source : ${row.type}`);
+  if (statutSourceApplique !== statut) notes.push(`Statut source : ${row.statut}`);
+
   const data = {
     lien_url: lien,
     plateforme: parsedUrl.ok ? parsedUrl.plateforme : undefined,
-    date_signalement: isoDate(row.date_signalement) || undefined,
-    domaine_id: domaineId,
-    type_id: typeId,
-    daira_id: dairaId,
-    commune_id: communeId,
+    date_signalement: dateSignalement,
+    domaine_id: type?.domaine_id,
+    type_id: type?.id,
+    daira_id: daira?.id,
+    commune_id: commune?.id,
     gps: gps.ok ? (gps.lat === null ? null : { lat: gps.lat, lng: gps.lng }) : null,
-    adresse_texte: row.adresse || null,
+    adresse_texte: addressText(row, extraAddress),
     priorite,
     verification,
     agent_id: agentId,
     statut,
     epic_id: epicId,
-    date_intervention: isoDate(row.date_intervention) || undefined,
-    date_traitement: isoDate(row.date_traitement) || undefined,
-    observations: row.observations || null,
+    date_verification: dateVerification,
+    date_intervention: dateIntervention,
+    date_traitement: dateTraitement,
+    observations: notes.length ? notes.join('\n').slice(0, 5000) : null,
   };
-  return { data, errors, url: parsedUrl.ok ? parsedUrl.url : null };
+
+  const resolved = {
+    date: dateSignalement,
+    statut,
+    statut_source: statutInfo.statut || null,
+    categorie: type?.domainLabel || null,
+    type: type?.label || null,
+    daira: daira?.label || null,
+    commune: commune?.label || null,
+    type_approx: Boolean(type && typeResult.approx),
+  };
+
+  return { data, errors, warnings, resolved, url: parsedUrl.ok ? parsedUrl.url : null };
 }
 
-export async function previewImport(db, file, user, settings) {
-  const rows = await parseImportFile(file);
-  if (!rows.length) throw badRequest('Fichier vide ou illisible');
-  const maps = buildMaps(db);
+function publicRow(row) {
+  return {
+    lien_url: row.lien_url || '',
+    categorie: row.categorie || '',
+    type: row.type || '',
+    ca: row.ca || '',
+    daira: row.daira || '',
+    commune: row.commune || '',
+    statut: row.statut || '',
+    date: row.date_signalement || '',
+    observations: row.observations || '',
+  };
+}
+
+function validateImportOptions(db, options) {
+  if (options.agent_id && !db.prepare('SELECT 1 FROM agents WHERE id = ? AND actif = 1').get(options.agent_id)) {
+    throw badRequest('Agent de vérification inconnu');
+  }
+  if (options.epic_id && !db.prepare('SELECT 1 FROM epics WHERE id = ? AND actif = 1').get(options.epic_id)) {
+    throw badRequest('EPIC inconnu');
+  }
+}
+
+export async function previewImport(db, file, user, settings, options = {}) {
+  validateImportOptions(db, options);
+  const parsed = await readImportFile(file);
+  if (!parsed.rows.length) throw badRequest('Fichier vide ou illisible');
+  const refs = { ...buildReferenceIndex(db), entities: buildEntityMaps(db) };
   const bbox = getParams(db).gps_bbox;
   const seen = new Set();
-  const results = rows.map((row, index) => {
-    const { data, errors, url } = buildCandidate(db, row, maps, bbox);
-    const ligne = index + 2;
-    if (errors.length) return { ligne, statut: 'error', messages: errors, raw: publicRow(row) };
+  const results = parsed.rows.map(({ values: row, ligne }) => {
+    const { data, errors, warnings, resolved, url } = buildCandidate(db, row, refs, bbox, options);
+    const raw = publicRow(row);
+    if (errors.length) return { ligne, statut: 'error', messages: [...errors, ...warnings], raw, resolved };
     const strictKey = `${url}|${data.type_id}|${data.commune_id}`;
-    if (seen.has(strictKey)) return { ligne, statut: 'error', messages: ['Doublon strict dans le fichier'], raw: publicRow(row) };
+    if (seen.has(strictKey)) {
+      return { ligne, statut: 'error', messages: [...warnings, 'Doublon strict dans le fichier'], raw, resolved };
+    }
     seen.add(strictKey);
     try {
       createAnomalie(db, { ...data, force_duplicate: true }, user.id, { ...settings, dryRun: true });
       const matches = findDuplicateMatches(db, url);
-      const warnings = matches.length ? [`Lien déjà utilisé (${matches.length} fiche(s)) — import possible`] : [];
-      if (warnings.length) return { ligne, statut: 'warning', messages: warnings, data, raw: publicRow(row) };
-      return { ligne, statut: 'ok', messages: [], data, raw: publicRow(row) };
+      if (matches.length) warnings.push(`Lien déjà utilisé (${matches.length} fiche(s)) — import possible`);
+      return { ligne, statut: warnings.length ? 'warning' : 'ok', messages: warnings, data, raw, resolved };
     } catch (error) {
-      if (error.code === 'DUPLICATE_STRICT') return { ligne, statut: 'error', messages: [error.message], raw: publicRow(row) };
-      return { ligne, statut: 'error', messages: [error.message], raw: publicRow(row) };
+      return { ligne, statut: 'error', messages: [...warnings, error.message], raw, resolved };
     }
   });
   const summary = {
     total: results.length,
-    ok: results.filter((r) => r.statut === 'ok').length,
-    warning: results.filter((r) => r.statut === 'warning').length,
-    error: results.filter((r) => r.statut === 'error').length,
+    ok: results.filter((row) => row.statut === 'ok').length,
+    warning: results.filter((row) => row.statut === 'warning').length,
+    error: results.filter((row) => row.statut === 'error').length,
   };
   const importId = uuid();
   fs.mkdirSync(config.tmpDir, { recursive: true });
   fs.writeFileSync(path.join(config.tmpDir, `import-${importId}.json`), JSON.stringify({
-    importId, createdAt: new Date().toISOString(), fileName: file.originalname, rows: results, summary,
+    importId,
+    createdAt: new Date().toISOString(),
+    fileName: file.originalname,
+    sheetName: parsed.sheetName,
+    rows: results,
+    summary,
   }));
-  return { importId, fileName: file.originalname, rows: results, summary };
-}
-
-function publicRow(row) {
-  return { lien_url: row.lien_url, categorie: row.categorie, type: row.type, daira: row.daira, commune: row.commune };
+  return { importId, fileName: file.originalname, sheetName: parsed.sheetName, rows: results, summary };
 }
 
 function readImport(importId) {
@@ -221,8 +384,8 @@ function readImport(importId) {
 
 export async function commitImport(db, importId, mode, user, settings) {
   const preview = readImport(importId);
-  const valid = preview.rows.filter((r) => r.statut === 'ok' || r.statut === 'warning');
-  const errors = preview.rows.filter((r) => r.statut === 'error').map((r) => ({ ligne: r.ligne, messages: r.messages }));
+  const valid = preview.rows.filter((row) => row.statut === 'ok' || row.statut === 'warning');
+  const errors = preview.rows.filter((row) => row.statut === 'error').map((row) => ({ ligne: row.ligne, messages: row.messages }));
   if (mode === 'all_or_nothing' && errors.length) {
     throw new AppError(422, 'IMPORT_BLOQUE', `Import annulé : ${errors.length} ligne(s) en erreur`, null, errors);
   }
@@ -251,12 +414,12 @@ export async function commitImport(db, importId, mode, user, settings) {
 
 export function importErrorsCsv(importId) {
   const preview = readImport(importId);
-  const lines = ['"Ligne";"Statut";"Messages";"Lien";"Catégorie";"Type";"Daïra";"Commune"'];
+  const lines = ['"Ligne";"Statut";"Messages";"Lien";"Catégorie";"Type";"CA";"Daïra";"Commune";"Statut source";"Date"'];
   for (const row of preview.rows) {
     if (row.statut !== 'error') continue;
     const raw = row.raw || {};
-    const cells = [row.ligne, row.statut, (row.messages || []).join(' | '), raw.lien_url, raw.categorie, raw.type, raw.daira, raw.commune];
-    lines.push(cells.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';'));
+    const cells = [row.ligne, row.statut, (row.messages || []).join(' | '), raw.lien_url, raw.categorie, raw.type, raw.ca, raw.daira, raw.commune, raw.statut, raw.date];
+    lines.push(cells.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(';'));
   }
   return `\uFEFF${lines.join('\r\n')}`;
 }

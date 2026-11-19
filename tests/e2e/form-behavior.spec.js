@@ -76,8 +76,10 @@ test('45–46 — géométrie, libellés accessibles et motif conditionnel à 39
     await page.setViewportSize({ width, height: 1000 }); await expectNoOverflow(page); await expectCompactCards(page);
     await expectActionBarClear(page);
   }
-  await page.getByText('Options avancées', { exact: true }).click(); await expect(page.locator('#motif')).toHaveCount(0);
-  await page.locator('#verification').selectOption('infirmee'); await expect(page.locator('#motif')).toBeVisible();
+  // V12 : la vérification n'est plus proposée dans le formulaire ; le motif n'est plus requis à la création.
+  await page.getByText('Options avancées', { exact: true }).click();
+  await expect(page.locator('#verification')).toHaveCount(0);
+  await expect(page.locator('#motif')).toHaveCount(0);
   await expect(page.getByLabel('Type de contenu', { exact: true })).toBeVisible();
   await expectAccessible(page); expect(errors.snapshot().pageError).toEqual([]);
 });

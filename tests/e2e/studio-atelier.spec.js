@@ -177,6 +177,7 @@ test('142 — normalisation, hauteur automatique et actions compactes sans recou
   const row = await grid.evaluate((element) => parseFloat(getComputedStyle(element).gridAutoRows) + parseFloat(getComputedStyle(element).rowGap || '4'));
   const ringY = Number(await ring.getAttribute('data-y'));
   const handle = ring.getByRole('button', { name: 'Déplacer le widget' });
+  await handle.scrollIntoViewIfNeeded();
   const box = await handle.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();

@@ -7,7 +7,7 @@ import StudioGrid from './StudioGrid.jsx';
 
 export default function SyntheseCanvas({
   modele, mode, sourceId, alreadyFrozen, editor, blocs, activeBlocs, activeResults, maxWidgets,
-  t, lang, dir, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onPreview, onVoirFiches, embedded = false,
+  t, lang, dir, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onPreview, onVoirFiches, embedded = false, role = 'operateur',
 }) {
   const [zoom, setZoom] = useState(100);
   const layout = useMemo(() => convertirEnGrille(editor.currentDefinition), [editor.currentDefinition]);
@@ -86,6 +86,7 @@ export default function SyntheseCanvas({
         lang={lang}
         dir={dir}
         zoom={zoom}
+        role={role}
         onVoirFiches={onVoirFiches}
         onEdit={onEdit}
         onRemove={editor.removeBloc}

@@ -3,6 +3,9 @@ import { conflict, business, notFound } from '../utils/errors.js';
 import { getAnomalieRaw, getAnomalie, findDuplicateMatches } from './anomalyRead.js';
 import { validerEtat } from './etat.js';
 import { searchNormForAnomaly } from './searchNorm.js';
+import { affecterAgent } from './agentAssignment.js';
+import { getBoolParam } from './settings.js';
+import { photoCounts } from './attachments.js';
 
 const FIELDS = [
   'plateforme', 'lien_url', 'lien_normalise', 'date_publication', 'date_signalement',
@@ -10,7 +13,7 @@ const FIELDS = [
   'gps_lat', 'gps_lng', 'verification', 'agent_id', 'date_verification', 'statut',
   'epic_id', 'intervenant_autre', 'date_intervention', 'date_traitement', 'priorite', 'observations',
   'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',
-  'date_publication_estimee', 'legende', 'auteur_publication',
+  'date_publication_estimee', 'legende', 'auteur_publication', 'sans_photo_motif',
 ];
 
 const HISTORY_FIELDS = [
@@ -131,7 +134,6 @@ export function createAnomalie(db, input, userId, settings = {}) {
   const etat = validerEtat(state, {
     today,
     motif: input.motif,
-    exigerVerification: settings.exigerVerification !== false,
   });
   if (settings.dryRun) {
     return { ...state, ...etat, id: null, reference: null, dryRun: true };
@@ -156,6 +158,15 @@ export function createAnomalie(db, input, userId, settings = {}) {
     db.prepare(`INSERT INTO anomalie_historique(anomalie_id, champ, nouvelle_valeur, motif, user_id)
                 VALUES (?, 'creation', ?, ?, ?)`).run(newId, reference, input.motif || null, userId);
     db.prepare('UPDATE anomalies SET search_norm = ? WHERE id = ?').run(searchNormForAnomaly(db, newId), newId);
+    // Affectation V12 : un agent fourni explicitement est manuel et n'est jamais écrasé.
+    if (state.agent_id) {
+      affecterAgent(db, newId, {
+        manualAgentId: state.agent_id, manualMotif: input.motif || 'Affectation manuelle à la création',
+        user_id: userId, skipIfManuel: false, bumpVersion: false,
+      });
+    } else if (state.daira_id) {
+      affecterAgent(db, newId, { daira_id: state.daira_id, user_id: userId, skipIfManuel: true, bumpVersion: false });
+    }
     return newId;
   })();
   return getAnomalie(db, id);
@@ -198,6 +209,19 @@ function diffAnomalie(db, before, after) {
   return changes;
 }
 
+/** V12 : clore une anomalie exige une photo après, sauf motif de dispense explicite. */
+function verifierPhotoApres(db, current, next, data, settings) {
+  if (settings.ignorePhotoAfter || next.statut !== 'traite' || current.statut === 'traite') return;
+  if (!getBoolParam(db, 'photo_apres_obligatoire', true)) return;
+  if (photoCounts(db, current.id).apres > 0) { next.sans_photo_motif = null; return; }
+  const motif = typeof data.sans_photo_motif === 'string' ? data.sans_photo_motif.trim() : '';
+  if (!motif) {
+    throw business('Ajoutez une photo après ou indiquez le motif de l’absence de photo', 'PHOTO_APRES_REQUISE',
+      { sans_photo_motif: 'Photo après ou motif requis' });
+  }
+  next.sans_photo_motif = motif.slice(0, 1000);
+}
+
 export function updateAnomalie(db, id, data, userId, settings = {}) {
   const current = getAnomalieRaw(db, id);
   if (!current || current.deleted_at) throw notFound('Anomalie introuvable');
@@ -225,10 +249,12 @@ export function updateAnomalie(db, id, data, userId, settings = {}) {
     today: settings.today || todayAlgiers(),
     previous: current,
     motif: data.motif,
-    exigerVerification: settings.exigerVerification !== false,
   });
   const next = { ...merged, ...etat };
+  verifierPhotoApres(db, current, next, data, settings);
   const changes = diffAnomalie(db, current, next);
+  const dairaChanged = Number(current.daira_id) !== Number(next.daira_id);
+  const agentChanged = data.agent_id !== undefined && Number(data.agent_id) !== Number(current.agent_id);
   db.transaction(() => {
     const columns = FIELDS.filter((f) => f !== 'lien_normalise');
     db.prepare(`UPDATE anomalies SET ${columns.map((c) => `${c} = ?`).join(', ')},
@@ -240,6 +266,16 @@ export function updateAnomalie(db, id, data, userId, settings = {}) {
     for (const change of changes) stmt.run(id, change.champ, change.ancienne, change.nouvelle, data.motif || null, userId);
     db.prepare('UPDATE anomalies SET search_norm = ? WHERE id = ?').run(searchNormForAnomaly(db, id), id);
   })();
+  // V12 : une affectation explicite est manuelle et n'est jamais écrasée ;
+  // sinon réaffectation auto si la daïra a changé et que le statut n'est pas traité.
+  if (agentChanged && data.agent_id) {
+    affecterAgent(db, id, {
+      manualAgentId: data.agent_id, manualMotif: data.motif || 'Affectation manuelle',
+      user_id: userId, skipIfManuel: false, bumpVersion: false,
+    });
+  } else if (!agentChanged && dairaChanged && next.statut !== 'traite' && current.agent_source !== 'manuel') {
+    affecterAgent(db, id, { daira_id: next.daira_id, user_id: userId, skipIfManuel: true, bumpVersion: false });
+  }
   return { item: getAnomalie(db, id), changes };
 }
 
@@ -280,7 +316,7 @@ export function bulkStatut(db, payload, userId, settings = {}) {
         date_intervention: payload.date_intervention,
         date_traitement: payload.date_traitement,
         motif: payload.motif || 'Action groupée',
-      }, userId, settings);
+      }, userId, { ...settings, ignorePhotoAfter: true });
       ok.push(id);
     } catch (error) {
       echecs.push({ id, code: error.code || 'ERREUR', message: error.message });

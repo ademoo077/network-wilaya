@@ -40,7 +40,7 @@ function titreBloc(bloc, item, lang) {
 }
 
 function typeLabel(type, lang) {
-  const map = { kpi: 'Indicateur', tableau: 'Tableau', barres: 'Barres', courbe: 'Courbe', anneau: 'Anneau', histogramme: 'Histogramme', texte: 'Texte', signature: 'Signature', separateur: 'Séparateur', legende: 'Légende', annexe: 'Annexe' };
+  const map = { kpi: 'Indicateur', tableau: 'Tableau', barres: 'Barres', courbe: 'Courbe', anneau: 'Anneau', histogramme: 'Histogramme', texte: 'Texte', signature: 'Signature', separateur: 'Séparateur', legende: 'Légende', annexe: 'Annexe', avant_apres: 'Comparer avant / après' };
   return (lang === 'ar' ? 'عنصر' : map[type]) || type;
 }
 
@@ -67,8 +67,13 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
   useEffect(() => {
     if (!remoteModele) return;
     setModele((current) => {
-      if (!current || current.id !== remoteModele.id) return remoteModele;
-      return Number(remoteModele.version) > Number(current.version) ? remoteModele : current;
+      if (!current) return remoteModele;
+      // Une copie personnelle déjà ouverte ne doit pas être remplacée par le modèle
+      // système d'origine ; en revanche, naviguer vers une copie fraîchement créée
+      // doit bien charger cette copie (le cache est alimenté par rememberModel).
+      if (current.id === remoteModele.id) return Number(remoteModele.version) > Number(current.version) ? remoteModele : current;
+      if (current.portee === 'systeme' && remoteModele.portee !== 'systeme') return remoteModele;
+      return current;
     });
   }, [remoteModele]);
   const [mode, setMode] = useState(personnaliserAsked ? 'personnaliser' : 'lecture');
@@ -134,6 +139,14 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     return `/syntheses/${targetId}${query.size ? `?${query}` : ''}`;
   }, [modeleHref]);
 
+  const ouvrirCopie = useCallback(async () => {
+    if (!modele || modele.portee !== 'systeme') return false;
+    const copie = await editor.personnaliser(modele);
+    push(t('synthese.copieCreee', { nom: copie.nom }), 'info');
+    navigate(hrefForModele(copie.id, { personnaliser: true, source: copie.source_modele_id || modele.id }), { replace: true });
+    return true;
+  }, [modele, editor, hrefForModele, navigate, push, t]);
+
   const handlePersonnaliser = useCallback(async () => {
     if (!modele) return;
     if (mode === 'personnaliser') {
@@ -141,14 +154,28 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
       return;
     }
     if (modele.portee === 'systeme') {
-      try {
-        const copie = await editor.personnaliser(modele);
-        navigate(hrefForModele(copie.id, { personnaliser: true, source: copie.source_modele_id || modele.id }));
-      } catch (error) { push(error.message || t('common.error'), 'danger'); }
+      try { await ouvrirCopie(); } catch (error) { push(error.message || t('common.error'), 'danger'); }
       return;
     }
     setMode('personnaliser');
-  }, [modele, mode, editor, hrefForModele, navigate, push, t]);
+  }, [modele, mode, ouvrirCopie, push, t]);
+
+  // Ouvrir un modèle système en édition crée immédiatement la copie personnelle :
+  // sans cela, la première sauvegarde viserait le modèle système (refusé).
+  const copieEnCours = useRef(null);
+  useEffect(() => {
+    if (mode !== 'personnaliser' || !canPersonnaliser) return;
+    if (!modele || modele.portee !== 'systeme') return;
+    if (copieEnCours.current === modele.id) return;
+    copieEnCours.current = modele.id;
+    let actif = true;
+    ouvrirCopie().catch((error) => {
+      if (!actif) return;
+      copieEnCours.current = null;
+      push(error.message || t('common.error'), 'danger');
+    }).finally(() => { actif = false; });
+    return () => { actif = false; };
+  }, [mode, canPersonnaliser, modele, ouvrirCopie, push, t]);
 
   const handleReinitialiser = useCallback(async () => {
     if (!modele || !sourceId) return;
@@ -304,7 +331,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
               <div className="min-w-0 flex-1"><p className="font-bold text-ink">{t('synthese.brouillonActif')}</p><p className="text-xs leading-relaxed text-muted">{t('synthese.brouillonHelp')}</p></div>
               <span className="shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-brand-700">{t('synthese.brouillon')}</span>
             </div>}
-            <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel}
+            <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel} role={user?.role}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
               onPrint={() => setPrintOpen(true)}
               onPreview={() => (embedded && onDisplayWidth ? onDisplayWidth('print') : setLocalWidth('print'))}
@@ -314,7 +341,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
       </div>
 
       <WidgetGalleryDrawer open={openGalerie} onClose={() => setOpenGalerie(false)} query={galerieQuery} onQuery={setGalerieQuery} onAdd={handleAddBloc} t={t} lang={lang} />
-      <BlocInspectorDrawer open={openInspector} onClose={() => { setOpenInspector(false); setSelectedBloc(null); }} bloc={selectedBloc} onPatch={handleBlocPatch} typeLabel={typeLabel} t={t} lang={lang} />
+      <BlocInspectorDrawer open={openInspector} onClose={() => { setOpenInspector(false); setSelectedBloc(null); }} bloc={selectedBloc} onPatch={handleBlocPatch} typeLabel={typeLabel} t={t} lang={lang} role={user?.role} />
       <EditionsDrawer open={openEditions} onClose={() => setOpenEditions(false)} periode={periode} onPeriode={setPeriode} editor={editor} busy={editionBusy} canFreeze={peutFiger} onGenerate={handleGenererEdition} onOpen={handleOpenEdition} onFreeze={handleFreezeEdition} t={t} lang={lang} />
       <EditionDialog edition={snapshotEdition} blocs={snapshotBlocs} onClose={() => setSnapshotEdition(null)} t={t} lang={lang} dir={dir} />
       <PrintCustomizer open={printOpen} settings={printSettings} onChange={setPrintSettings} onClose={() => setPrintOpen(false)} onPrint={handlePrint}

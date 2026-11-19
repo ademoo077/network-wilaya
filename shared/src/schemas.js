@@ -78,6 +78,7 @@ const baseAnomalie = {
   date_intervention: optionalDate,
   date_traitement: optionalDate,
   veille_element_id: optionalId,
+  sans_photo_motif: z.string().trim().max(1000).nullable().optional(),
 };
 
 export const anomalieCreateSchema = z.object({
@@ -101,6 +102,7 @@ export const statutChangeSchema = z.object({
   date_intervention: optionalDate,
   date_traitement: optionalDate,
   motif: z.string().trim().max(1000).optional(),
+  sans_photo_motif: z.string().trim().max(1000).nullable().optional(),
 });
 
 export const verificationChangeSchema = z.object({
@@ -191,6 +193,11 @@ export const refUpdateSchemas = Object.fromEntries(
   Object.entries(refSchemas).map(([key, schema]) => [key, schema.partial()]),
 );
 
+export const sansSuiteSchema = z.object({
+  version: idSchema,
+  motif: z.string().trim().max(1000),
+});
+
 export const settingsSchema = z.object({
   nom_cellule: z.string().trim().min(1).max(120),
   week_start_day: z.coerce.number().int().min(0).max(6),
@@ -250,6 +257,14 @@ export const importCommitSchema = z.object({
   importId: z.string().min(8).max(120),
   mode: z.enum(['valid_only', 'all_or_nothing']),
 });
+
+const emptyToUndefined = (value) => (value === '' || value === null ? undefined : value);
+
+/** Options facultatives d'un aperçu d'import (statuts « Traité » / « En cours »). */
+export const importPreviewOptionsSchema = z.object({
+  agent_id: z.preprocess(emptyToUndefined, optionalId),
+  epic_id: z.preprocess(emptyToUndefined, optionalId),
+}).strict();
 
 export const snapshotSchema = z.object({ semaine: dateString });
 

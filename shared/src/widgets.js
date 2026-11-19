@@ -94,10 +94,10 @@ export const GALERIE = [
     req({ mesures: [m('recues'), m('traitees_periode'), m('stock_fin')], dimensions: [d('epic')] })),
   widget('charge-agent', 'acteurs', 'Charge par agent', 'العبء حسب العون', 'barres',
     req({ mesures: [m('recues')], dimensions: [d('agent')], tri: [{ champ: 'recues', dir: 'desc' }], limite: 10 })),
-  widget('confirmation-agent', 'acteurs', 'Taux de confirmation par agent', 'معدل التأكيد حسب العون', 'barres',
-    req({ mesures: [m('taux_confirmation')], dimensions: [d('agent')] })),
-  widget('delai-verification-kpi', 'acteurs', 'Délai de vérification', 'مدة التحقق', 'kpi',
-    req({ mesures: [m('delai_verification_moyen')], comparaison: 'periode_precedente' })),
+  widget('traitement-agent', 'acteurs', 'Taux de traitement par agent', 'معدل المعالجة حسب العون', 'barres',
+    req({ mesures: [m('taux_traitement_par_agent')], dimensions: [d('agent')] })),
+  widget('prise-charge-kpi', 'acteurs', 'Délai de prise en charge', 'مدة تولي المهمة', 'kpi',
+    req({ mesures: [m('delai_prise_en_charge')], comparaison: 'periode_precedente' })),
 
   widget('plateforme-anneau', 'plateformes', 'Répartition par plateforme', 'التوزيع حسب المنصة', 'anneau',
     req({ mesures: [m('recues')], dimensions: [d('plateforme')] })),
@@ -112,6 +112,8 @@ export const GALERIE = [
     req({ mesures: [m('recues')], dimensions: [d('gps_source')] })),
   widget('pieces-jointes-anneau', 'qualite', 'Fiches avec pièces jointes', 'بطاقات مع مرفقات', 'anneau',
     req({ mesures: [m('recues')], dimensions: [d('a_pieces_jointes')] })),
+  widget('photos-avant-apres', 'qualite', 'Comparer avant / après', 'مقارنة قبل / بعد', 'avant_apres',
+    req({ mesures: [m('taux_photo_avant'), m('taux_photo_apres')] })),
   widget('en-retard-kpi', 'qualite', 'Fiches en retard', 'بطاقات متأخرة', 'kpi',
     req({ mesures: [m('en_retard')], comparaison: 'periode_precedente' })),
 

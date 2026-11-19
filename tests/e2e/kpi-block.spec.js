@@ -24,12 +24,13 @@ test('143 — bloc KPI complet : bibliothèque de mesures, sélection, objectifs
   const kpiWidget = page.locator('[data-widget-id="kpi-executif"]');
   await expect(kpiWidget).toBeVisible({ timeout: 15_000 });
 
-  const initialCount = await kpiWidget.getAttribute('data-kpi-count');
+  const initialCount = await kpiWidget.locator('[data-kpi-grid]').getAttribute('data-kpi-count');
   expect(initialCount).not.toBeNull();
   const initialNumber = parseInt(initialCount, 10);
   expect(initialNumber).toBeGreaterThanOrEqual(1);
 
-  await kpiWidget.getByRole('button', { name: 'Modifier le bloc' }).click();
+  await kpiWidget.getByRole('button', { name: /Plus d’actions/ }).click();
+  await kpiWidget.getByRole('button', { name: 'Éditer le bloc' }).click();
 
   await expect(page.getByRole('heading', { name: 'Inspecteur' })).toBeVisible();
 
@@ -50,9 +51,13 @@ test('143 — bloc KPI complet : bibliothèque de mesures, sélection, objectifs
   await lastMeasureAdd.click();
   await expect(page.locator('[data-kpi-mesures-list] li')).toHaveCount(mesListBefore + 1);
 
-  await page.getByRole('button', { name: 'Monter', exact: true }).first().click();
-  const afterReorder = await page.locator('[data-kpi-mesures-list] li').first().textContent();
-  expect(afterRender).toBeDefined();
+  // Remonter la mesure ajoutée (en fin de liste) jusqu'en première position.
+  const mesuresList = page.locator('[data-kpi-mesures-list] li');
+  for (let index = (await mesuresList.count()) - 1; index > 0; index -= 1) {
+    await mesuresList.nth(index).getByRole('button', { name: 'Monter', exact: true }).click();
+  }
+  const afterReorder = await mesuresList.first().textContent();
+  expect(afterReorder).toBeDefined();
   expect(afterReorder).toContain('Délai');
 
   await page.locator('input[type="number"]').nth(0).fill('15');
@@ -87,11 +92,16 @@ test('143 — bloc KPI complet : bibliothèque de mesures, sélection, objectifs
 
   await page.setViewportSize({ width: 1440, height: 1000 });
 
+  // L'inspecteur se ferme lors de l'application : le rouvrir pour objectifs et préréglages.
+  await kpiWidget.getByRole('button', { name: /Plus d’actions/ }).click();
+  await kpiWidget.getByRole('button', { name: 'Éditer le bloc' }).click();
+  await expect(page.getByRole('heading', { name: 'Inspecteur' })).toBeVisible();
+
   const objectifInput = page.locator('input[type="number"]').first();
   await objectifInput.fill('20');
   await expect(objectifInput).toHaveValue('20');
 
-  await page.getByRole('button', { name: 'Préréglages KPI' }).click();
+  // Les préréglages sont exposés directement dans l'inspecteur, sous leur intitulé.
   await page.getByRole('button', { name: /Stock ouvert en fin de période/ }).click();
   await expect(page.locator('[data-kpi-mesures-list] li')).toHaveCount(1);
 
@@ -111,23 +121,24 @@ test('143b — bloc KPI : sélection de 24 mesures maximum', async ({ page, base
   await ouvrirCopie(page);
 
   const kpiWidget = page.locator('[data-widget-id="kpi-executif"]');
-  await kpiWidget.getByRole('button', { name: 'Modifier le bloc' }).click();
+  await kpiWidget.getByRole('button', { name: /Plus d’actions/ }).click();
+  await kpiWidget.getByRole('button', { name: 'Éditer le bloc' }).click();
 
   const allSectionIds = [
     'cohorte', 'traitement', 'verification', 'intervention', 'stock', 'qualite', 'derivee',
   ];
 
   let added = 0;
-  for (const section of allSectionIds) {
-    const btn = page.getByRole('button', { name: new RegExp(section, 'i') });
-    await btn.click().catch(() => {});
-    const measureButtons = page.locator('[data-kpi-mesures-selector] button:not(:disabled)');
+  for (const group of allSectionIds) {
+    await page.locator(`[data-kpi-group="${group}"]`).click();
+    // Ne cliquer que les mesures non sélectionnées : cliquer une mesure active la
+    // désélectionnerait et ferait osciller le compteur sous la limite de 24.
+    const measureButtons = page.locator('[data-kpi-measure]:not(:disabled):not(.bg-brand-100)');
     while (await measureButtons.count() > 0 && added < 24) {
-      const btn = measureButtons.first();
-      if (await btn.isDisabled()) break;
-      await btn.click();
-      added++;
+      await measureButtons.first().click();
+      added += 1;
     }
+    await page.locator(`[data-kpi-group="${group}"]`).click();
   }
 
   const selectedCount = await page.locator('[data-kpi-mesures-list] li').count();

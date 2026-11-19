@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatValue } from '@anm/shared';
+import { colonnesAffichees } from '@anm/shared';
+import {
+  classeAccentStyle, classeAlignementStyle, classeDensiteStyle, normaliserStyle,
+} from '@anm/shared';
+import { api, queryString } from '../../api/client.js';
 import { ErrorBoundary } from '../../components/ErrorBoundary.jsx';
 import { Button, Card, CardHeader, EmptyState, Skeleton } from '../../components/ui/index.js';
 import {
@@ -136,26 +142,47 @@ function MiniChart({ result, lang, t }) {
   </div>;
 }
 
-function TableauWidget({ bloc, result, title, lang, dir, t, actions }) {
-  const dimensions = dimsOf(result);
-  const measures = mesuresOf(result);
+function TableauWidget({ bloc, result, title, lang, dir, t, actions, role }) {
   const rows = rowsOf(result);
   const [page, setPage] = useState(0);
+  const colonnes = colonnesAffichees(bloc, result, { role });
+  const dims = colonnes.length ? colonnes : dimsOf(result).map((dimension) => ({
+    id: dimension.champ,
+    source: 'dimension',
+    champ: dimension.champ,
+    format: 'entier',
+    align: 'left',
+    label_fr: dimensionLabel(dimension.champ, lang),
+    label_ar: dimensionLabel(dimension.champ, lang),
+  })).concat(mesuresOf(result).map((measure) => ({
+    id: measure.id,
+    source: 'mesure',
+    champ: measure.id,
+    format: measure.format,
+    align: 'right',
+    label_fr: measureLabel(measure.id, lang),
+    label_ar: measureLabel(measure.id, lang),
+  })));
   const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
   const pageRows = rows.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE);
-  const headers = dimensions.map((d) => dimensionLabel(d.champ, lang)).concat(measures.map((m) => measureLabel(m.id, lang)));
   const Previous = dir === 'rtl' ? ChevronRight : ChevronLeft;
   const Next = dir === 'rtl' ? ChevronLeft : ChevronRight;
   return <>
     <CardHeader title={title} action={actions} />
     {bloc.options?.avec_graphique && <MiniChart result={result} lang={lang} t={t} />}
     <div className="overflow-x-auto rounded-md border border-border lg:overflow-x-visible" role="region" aria-label={title} tabIndex={0}>
-      <table className="w-full text-sm" data-widget-table><thead className="sticky top-0 z-10 bg-surface2"><tr>{headers.map((text, index) => <th key={`${text}-${index}`} className="border-b border-border px-2 py-2 text-start text-xs font-bold text-ink2 lg:px-3">{text}</th>)}</tr></thead>
-        <tbody>{pageRows.length === 0 ? <tr><td colSpan={Math.max(1, headers.length)} className="px-4 py-5 text-center text-muted">{t('synthese.aucuneLigne')}</td></tr> : pageRows.map((row, rowIndex) => <tr key={rowIndex} className="border-b border-border last:border-0">
-          {dimensions.map((dimension, index) => <td key={`${dimension.id}-${index}`} className="px-2 py-2 text-start text-ink lg:px-3"><bdi>{rowDimensionLabel(row, dimension, index, lang)}</bdi></td>)}
-          {measures.map((measure) => <td key={measure.id} className="px-2 py-2 text-end tabular-nums text-ink lg:px-3"><bdi dir="ltr">{formatValue(row.valeurs?.[measure.id], measure.format, lang)}</bdi></td>)}
+      <table className="w-full text-sm" data-widget-table><thead className="sticky top-0 z-10 bg-surface2"><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-2 text-xs font-bold text-ink2 lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
+        <tbody>{pageRows.length === 0 ? <tr><td colSpan={Math.max(1, dims.length)} className="px-4 py-5 text-center text-muted">{t('synthese.aucuneLigne')}</td></tr> : pageRows.map((row, rowIndex) => <tr key={rowIndex} className="border-b border-border last:border-0">
+          {dims.map((column, index) => {
+            if (column.source === 'dimension') {
+              return <td key={`${column.id}-${index}`} className={`px-2 py-2 text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi>{rowDimensionLabel(row, { id: column.champ, champ: column.champ }, index, lang)}</bdi></td>;
+            }
+            return <td key={`${column.id}-${index}`} className={`px-2 py-2 tabular-nums text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi dir="ltr">{formatValue(row.valeurs?.[column.champ], column.format, lang)}</bdi></td>;
+          })}
         </tr>)}
-        {result?.totaux && <tr className="border-t border-border bg-surface2 font-bold">{dimensions.map((dimension) => <td key={dimension.id} className="px-2 py-2 text-start text-muted lg:px-3">{t('synthese.total')}</td>)}{measures.map((measure) => <td key={measure.id} className="px-2 py-2 text-end tabular-nums lg:px-3"><bdi dir="ltr">{formatValue(result.totaux.valeurs?.[measure.id], measure.format, lang)}</bdi></td>)}</tr>}
+        {result?.totaux && <tr className="border-t border-border bg-surface2 font-bold">{dims.map((column) => <td key={column.id} className={`px-2 py-2 lg:px-3 ${column.align === 'right' ? 'text-end' : 'text-start'}`}>
+          {column.source === 'dimension' ? <span className="text-muted">{t('synthese.total')}</span> : <bdi dir="ltr">{formatValue(result.totaux.valeurs?.[column.champ], column.format, lang)}</bdi>}
+        </td>)}</tr>}
         </tbody></table>
     </div>
     {totalPages > 1 && <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted no-print"><span><bdi dir="ltr">{t('synthese.page', { page: page + 1, total: totalPages })}</bdi></span><div className="flex gap-1">
@@ -184,8 +211,8 @@ function KpiWidget({ bloc, result, title, lang, actions }) {
   };
 
   const bgClass = (status) => {
-    if (status === 'critique') return 'border-danger/40 bg-red-50';
-    if (status === 'alerte') return 'border-amber-400/40 bg-amber-50';
+    if (status === 'critique') return 'border-danger/40 bg-danger/10';
+    if (status === 'alerte') return 'border-warning/40 bg-warning/10';
     return 'border-border bg-surface2';
   };
 
@@ -207,22 +234,64 @@ function KpiWidget({ bloc, result, title, lang, actions }) {
   </div></>;
 }
 
-function TexteWidget({ bloc, lang, t }) {
+function TexteWidget({ bloc, lang, t, alignement = 'auto' }) {
   const text = lang === 'ar' ? (bloc.options?.texte_ar || bloc.options?.texte_fr) : (bloc.options?.texte_fr || bloc.options?.texte_ar);
-  return <div className="whitespace-pre-wrap p-2 text-sm leading-relaxed text-ink2">{text || t('synthese.texteAjouter')}</div>;
+  return <div className={`whitespace-pre-wrap p-2 text-sm leading-relaxed text-ink2 ${classeAlignementStyle(alignement)}`}>{text || t('synthese.texteAjouter')}</div>;
+}
+
+function PhotoPairsWidget({ bloc, result, t, lang, actions }) {
+  const periode = result?.meta?.periode || {};
+  const limite = bloc.options?.limite || 12;
+  const debut = periode.debut || '';
+  const fin = periode.fin || '';
+  const [state, setState] = useState({ items: [], loading: true, error: null });
+  useEffect(() => {
+    let alive = true;
+    setState((current) => ({ ...current, loading: true, error: null }));
+    const query = queryString({ debut, fin, limite });
+    api(`/photos/paires${query}`)
+      .then((data) => { if (alive) setState({ items: data.items || [], loading: false, error: null }); })
+      .catch((error) => { if (alive) setState({ items: [], loading: false, error }); });
+    return () => { alive = false; };
+  }, [debut, fin, limite]);
+  const title = bloc.titre || (lang === 'ar' ? 'مقارنة قبل / بعد' : 'Comparer avant / après');
+  if (state.loading) return <><CardHeader title={title} action={actions} /><div className="p-4"><Skeleton className="h-24 w-full" /></div></>;
+  if (state.error) return <><CardHeader title={title} action={actions} /><div className="p-4 text-sm text-danger">{state.error.message}</div></>;
+  if (!state.items.length) return <><CardHeader title={title} action={actions} /><EmptyState title={title} description={t('photo.noPairs')} /></>;
+  return <>
+    <CardHeader title={title} action={actions} />
+    <div data-photo-pairs className="grid min-w-0 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+      {state.items.map((pair) => <article key={`${pair.anomalie_id}-${pair.avant.id}-${pair.apres.id}`}
+        data-photo-pair={pair.anomalie_id} className="min-w-0 overflow-hidden rounded-lg border border-border bg-surface2">
+        <div className="grid grid-cols-2 gap-px bg-border">
+          {[pair.avant, pair.apres].map((piece) => <figure key={piece.id} className="min-w-0 bg-surface">
+            <img src={piece.thumb_url || piece.url} alt={`${t(piece.role === 'avant' ? 'photo.avant' : 'photo.apres')} — ${pair.reference}`}
+              className="aspect-[4/3] w-full object-cover" loading="lazy" />
+            <figcaption className="truncate px-2 py-1 text-[11px] text-muted" title={piece.legende || piece.nom_original || ''}>
+              <bdi>{t(piece.role === 'avant' ? 'photo.avant' : 'photo.apres')}</bdi>
+            </figcaption>
+          </figure>)}
+        </div>
+        <Link to={`/anomalies/${pair.anomalie_id}`} className="block truncate px-3 py-2 text-xs font-semibold text-brand-700">
+          <bdi>{pair.reference}</bdi>
+        </Link>
+      </article>)}
+    </div>
+  </>;
 }
 
 function typeLabel(type, lang) {
-  const labels = { kpi: 'Indicateur', tableau: 'Tableau', barres: 'Barres', lignes: 'Lignes', courbe: 'Courbe', aire: 'Aire', anneau: 'Anneau', histogramme: 'Histogramme', cascade: 'Cascade', carte_thermique: 'Carte thermique', radar: 'Radar', nuage: 'Nuage', treemap: 'Treemap', entonnoir: 'Entonnoir', pareto: 'Pareto', texte: 'Texte', signature: 'Signature', separateur: 'Séparateur', legende: 'Légende', annexe: 'Annexe' };
+  const labels = { kpi: 'Indicateur', tableau: 'Tableau', barres: 'Barres', lignes: 'Lignes', courbe: 'Courbe', aire: 'Aire', anneau: 'Anneau', histogramme: 'Histogramme', cascade: 'Cascade', carte_thermique: 'Carte thermique', radar: 'Radar', nuage: 'Nuage', treemap: 'Treemap', entonnoir: 'Entonnoir', pareto: 'Pareto', texte: 'Texte', signature: 'Signature', separateur: 'Séparateur', legende: 'Légende', annexe: 'Annexe', avant_apres: 'Comparer avant / après', liste_fiches: 'Liste de fiches', classement: 'Classement', chronologie: 'Chronologie' };
   return lang === 'ar' ? 'عنصر' : (labels[type] || type);
 }
 
-function RenderWidget({ bloc, result, t, lang, dir, actions }) {
+function RenderWidget({ bloc, result, t, lang, dir, actions, role, style }) {
   const title = bloc.titre || typeLabel(bloc.type, lang);
   const height = heightClass(bloc);
-  if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><CardHeader title={title} action={actions} /><TexteWidget bloc={bloc} lang={lang} t={t} /></>;
+  if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><CardHeader title={title} action={actions} /><TexteWidget bloc={bloc} lang={lang} t={t} alignement={style.alignement} /></>;
   if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} actions={actions} />;
-  if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} />;
+  if (bloc.type === 'avant_apres') return <PhotoPairsWidget bloc={bloc} result={result} t={t} lang={lang} actions={actions} />;
+  if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} role={role} />;
   if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
   if (bloc.type === 'anneau') return <AnneauChart result={result} title={title} t={t} lang={lang} actions={actions} />;
   if (['barres', 'histogramme', 'carte_thermique', 'pareto', 'cascade', 'treemap', 'radar', 'nuage', 'entonnoir'].includes(bloc.type)) return <BarresChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
@@ -233,18 +302,21 @@ function WidgetError({ error, reset, t, bloc }) {
   return <Card data-testid={`widget-${bloc.id}`} data-widget-error className="p-4"><p className="font-bold text-danger">{t('synthese.erreurWidget')}</p><p className="mt-1 text-xs text-muted">{error?.message || t('common.error')}</p><Button size="sm" variant="secondary" className="mt-3" onClick={reset}>{t('common.retry')}</Button></Card>;
 }
 
-export default function WidgetCard({ bloc, result, t, lang, dir, onVoirFiches, editorActions = null }) {
+export default function WidgetCard({ bloc, result, t, lang, dir, onVoirFiches, editorActions = null, role = 'operateur' }) {
   const [dialog, setDialog] = useState(null);
   if (bloc.type === 'separateur') return <div className="my-4 border-t-2 border-border" data-testid={`widget-${bloc.id}`} />;
   const needsResult = !['texte', 'signature', 'legende', 'annexe'].includes(bloc.type);
   const title = bloc.titre || typeLabel(bloc.type, lang);
   const actions = <WidgetActionBar result={result} bloc={bloc} title={title} lang={lang} t={t} onDialog={setDialog} onVoirFiches={onVoirFiches} editorActions={editorActions} />;
+  const style = normaliserStyle(bloc.options);
+  const densite = classeDensiteStyle(style.densite);
+  const accent = classeAccentStyle(style.accent);
   const body = needsResult && !result
     ? <><CardHeader title={title} action={actions} /><div className="p-4"><Skeleton className="h-24 w-full" /></div></>
-    : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={actions} />;
-  const fullBody = needsResult && !result ? <Skeleton className="h-24 w-full" /> : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={null} />;
+    : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={actions} role={role} style={style} />;
+  const fullBody = needsResult && !result ? <Skeleton className="h-24 w-full" /> : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={null} role={role} style={style} />;
   return <ErrorBoundary fallback={({ error, reset }) => <WidgetError error={error} reset={reset} t={t} bloc={bloc} />}>
-    <Card data-testid={`widget-${bloc.id}`} data-widget-card className="p-4">{body}</Card>
+    <Card data-testid={`widget-${bloc.id}`} data-widget-card data-style-align={style.alignement} data-style-accent={style.accent} className={`${densite} ${accent}`}>{body}</Card>
     <WidgetDialogs dialog={dialog} onClose={() => setDialog(null)} title={title} result={result} lang={lang} t={t} fullBody={fullBody} />
   </ErrorBoundary>;
 }

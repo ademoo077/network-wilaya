@@ -14,7 +14,11 @@ function Photo({ file, onRemove }) {
 }
 export default function PhotoAttachments({ model }) {
   const { t } = useI18n(); const { state, ui, handleFiles } = model;
-  return <div className="min-w-0 space-y-3 sm:col-span-2">
+  return <div data-photo-role="avant" className="min-w-0 space-y-3 sm:col-span-2">
+    <div>
+      <p className="text-sm font-bold text-ink">{t('photo.avant')}</p>
+      <p className="text-xs text-muted">{t('photo.helpAvant')}</p>
+    </div>
     <label htmlFor="attachments" className="grid min-h-28 cursor-pointer place-items-center gap-2 rounded-md border border-dashed border-border bg-surface2 p-4 text-center text-sm text-ink2 transition hover:border-brand-600 focus-within:ring-2 focus-within:ring-brand-600"
       onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFiles([...event.dataTransfer.files]); }}>
       <ImagePlus className="h-6 w-6 text-brand-700" aria-hidden="true" /><span>{t('form.dropFiles')}</span>

@@ -19,11 +19,10 @@ test('Options avancées — affordance, focus clavier et état conservé', async
   await summary.click();
   await expect(details).toHaveJSProperty('open', true);
 
-  await page.locator('#verification').selectOption('infirmee');
-  await expect(page.locator('#motif')).toBeVisible();
-  await page.locator('#verification').selectOption('a_verifier');
-  await expect(page.locator('#motif')).toHaveCount(0);
-  await expect(details, 'le panneau reste ouvert après le retour à « À vérifier »').toHaveJSProperty('open', true);
+  await page.locator('#intervenant_autre').fill('Prestataire temporaire');
+  await expect(page.locator('#intervenant_autre')).toHaveValue('Prestataire temporaire');
+  await page.locator('#intervenant_autre').fill('');
+  await expect(details, 'le panneau reste ouvert après vidage du champ').toHaveJSProperty('open', true);
 
   await summary.focus();
   await page.keyboard.press('Enter');
