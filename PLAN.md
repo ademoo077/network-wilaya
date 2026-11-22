@@ -97,3 +97,39 @@ Après chaque phase : 5 lignes maximum - corrigé / tests / causes trouvées / p
 - **Complément « Aujourd’hui »** : préréglage `1` partagé, `from=to=todayAlgiers()` en SQL, libellé FR/AR et puce de filtre, scénario 189. QA vert : 754 Vitest, 11 API, 169 Playwright, lint/styles/a11y. Reste : rien.
 - **Correctif `profile.php` long (22/11/2026)** : un identifiant Facebook ≥ 12 chiffres est suggéré en « Page locale », pas en « Profil citoyen » ; l’ajout réussit pour un opérateur. Scénario 190 + 2 assertions Vitest. QA vert : 754 Vitest, 11 API, 170 Playwright, lint/styles/a11y. Page live id 111 créée avec le nom exact. Reste : rien.
 - **Correctif « Données invalides » / territoire (22/11/2026)** : les ids de daïra/commune du formulaire (texte) sont convertis en nombres dans `SourcePicker` avant l’ajout de page ; scénario 191. QA vert : 754 Vitest, 11 API, 171 Playwright, lint/styles/a11y. Service redémarré sur le nouveau build. Reste : rien.
+
+## V15 — Studio de synthèses : flux, visualisations et impression fiable (22/11/2026)
+
+Références : prompt V15, `docs/SPEC_V8.md`, `AUDIT_V9.md` à `AUDIT_V14.md`, `DECISIONS.md`. Baseline : tag annoté `avant-v15` sur `6b283f5`. Le moteur de calcul, les chiffres et les éditions figées ne changent pas.
+
+### Numérotation des scénarios
+
+Les scénarios V14 189 (« Aujourd’hui »), 190 (`profile.php`) et 191 (territoire) existent déjà. Les scénarios du prompt V15 sont donc décalés de +3 :
+
+| Prompt | Scénario effectif | Objet |
+|---:|---:|---|
+| 189 | 192 | Studio à l’écran 1280/1440, lignes 4+8, KPI, barre unique |
+| 190 | 193 | Personnaliser : min 240 px, poignées bords, clavier, annuler/rétablir |
+| 191 | 194 | Anneau : total centré dans le SVG, légende complète |
+| 192 | 195 | « Par daïra » : barres horizontales, colonne Daïra, toutes les lignes |
+| 193 | 196 | Impression A4 standard : 1 page, référence `SYN-2026-S47-v1` |
+| 194 | 197 | Rapport long : remplissage ≥ 70 %, en-têtes répétés, formats |
+| 195 | 198 | Aperçu = impression = PDF, FR/AR |
+| 196 | 199 | Galerie : recherche, catégories, aperçu, clavier |
+| 197 | 200 | Migration x/y → flux, éditions figées réimprimées à l’identique |
+| 198 | 201 | Résilience : ErrorBoundary, F5, clair/sombre, FR/AR, régression |
+
+### Phases
+
+| # | Phase | Critère de réussite |
+|---:|---|---|
+| 1 | Instrumentation (JSON géométrie/remplissage/pages, captures) + `AUDIT_V15.md` + tests rouges S1–S9 | Chaque constat a une cause mesurée et un test rouge |
+| 2 | Modèle de flux : `regrouperEnLignes`, conversion x/y → flux, migration **017** (pas 013, déjà appliquée), grille 12/6/1, min 240 px, modèle système réécrit | Scénarios 192, 200 verts |
+| 3 | Cadre de widget (actions hors flux, menu ⋯, pas de « Contenu masqué »), barre unique, KPI équilibrés | Scénarios 192, 193 verts |
+| 4 | Visualisations : anneau, barres/étiquettes, tableau avec dimension, Analyse | Scénarios 194, 195 verts |
+| 5 | Pipeline d’impression : route `#/imprimer/:id`, mesure, `paginer()`, vue statique, CSS, référence, PDF, réimpression des figées | Scénarios 196–198 verts |
+| 6 | Galerie refaite : recherche, catégories accentuées, aperçu, configuration, clavier | Scénario 199 vert |
+| 7 | Recette 192–201, captures FR/AR × clair/sombre, PDF exemple, README, audit complet | **`npm run qa` vert** ; commit |
+
+### Résumés V15 (5 lignes maximum par phase)
+- **Phase 1** : instrumentation JSON/captures centralisée (`v15-instrumentation.js`), `AUDIT_V15.md` avec causes mesurées S1–S9. Neuf tests rouges exécutés puis retirés (TDD), remplacés par les scénarios verts 192–201. Migration 017 et décalage de numérotation consignés dans `DECISIONS.md`. QA vert : 754 Vitest, 11 API, 171 Playwright, lint (1 avertissement préexistant), styles et a11y. Reste : phases 2 à 7.
