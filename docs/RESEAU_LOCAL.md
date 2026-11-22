@@ -89,3 +89,20 @@ Sur une IP LAN en HTTP, la géolocalisation du navigateur et la lecture directe 
 - Client et `/api/health` : HTTP `200`, diagnostic de base valide.
 - Navigateur réel à `390` et `1440` px : écran de connexion chargé, appels API sur la même adresse LAN, aucune erreur JavaScript ou requête échouée inattendue, aucun débordement horizontal. La route nouvelle anomalie reste protégée sans session.
 - Accès depuis un autre appareil : **à confirmer sur ce réseau**.
+
+## Contrôles complémentaires le 22/11/2026
+
+Côté serveur, après le correctif V14 et le redémarrage du service :
+
+- Adresse `192.168.117.163/24` active sur **Ethernet 2**, profil réseau **Public**.
+- Serveur en écoute sur `0.0.0.0:3000` (PID 23532), build `assets/index-DK120sIX.js` servi.
+- Aucune règle de pare-feu dédiée au port 3000 : la règle **Node.js JavaScript Runtime** (TCP entrant, profil Public, `C:\program files\nodejs\node.exe`) est activée et couvre le port.
+- `/api/health` répond `ok:true`, `db:true`, `version:5.0.0` sur `127.0.0.1` **et** `192.168.117.163`.
+- Des voisins sont présents sur le segment (`.1`, `.98`, `.138`, `.150`, `.159`, `.253`) : le réseau est actif, mais cela ne prouve pas l'accès HTTP depuis ces appareils.
+
+À réaliser depuis **un autre appareil du réseau** (le test ci-dessus depuis le serveur ne suffit pas) :
+
+1. Ouvrir `http://192.168.117.163:3000/api/health` : attendre `{"ok":true,"db":true}`.
+2. Ouvrir `http://192.168.117.163:3000/#/anomalies/nouvelle` : la connexion doit s'afficher ; se connecter avec un compte réel et vérifier que la session reste valide en naviguant.
+3. Vérifier à `390` et `1440` px : aucun débordement horizontal, aucune erreur JavaScript, appels API sur la même adresse LAN.
+4. En cas d'échec : exécuter `Test-NetConnection 192.168.117.163 -Port 3000` depuis l'appareil, puis vérifier le profil réseau, la règle Node.js, l'isolation clients/VLAN et le mode réseau de la machine virtuelle le cas échéant.
