@@ -237,17 +237,16 @@ test('115 — Studio : les actions compactes de chaque widget sont présentes et
 
   for (let index = 0; index < 3; index += 1) {
     const card = cards.nth(index);
-    for (const label of ['Voir la définition', 'Afficher en plein écran', 'Exporter ce widget en CSV', 'Plus d’actions']) {
-      await expect(card.getByRole('button', { name: label }), `${label} absent du widget ${index}`).toHaveCount(1);
-    }
+    await expect(card.getByRole('button', { name: 'Plus d’actions' }), `Menu absent du widget ${index}`).toHaveCount(1);
     await card.getByRole('button', { name: 'Plus d’actions' }).click();
-    for (const label of ['Voir les données', 'Voir les fiches', 'Exporter en PNG', 'Exporter en JSON']) {
+    for (const label of ['Voir la définition', 'Voir les données', 'Voir les fiches', 'Exporter en PNG', 'Exporter en JSON']) {
       await expect(card.getByRole('menu').getByRole('button', { name: label }), `${label} absent du menu du widget ${index}`).toHaveCount(1);
     }
     await card.getByRole('button', { name: 'Plus d’actions' }).click();
   }
   const first = cards.first();
-  await first.getByRole('button', { name: 'Voir la définition' }).click();
+  await first.getByRole('button', { name: 'Plus d’actions' }).click();
+  await first.getByRole('menu').getByRole('button', { name: 'Voir la définition' }).click();
   await expect(page.getByRole('dialog', { name: /Voir la définition/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await first.getByRole('button', { name: 'Plus d’actions' }).click();

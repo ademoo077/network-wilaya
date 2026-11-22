@@ -67,7 +67,10 @@ test('Rapport — un ancien serveur rejette le flux V15 puis accepte le repli sa
     return route.continue();
   });
   await personalizeReport(page);
-  await page.getByLabel('Placement des widgets').selectOption('libre');
+  const widget = page.locator('[data-widget-id="anneau-statuts"]');
+  await expect(widget).toBeVisible();
+  await widget.focus();
+  await page.keyboard.press('Shift+ArrowRight');
   await expect(savedStatus(page)).toBeVisible({ timeout: 10_000 });
   expect(requests).toHaveLength(3);
   expect(requests[0].definition.layout.schema_version).toBe(2);
@@ -190,6 +193,7 @@ test('Rapport — revenir au standard conserve une version éditable après navi
   await addWidget(page);
   await expect(savedStatus(page)).toBeVisible();
   const reset = page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/reinitialiser'));
+  await page.getByRole('button', { name: 'Affichage', exact: true }).click();
   await page.getByRole('button', { name: 'Revenir au standard', exact: true }).click();
   expect((await reset).status()).toBe(200);
   await expect(page.locator('[data-testid^="widget-"]')).toHaveCount(3);

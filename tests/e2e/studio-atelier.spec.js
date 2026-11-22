@@ -181,35 +181,29 @@ test('142 — normalisation, hauteur automatique et actions compactes sans recou
   await expectCompactWidgetActions(page);
 
   const ring = page.locator('[data-widget-id="anneau-statuts"]');
-  const before = await page.locator('[data-widget-id]').evaluateAll((widgets) => Object.fromEntries(widgets.map((widget) => [widget.dataset.widgetId, Number(widget.dataset.y)])));
-  const grid = page.locator('[data-synthese-grid]');
-  const row = await grid.evaluate((element) => parseFloat(getComputedStyle(element).gridAutoRows) + parseFloat(getComputedStyle(element).rowGap || '4'));
-  const ringY = Number(await ring.getAttribute('data-y'));
+  const positions = (widgets) => Object.fromEntries(widgets.map((widget) => [widget.dataset.widgetId, `${widget.dataset.x}:${widget.dataset.y}`]));
+  const before = await page.locator('[data-widget-id]').evaluateAll(positions);
   const handle = ring.getByRole('button', { name: 'Déplacer le widget' });
-  await handle.scrollIntoViewIfNeeded();
-  const box = await handle.boundingBox();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - ringY * row);
-  await page.mouse.up();
+  await expect(handle).toBeVisible();
+  for (let index = 0; index < 10; index += 1) {
+    await ring.focus();
+    await page.keyboard.press('ArrowDown');
+  }
   await expectNoWidgetIntersections(page);
-  const after = await page.locator('[data-widget-id]').evaluateAll((widgets) => Object.fromEntries(widgets.map((widget) => [widget.dataset.widgetId, Number(widget.dataset.y)])));
+  const after = await page.locator('[data-widget-id]').evaluateAll(positions);
   expect(Object.keys(before).some((id) => id !== 'anneau-statuts' && before[id] !== after[id]), 'Aucun voisin ne s’est écarté').toBe(true);
 
   const more = ring.getByRole('button', { name: 'Plus d’actions' });
   await more.click();
   const menu = ring.getByRole('menu');
-  for (const label of ['Voir les données', 'Voir les fiches', 'Dupliquer le widget', 'Exporter ce widget en CSV', 'Exporter en PNG', 'Exporter en JSON', 'Masquer à l’impression']) {
+  for (const label of ['Voir la définition', 'Voir les données', 'Voir les fiches', 'Monter', 'Descendre', 'Dupliquer le widget', 'Éditer le bloc', 'Masquer à l’impression', 'Exporter en PNG', 'Exporter en JSON']) {
     await expect(menu.getByRole('button', { name: label })).toBeVisible();
   }
   await more.click();
   await expect(menu).toHaveCount(0);
   const kpi = page.locator('[data-widget-id="kpi-executif"]');
-  const kpiHeight = Number(await kpi.getAttribute('data-h'));
-  await kpi.focus();
-  for (let index = 1; index < kpiHeight; index += 1) await page.keyboard.press('Shift+ArrowUp');
-  await expect(kpi).toHaveAttribute('data-height-mode', 'fixed');
-  await expect(kpi.getByRole('status').filter({ hasText: 'Contenu masqué' })).toBeVisible();
+  await expect(kpi).toHaveAttribute('data-height-mode', 'auto');
+  await expect(kpi.getByRole('status').filter({ hasText: 'Contenu masqué' })).toHaveCount(0);
   await expectNoWidgetIntersections(page);
   await expectNoWidgetClipping(page);
   await expectAccessible(page);

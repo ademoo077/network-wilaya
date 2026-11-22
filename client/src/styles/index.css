@@ -71,9 +71,18 @@
 .recharts-tooltip-item-value,
 .recharts-tooltip-label { color: var(--ink) !important; }
 
+/* V15 : 12 colonnes en grand écran, 6 sur tablette, 1 colonne sur mobile. */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .synthese-free-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; grid-auto-rows: auto !important; }
+  .synthese-free-grid > [data-widget-id] { grid-column: auto / span 3 !important; grid-row: auto !important; }
+  .synthese-free-grid > [data-widget-id][data-colonnes='8'],
+  .synthese-free-grid > [data-widget-id][data-colonnes='9'],
+  .synthese-free-grid > [data-widget-id][data-colonnes='12'] { grid-column: auto / span 6 !important; }
+}
+
 @media screen and (max-width: 767px) {
   .synthese-free-grid { display: flex !important; flex-direction: column; gap: 0.75rem; }
-  .synthese-free-grid > section { width: 100% !important; min-height: 0 !important; }
+  .synthese-free-grid > [data-widget-id] { width: 100% !important; min-width: 0 !important; min-height: 0 !important; grid-column: auto !important; grid-row: auto !important; }
 }
 
 @media print {

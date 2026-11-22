@@ -347,7 +347,9 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
               <div className="min-w-0 flex-1"><p className="font-bold text-ink">{t('synthese.brouillonActif')}</p><p className="text-xs leading-relaxed text-muted">{t('synthese.brouillonHelp')}</p></div>
               <span className="shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-brand-700">{t('synthese.brouillon')}</span>
             </div>}
-            <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} typeLabel={typeLabel} role={user?.role}
+            <OfficialPrintDocument settings={printSettings} t={t} lang={lang}><SyntheseCanvas modele={modele} mode={mode} sourceId={sourceId} alreadyFrozen={alreadyFrozen} editor={editor} blocs={blocs} activeBlocs={activeBlocs} activeResults={activeResults} maxWidgets={MAX_WIDGETS} t={t} lang={lang} dir={dir} role={user?.role}
+              canPersonnaliser={canPersonnaliser} peutFiger={peutFiger} editionBusy={editionBusy} onPersonnaliser={handlePersonnaliser} onFiger={handleFiger}
+              displayWidth={activeWidth} onDisplayWidth={onDisplayWidth || setLocalWidth}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
               onPrint={() => setPrintOpen(true)}
               onPreview={() => (embedded && onDisplayWidth ? onDisplayWidth('print') : setLocalWidth('print'))}

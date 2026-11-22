@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowDown, ArrowUp, Copy, Download, Edit, EyeOff, FileJson, FileText,
-  GripVertical, Info, Maximize2, MoreHorizontal, Scaling, Table2, Trash2, X,
+  Info, Maximize2, MoreHorizontal, Table2, Trash2, X,
 } from 'lucide-react';
 import { formatValue } from '@anm/shared';
 import { Button, Card, Dialog } from '../../components/ui/index.js';
@@ -21,25 +21,40 @@ function MenuAction({ icon: Icon, children, ...props }) {
 
 export function WidgetActionBar({ result, bloc, title, lang, t, onDialog, onVoirFiches, editorActions }) {
   const [more, setMore] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const zoneRef = useRef(null);
   const run = (action) => () => { setMore(false); action?.(); };
-  return <div className="flex max-w-full flex-wrap items-center justify-end gap-0.5 no-print" data-widget-actions>
-    {editorActions?.onMoveStart && <IconAction label={t('synthese.deplacer')} onPointerDown={editorActions.onMoveStart} onPointerMove={editorActions.onPointerMove} onPointerUp={editorActions.onPointerUp} onPointerCancel={editorActions.onPointerUp}><GripVertical className="h-4 w-4" aria-hidden="true" /></IconAction>}
-    {editorActions?.onResizeStart && <IconAction label={t('synthese.redimensionner')} onPointerDown={editorActions.onResizeStart} onPointerMove={editorActions.onPointerMove} onPointerUp={editorActions.onPointerUp} onPointerCancel={editorActions.onPointerUp}><Scaling className="h-4 w-4" aria-hidden="true" /></IconAction>}
-    <IconAction label={t('synthese.action.info')} onClick={() => onDialog('info')}><Info className="h-4 w-4" aria-hidden="true" /></IconAction>
-    <IconAction label={t('synthese.action.fullscreen')} disabled={!result} onClick={() => onDialog('full')}><Maximize2 className="h-4 w-4" aria-hidden="true" /></IconAction>
-    <IconAction label={t('synthese.exporterCsv')} disabled={!result} onClick={() => downloadWidgetCsv(result, title, lang)}><Download className="h-4 w-4" aria-hidden="true" /></IconAction>
+
+  // Les actions restent dans l'en-tête : le menu ⋯ absorbe tout dès que la
+  // carte devient étroite, sans jamais pousser le contenu vers le bas.
+  useEffect(() => {
+    const zone = zoneRef.current;
+    const carte = zone?.closest('[data-widget-card]') || zone;
+    if (!carte || typeof ResizeObserver === 'undefined') return undefined;
+    const observateur = new ResizeObserver(([entree]) => setCompact(entree.contentRect.width < 320));
+    observateur.observe(carte);
+    return () => observateur.disconnect();
+  }, []);
+
+  return <div ref={zoneRef} className="relative flex max-w-full items-center justify-end gap-0.5 no-print" data-widget-actions data-compact={compact || undefined}>
+    {!compact && <>
+      <IconAction label={t('synthese.action.info')} onClick={() => onDialog('info')}><Info className="h-4 w-4" aria-hidden="true" /></IconAction>
+      <IconAction label={t('synthese.action.fullscreen')} disabled={!result} onClick={() => onDialog('full')}><Maximize2 className="h-4 w-4" aria-hidden="true" /></IconAction>
+      <IconAction label={t('synthese.exporterCsv')} disabled={!result} onClick={() => downloadWidgetCsv(result, title, lang)}><Download className="h-4 w-4" aria-hidden="true" /></IconAction>
+    </>}
     <IconAction label={t('synthese.action.more')} aria-expanded={more} onClick={() => setMore((value) => !value)}><MoreHorizontal className="h-4 w-4" aria-hidden="true" /></IconAction>
-    {more && <div className="basis-full rounded-md border border-border bg-surface p-1 shadow-1" role="menu" data-widget-menu>
+    {more && <div className="absolute end-0 top-full z-40 mt-1 w-56 rounded-md border border-border bg-surface p-1 shadow-1" role="menu" data-widget-menu>
+      <MenuAction icon={Info} onClick={run(() => onDialog('info'))}>{t('synthese.action.info')}</MenuAction>
       <MenuAction icon={Table2} disabled={!result} onClick={run(() => onDialog('data'))}>{t('synthese.action.data')}</MenuAction>
+      <MenuAction icon={Maximize2} disabled={!result} onClick={run(() => onDialog('full'))}>{t('synthese.action.fullscreen')}</MenuAction>
       {onVoirFiches && <MenuAction icon={FileText} disabled={!result} onClick={run(onVoirFiches)}>{t('synthese.voirFiches')}</MenuAction>}
       {editorActions?.onMoveUp && <MenuAction icon={ArrowUp} onClick={run(editorActions.onMoveUp)}>{t('synthese.monter')}</MenuAction>}
       {editorActions?.onMoveDown && <MenuAction icon={ArrowDown} onClick={run(editorActions.onMoveDown)}>{t('synthese.descendre')}</MenuAction>}
       {editorActions?.onDuplicate && <MenuAction icon={Copy} onClick={run(editorActions.onDuplicate)}>{t('synthese.dupliquer')}</MenuAction>}
       {editorActions?.onEdit && <MenuAction icon={Edit} onClick={run(editorActions.onEdit)}>{t('synthese.editer')}</MenuAction>}
-      <MenuAction icon={Download} disabled={!result} onClick={run(() => downloadWidgetCsv(result, title, lang))}>{t('synthese.exporterCsv')}</MenuAction>
+      {editorActions?.onTogglePrint && <MenuAction icon={EyeOff} onClick={run(editorActions.onTogglePrint)}>{bloc.options?.masquer_impression ? t('synthese.widget.printVisible') : t('synthese.widget.printHidden')}</MenuAction>}
       <MenuAction icon={Download} disabled={!result} onClick={run(() => downloadWidgetPng({ title, result, lang }))}>{t('synthese.action.png')}</MenuAction>
       <MenuAction icon={FileJson} disabled={!result} onClick={run(() => downloadWidgetJson({ title, bloc, result }))}>{t('synthese.action.json')}</MenuAction>
-      {editorActions?.onTogglePrint && <MenuAction icon={EyeOff} onClick={run(editorActions.onTogglePrint)}>{bloc.options?.masquer_impression ? t('synthese.widget.printVisible') : t('synthese.widget.printHidden')}</MenuAction>}
       {editorActions?.onRemove && <MenuAction icon={Trash2} onClick={run(editorActions.onRemove)}>{t('synthese.supprimer')}</MenuAction>}
     </div>}
   </div>;

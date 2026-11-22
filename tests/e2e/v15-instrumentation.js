@@ -148,18 +148,20 @@ export async function mesurerTableau(page, motif = /Par daïra/i) {
 
 export async function mesurerBarreOutils(page) {
   return page.evaluate(() => {
-    const zone = document.querySelector('[data-report-studio]') || document.querySelector('header');
-    const boutons = zone ? [...zone.querySelectorAll('button')].map((b) => ({
+    const zones = [...document.querySelectorAll('[data-report-studio], [data-synthese-toolbar]')];
+    const boutons = zones.flatMap((zone) => [...zone.querySelectorAll('button')].map((b) => ({
       texte: (b.getAttribute('aria-label') || b.textContent || '').trim(),
       titre: b.getAttribute('title') || '',
-    })) : [];
-    const sansLibelle = zone ? [...zone.querySelectorAll('select, input, button')].filter((element) => {
+    })));
+    const sansLibelle = zones.flatMap((zone) => [...zone.querySelectorAll('select, input, button')]).filter((element) => {
       const name = element.getAttribute('aria-label') || element.getAttribute('title') || element.labels?.[0]?.textContent?.trim() || element.textContent.trim();
       return !name;
-    }).length : 0;
+    }).length;
+    const barre = document.querySelector('[data-synthese-toolbar]') || document.querySelector('[data-report-studio]');
     return {
-      hauteur: zone ? Math.round(zone.getBoundingClientRect().height) : 0,
-      doublons: ['Imprimer', 'Éditions'].filter((nom) => boutons.filter((b) => b.texte.includes(nom)).length > 1),
+      hauteur: barre ? Math.round(barre.getBoundingClientRect().height) : 0,
+      zones: zones.length,
+      doublons: ['Imprimer', 'Éditions', 'Affichage'].filter((nom) => boutons.filter((b) => b.texte.includes(nom)).length > 1),
       sansLibelle,
       boutons: boutons.map((b) => b.texte).filter(Boolean),
     };

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, FileText, FlaskConical, LayoutGrid, Maximize2, Minimize2, PanelTop, Printer, ShieldAlert, SlidersHorizontal } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, FileText, FlaskConical, LayoutGrid, Maximize2, Minimize2, PanelTop, SlidersHorizontal } from 'lucide-react';
 import { addDays, formatDate, todayAlgiers, weekStart } from '@anm/shared';
 import { useSearchParams } from 'react-router-dom';
 import { Button, EmptyState, ErrorState, LoadingBlock } from '../../components/ui/index.js';
@@ -44,12 +44,6 @@ export default function ReportPage() {
   const [displayWidth, setDisplayWidth] = useState('large');
   const defaultWidthModelRef = useRef(null);
   const [focus, setFocus] = useState(false);
-  const studioActions = useRef(null);
-  const [studioState, setStudioState] = useState({ canPersonnaliser: false, peutFiger: false, alreadyFrozen: false, mode: 'lecture', busy: false });
-  const registerActions = useCallback((next) => { studioActions.current = next; }, []);
-  const onStudioState = useCallback((next) => setStudioState((prev) => (
-    Object.keys(next).every((key) => prev[key] === next[key]) ? prev : next
-  )), []);
 
   const updateParams = useCallback((updates, { replace = false } = {}) => {
     const next = new URLSearchParams(params);
@@ -137,24 +131,6 @@ export default function ReportPage() {
     </select>
   </>;
 
-  const compositionActions = tool === 'composition' ? <div className="flex flex-wrap items-center gap-1 ms-auto">
-    <Button size="sm" className="px-2 text-xs" aria-label={studioState.mode === 'personnaliser'
-      ? (studioState.alreadyFrozen ? t('synthese.modeLecture') : t('synthese.quitterPersonnalisation'))
-      : t('synthese.personnaliser')}
-      disabled={!studioState.canPersonnaliser || studioState.busy} onClick={() => studioActions.current?.personnaliser()}>
-      <span className="hidden lg:inline">{studioState.mode === 'personnaliser'
-        ? (studioState.alreadyFrozen ? t('synthese.modeLecture') : t('synthese.quitterPersonnalisation'))
-        : t('synthese.personnaliser')}</span>
-      <SlidersHorizontal className="h-4 w-4 lg:hidden" aria-hidden="true" />
-    </Button>
-    <Button size="sm" variant="secondary" className="px-2 text-xs" aria-label={t('synthese.figer')} disabled={!studioState.peutFiger || studioState.busy} onClick={() => studioActions.current?.figer()}>
-      <ShieldAlert className="h-4 w-4" aria-hidden="true" /><span className="hidden lg:inline">{t('synthese.figer')}</span>
-    </Button>
-    <Button size="sm" variant="ghost" className="px-2 text-xs" aria-label={t('common.imprimer')} onClick={() => studioActions.current?.print()}>
-      <Printer className="h-4 w-4" aria-hidden="true" /><span className="hidden lg:inline">{t('common.imprimer')}</span>
-    </Button>
-  </div> : null;
-
   return <>
     {!focus && <div className="sticky top-0 z-20 min-w-0 overflow-hidden no-print" data-report-studio>
       <div className="border-b border-border bg-surface shadow-sm">
@@ -169,7 +145,6 @@ export default function ReportPage() {
               <Maximize2 className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
-          {compositionActions}
         </div>
       </div>
     </div>}
@@ -183,7 +158,6 @@ export default function ReportPage() {
         <span className="hidden min-w-0 truncate text-xs font-bold text-muted xl:inline">{weekLabel}</span>
         {toolsNav('report-studio-compact-tools')}
         <div className="flex items-center gap-1">{widthSelect('report-studio-compact-width')}</div>
-        {compositionActions}
       </div>
     </div>}
 
@@ -197,7 +171,7 @@ export default function ReportPage() {
       {tool === 'composition' && modelsQuery.isError && <div className="page-container"><ErrorState message={modelsQuery.error?.message || t('error.load')} onRetry={() => modelsQuery.refetch()} /></div>}
       {tool === 'composition' && modelsQuery.isSuccess && !modeleId && <div className="page-container"><EmptyState title={t('report.studio.noWeekly')} description={t('report.studio.noWeeklyHelp')} /></div>}
       {tool === 'composition' && modeleId && <SynthesePage embedded modeleId={modeleId} periodeOverride={period} modeleHref={hrefForModele}
-        displayWidth={displayWidth} onDisplayWidth={setDisplayWidth} registerActions={registerActions} onStudioState={onStudioState} />}
+        displayWidth={displayWidth} onDisplayWidth={setDisplayWidth} />}
     </Suspense>
   </>;
 }
