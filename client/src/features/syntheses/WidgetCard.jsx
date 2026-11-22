@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, Pie, PieChart,
@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate, formatValue } from '@anm/shared';
-import { colonnesAffichees } from '@anm/shared';
+import { colonnesAffichees, colonnesEquilibrees } from '@anm/shared';
 import {
   classeAccentStyle, classeAlignementStyle, classeDensiteStyle, normaliserStyle,
 } from '@anm/shared';
@@ -200,6 +200,17 @@ function KpiWidget({ bloc, result, title, lang, actions }) {
   const compact = count > 12;
   const dense = count > 6 && count <= 12;
   const cols = compact ? 'sm:grid-cols-4 lg:grid-cols-6' : dense ? 'sm:grid-cols-3 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3';
+  const grilleRef = useRef(null);
+  const [largeurGrille, setLargeurGrille] = useState(0);
+  useEffect(() => {
+    const element = grilleRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return undefined;
+    const observateur = new ResizeObserver(([entree]) => setLargeurGrille(entree.contentRect.width));
+    observateur.observe(element);
+    return () => observateur.disconnect();
+  }, []);
+  const nbColonnes = colonnesEquilibrees(count, largeurGrille || 1200, compact ? 130 : 170);
+  const styleColonnes = largeurGrille ? { gridTemplateColumns: `repeat(${nbColonnes}, minmax(0, 1fr))` } : undefined;
 
   const statusOf = (id, value) => {
     const seuil = seuils[id];
@@ -216,7 +227,7 @@ function KpiWidget({ bloc, result, title, lang, actions }) {
     return 'border-border bg-surface2';
   };
 
-  return <><CardHeader title={title} action={actions} /><div className={`grid gap-2 p-2 ${cols}`} data-kpi-grid data-kpi-count={count}>
+  return <><CardHeader title={title} action={actions} /><div ref={grilleRef} style={styleColonnes} className={`grid gap-2 p-2 ${cols}`} data-kpi-grid data-kpi-count={count}>
     {measures.map((measure) => {
       const value = firstValue(result, measure.id);
       const variation = firstVariation(result, measure.id);

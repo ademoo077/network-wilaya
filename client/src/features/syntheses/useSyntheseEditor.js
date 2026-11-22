@@ -74,9 +74,10 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
   const replaceDefinition = useCallback((nextDefinition) => {
     documentRevision.current += 1;
     const next = cloneDefinition(nextDefinition || { schema_version: 1, sections: [] });
-    const before = JSON.stringify(next.layout || null);
+    const layoutFlux = next.layout?.schema_version === 2;
+    const before = layoutFlux ? null : JSON.stringify(next.layout || null);
     next.layout = convertirEnGrille(next);
-    const normalized = before !== JSON.stringify(next.layout);
+    const normalized = !layoutFlux && before !== JSON.stringify(next.layout);
     setHistory([next]);
     setHIndex(0);
     setDirty(normalized);

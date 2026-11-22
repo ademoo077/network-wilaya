@@ -51,7 +51,7 @@ test('Rapport — autosave accepte le refus Zod réel d’un serveur sans versio
   await expect(page.locator('[data-testid^="widget-"]')).toHaveCount(4);
 });
 
-test('Rapport — un serveur déjà démarré ignore le nouveau mode de compactage sans afficher Modèle invalide', async ({ page, baseURL }) => {
+test('Rapport — un ancien serveur rejette le flux V15 puis accepte le repli sans layout', async ({ page, baseURL }) => {
   await authenticate(page, baseURL, 'operateur');
   const requests = [];
   await page.route('**/api/syntheses/modeles/*', (route) => {
@@ -59,7 +59,7 @@ test('Rapport — un serveur déjà démarré ignore le nouveau mode de compacta
     const body = route.request().postDataJSON();
     requests.push(body);
     if (requests.length === 1) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({
-      error: { code: 'VALIDATION', message: 'Modèle invalide', fields: { 'definition.layout': "Unrecognized key(s) in object: 'compactage'" } },
+      error: { code: 'VALIDATION', message: 'Modèle invalide', fields: { 'definition.layout': "Unrecognized key(s) in object: 'largeur'" } },
     }) });
     if (requests.length === 2) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({
       error: { code: 'VALIDATION', message: 'Modèle invalide', fields: { definition: "Unrecognized key(s) in object: 'layout'" } },
@@ -70,8 +70,8 @@ test('Rapport — un serveur déjà démarré ignore le nouveau mode de compacta
   await page.getByLabel('Placement des widgets').selectOption('libre');
   await expect(savedStatus(page)).toBeVisible({ timeout: 10_000 });
   expect(requests).toHaveLength(3);
-  expect(requests[0].definition.layout.compactage).toBe(false);
-  expect(requests[1].definition.layout.compactage).toBeUndefined();
+  expect(requests[0].definition.layout.schema_version).toBe(2);
+  expect(requests[1].definition.layout.schema_version).toBe(1);
   expect(requests[1].definition.layout).toBeTruthy();
   expect(requests[2].definition.layout).toBeUndefined();
   await expect(saveAlert(page)).toHaveCount(0);

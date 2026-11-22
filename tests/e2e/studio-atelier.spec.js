@@ -72,9 +72,16 @@ test('130 — grille libre : souris, clavier, annulation, RTL et rechargement', 
   await expect(page.locator('[data-draft-banner]')).toBeVisible();
   await expect(page.getByText('BROUILLON', { exact: true })).toHaveCount(0);
   await expect(page.locator('[data-draft-banner]')).not.toHaveCSS('position', 'fixed');
-  await expect(page.locator('[data-widget-id="anneau-statuts"]')).toHaveAttribute('data-x', String(apres.x));
-  await expect(page.locator('[data-widget-id="anneau-statuts"]')).toHaveAttribute('data-y', String(apres.y));
-  await expect(page.locator('[data-widget-id="anneau-statuts"]')).toHaveAttribute('data-w', String(apres.w));
+  // V15 : la position absolue n'est plus persistée. L'ordre de lecture et la
+  // largeur admissible sont conservés ; la grille de compatibilité est recalculée.
+  const persistes = await page.locator('[data-widget-id]').evaluateAll((items) => items.map((item) => ({
+    id: item.dataset.widgetId, w: Number(item.dataset.w),
+  })));
+  const anneauPersiste = persistes.find((item) => item.id === 'anneau-statuts');
+  expect([3, 4, 6, 8, 9, 12], 'Largeur V15 admissible').toContain(anneauPersiste.w);
+  expect(anneauPersiste.w, 'Largeur au moins conservée').toBeGreaterThanOrEqual(initial.w);
+  expect(persistes.findIndex((item) => item.id === 'anneau-statuts'))
+    .toBeLessThan(persistes.findIndex((item) => item.id === 'tab-daira'));
 
   const overlaps = await page.locator('[data-widget-id]').evaluateAll((items) => {
     const boxes = items.map((item) => item.getBoundingClientRect());
@@ -134,7 +141,7 @@ test('140 — migration sections → grille : mêmes blocs et largeurs pour les 
     expect(new Set(modele.definition.layout.widgets.map((widget) => widget.id))).toEqual(new Set(blocs.map((bloc) => bloc.id)));
   }
   const hebdo = systemes.find((modele) => modele.cle_systeme === 'hebdomadaire');
-  expect(hebdo.definition.layout.widgets.map((widget) => widget.w)).toEqual([12, 4, 8]);
+  expect(hebdo.definition.layout.widgets.map((widget) => widget.largeur ?? widget.w)).toEqual([12, 4, 8]);
   const widths = await page.locator('[data-synthese-grid] > section').evaluateAll((items) => items.map((item) => item.getBoundingClientRect().width));
   const gridWidth = await page.locator('[data-synthese-grid]').evaluate((element) => element.getBoundingClientRect().width);
   expect(widths[0]).toBeGreaterThan(gridWidth * 0.95);
@@ -152,10 +159,12 @@ test('142 — normalisation, hauteur automatique et actions compactes sans recou
     const id = Number(location.hash.match(/syntheses\/(\d+)/)?.[1]);
     const response = await fetch(`/api/syntheses/modeles/${id}`);
     const { item } = await response.json();
+    // Ancienne grille volontairement chevauchante : le client la normalise au flux au chargement.
     item.definition.layout = {
-      ...item.definition.layout,
-      compactage: true,
-      widgets: item.definition.layout.widgets.map((widget) => ({ ...widget, x: 0, y: 0 })),
+      schema_version: 1,
+      widgets: item.definition.layout.widgets.map((widget) => ({
+        id: widget.id, x: 0, y: 0, w: widget.largeur ?? widget.w, h: 4,
+      })),
     };
     const saved = await fetch(`/api/syntheses/modeles/${id}`, {
       method: 'PUT',

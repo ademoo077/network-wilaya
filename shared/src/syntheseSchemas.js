@@ -230,13 +230,37 @@ export const syntheseLayoutWidgetSchema = z.object({
   }
 });
 
-export const syntheseLayoutSchema = z.object({
+export const syntheseLayoutV1Schema = z.object({
   schema_version: z.literal(1),
   colonnes: z.literal(GRILLE_COLONNES).optional(),
   hauteur_ligne: z.literal(GRILLE_HAUTEUR).optional(),
   compactage: z.boolean().optional(),
   widgets: z.array(syntheseLayoutWidgetSchema).max(60),
 }).strict();
+
+/** V15 — flux à largeurs en colonnes. L'ordre du tableau est l'ordre de lecture. */
+export const syntheseLayoutFluxWidgetSchema = z.object({
+  id: z.string().regex(/^[a-z0-9_-]{1,64}$/, 'Identifiant de widget invalide'),
+  ordre: z.number().int().min(0).max(60),
+  largeur: z.union([
+    z.literal(3), z.literal(4), z.literal(6), z.literal(8), z.literal(9), z.literal(12),
+  ]),
+  hauteur: z.union([
+    z.literal('auto'),
+    z.object({ min: z.number().int().min(1).max(40), max: z.number().int().min(1).max(40) }).strict().refine(
+      (value) => value.max >= value.min, { message: 'La hauteur maximale doit dépasser la minimale' },
+    ),
+  ]),
+  saut_page: z.boolean().optional(),
+}).strict();
+
+export const syntheseLayoutFluxSchema = z.object({
+  schema_version: z.literal(2),
+  colonnes: z.literal(12).optional(),
+  widgets: z.array(syntheseLayoutFluxWidgetSchema).max(60),
+}).strict();
+
+export const syntheseLayoutSchema = z.union([syntheseLayoutV1Schema, syntheseLayoutFluxSchema]);
 
 export const syntheseDefinitionSchema = z.object({
   schema_version: z.literal(1),

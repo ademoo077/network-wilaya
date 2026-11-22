@@ -6,8 +6,14 @@
  * n'est réécrite.
  */
 import { resoudrePlacement } from './layoutPlacement.js';
+import { grilleDepuisFlux, normaliserFlux } from './flux.js';
 
 export { layoutSansChevauchement, widgetsSeChevauchent } from './layoutPlacement.js';
+export {
+  LARGEURS_FLUX, LARGEUR_MIN_WIDGET_PX, FLUX_COLONNES, largeurFlux,
+  regrouperEnLignes, convertirEnFlux, convertirXyEnFlux, normaliserFlux,
+  grilleDepuisFlux, colonnesEquilibrees, largeurMinimaleRespectee,
+} from './flux.js';
 
 export const GRILLE_COLONNES = 12;
 export const GRILLE_HAUTEUR = 40;
@@ -82,6 +88,9 @@ function normaliserWidgets(widgets, { compactage = true, prioritaire = null } = 
 }
 
 export function normaliserLayout(definition, candidate) {
+  if (candidate?.schema_version === 2) {
+    return grilleDepuisFlux(definition, normaliserFlux(definition, candidate));
+  }
   const blocs = blocsDeDefinition(definition);
   const ids = new Set(blocs.map((bloc) => bloc.id));
   const seen = new Set();
@@ -111,6 +120,7 @@ export function normaliserLayout(definition, candidate) {
 
 /** Convertit sections/colonnes en grille, ou normalise une grille existante. */
 export function convertirEnGrille(definition) {
+  if (definition?.layout?.schema_version === 2) return grilleDepuisFlux(definition, definition.layout);
   if (definition?.layout?.widgets) return normaliserLayout(definition, definition.layout);
   const widgets = [];
   let sectionY = 0;

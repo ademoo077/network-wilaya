@@ -4,6 +4,7 @@ import { ensureAdmin } from './db/admin.js';
 import { ensureDailyBackup, applyRetention } from './services/backups.js';
 import { ensureVeilleLexicon } from './veille/seed.js';
 import { ensureSystemModels } from './synthese/systemModels.js';
+import { convertirDefinitionsEnFlux } from './synthese/fluxMigration.js';
 import { startVeilleScheduler, ensureVeilleJobs } from './veille/scheduler.js';
 import { collectSource } from './veille/collect.js';
 import { maybePurge } from './veille/compliance.js';
@@ -14,6 +15,8 @@ import { logger } from './utils/logger.js';
 export async function prepareDatabase({ db = getDb(), seed = true, backup = true, log = logger } = {}) {
   ensureDirs();
   runMigrations(db, { logger: log });
+  // V15 : conversion additive des définitions x/y vers le flux, snapshots figés intouchés.
+  convertirDefinitionsEnFlux(db, { logger: log });
   // V14 : rétro-remplissage idempotent des identifiants de pages (shared/, jamais de SQL métier).
   const sourcesV14 = backfillSourcesV14(db);
   if (sourcesV14.identifiants || sourcesV14.rattachees) {

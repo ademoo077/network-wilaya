@@ -1,3 +1,4 @@
+import { convertirEnFlux, convertirEnGrille } from '@anm/shared';
 import { api } from '../../api/client.js';
 import { queryClient } from '../../api/queryClient.js';
 
@@ -62,6 +63,12 @@ function withoutCompactage(body) {
   return next;
 }
 
+function rejectsFluxLayout(error) {
+  if (error.status !== 400 || error.code !== 'VALIDATION') return false;
+  const details = Object.entries(error.fields || {}).map(([path, message]) => `${path} ${message}`).join(' ').toLowerCase();
+  return details.includes('layout') && (details.includes('largeur') || details.includes('ordre') || details.includes('schema_version'));
+}
+
 function rejectsWholeLayout(error) {
   if (error.status !== 400 || error.code !== 'VALIDATION') return false;
   const details = Object.entries(error.fields || {}).map(([path, message]) => `${path} ${message}`).join(' ').toLowerCase();
@@ -74,10 +81,25 @@ function withoutLayout(body) {
   return next;
 }
 
+/** Le studio manipule une grille de compatibilité ; le contrat REST stocke le flux V15. */
+function definitionFlux(definition) {
+  if (!definition) return definition;
+  return { ...definition, layout: convertirEnFlux(definition, definition.layout) };
+}
+
+/** Repli vers la grille V1 pour un serveur qui ne connaît pas encore le flux. */
+function definitionGrille(definition) {
+  if (!definition) return definition;
+  const layout = definition.layout?.schema_version === 2
+    ? convertirEnGrille(definition)
+    : definition.layout;
+  return { ...definition, layout };
+}
+
 /** Un ancien processus serveur peut ne pas encore accepter le verrou `version`. */
 export async function updateModel(modele, definition) {
   const path = `/syntheses/modeles/${modele.id}`;
-  let body = { nom: modele.nom, description: modele.description, definition, version: modele.version };
+  let body = { nom: modele.nom, description: modele.description, definition: definitionFlux(definition), version: modele.version };
   let updated = null;
   for (let attempt = 0; attempt < 4 && !updated; attempt += 1) {
     try {
@@ -91,6 +113,10 @@ export async function updateModel(modele, definition) {
       }
       if (body.definition?.layout?.compactage !== undefined && rejectsCompactage(error)) {
         body = withoutCompactage(body);
+        continue;
+      }
+      if (body.definition?.layout?.schema_version === 2 && rejectsFluxLayout(error)) {
+        body = { ...body, definition: definitionGrille(definition) };
         continue;
       }
       if (body.definition?.layout && rejectsWholeLayout(error)) {

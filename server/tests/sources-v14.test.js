@@ -16,7 +16,7 @@ beforeAll(() => {
 
 describe('V14 — migration 015 et rétro-remplissage', () => {
   it('applique la migration additive et ajoute les objets attendus', () => {
-    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(16);
+    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(17);
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((row) => row.name);
     expect(tables).toContain('reseaux_identifiants');
     const colonnes = db.prepare("PRAGMA table_info('anomalies')").all().map((row) => row.name);

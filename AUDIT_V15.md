@@ -36,4 +36,12 @@ Les neuf tests rouges ont été exécutés dans un fichier temporaire `v15-phase
 
 ## 4. Suivi des phases
 
-Les résumés de phase (5 lignes maximum) sont consignés dans `PLAN.md`, section « Résumés V15 ». Le présent audit est mis à jour à chaque phase avec les causes supplémentaires trouvées et les résultats verts.
+Les résumés de phase (5 lignes maximum) sont consignés dans `PLAN.md`, section « Résumés V15 ».
+
+### Phase 2 — modèle de flux (vert)
+
+- `shared/src/flux.js` : `regrouperEnLignes`, `convertirXyEnFlux`, `convertirEnFlux`, `grilleDepuisFlux`, `colonnesEquilibrees` et `largeurMinimaleRespectee`, 9 tests de propriétés (50 projets aléatoires, aucune intersection).
+- Schéma Zod V15 accepté en plus du V1 ; le client envoie le flux, avec repli V1 puis sans layout pour les anciens serveurs. `convertirEnGrille()` dérive une grille de compatibilité pour le studio.
+- Migration 017 + `convertirDefinitionsEnFlux()` : copie personnelle convertie, snapshot figé inchangé, idempotence prouvée. Les tests qui fixaient `MAX(version)=16` ont été mis à jour à 17 sans affaiblissement.
+- Modèle système hebdomadaire réécrit : KPI 12 puis anneau 4 / daïra 8 sur la même ligne. Le scénario 192 mesure 281 px / 567 px et `kpiLignes:[4]` à 1280 et 1440 px.
+- QA vert : 766 Vitest, 11 scénarios API, 173 Playwright, lint (1 avertissement préexistant), `check:styles`, `check:a11y`.

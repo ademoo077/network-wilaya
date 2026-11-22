@@ -7,7 +7,7 @@
  * plage au moment du calcul, ce qui garantit que la période choisie pilote
  * tous les blocs.
  */
-import { CATALOGUE, convertirEnGrille, validerDefinition } from '@anm/shared';
+import { CATALOGUE, convertirEnFlux, validerDefinition } from '@anm/shared';
 
 const MAX_PERIODE = { mode: 'herite' };
 
@@ -54,6 +54,16 @@ export const SYSTEM_MODELS = [
           bloc('tab-daira', 'tableau', 'Par daïra', q(['recues', 'cohorte_non_traitees'], [{ champ: 'daira' }]), { largeur: 'double', avec_graphique: true }),
         ]),
       ],
+      // V15 : flux canonique. Le KPI occupe une ligne, puis 4 + 8 sur la même ligne.
+      layout: {
+        schema_version: 2,
+        colonnes: 12,
+        widgets: [
+          { id: 'kpi-executif', ordre: 0, largeur: 12, hauteur: 'auto' },
+          { id: 'anneau-statuts', ordre: 1, largeur: 4, hauteur: 'auto' },
+          { id: 'tab-daira', ordre: 2, largeur: 8, hauteur: 'auto' },
+        ],
+      },
     },
   },
   {
@@ -168,11 +178,12 @@ export const SYSTEM_MODELS = [
 ];
 
 /**
- * V10 : la grille libre est dérivée des sections des modèles système. Le
- * modèle conserve ses sections pour les éditions figées et les anciens clients.
+ * V15 : le flux est dérivé des sections, sauf quand le modèle fournit déjà son
+ * layout (Synthèse hebdomadaire standard). Les sections restent la source
+ * sémantique ; aucun snapshot d'édition n'est réécrit.
  */
 for (const model of SYSTEM_MODELS) {
-  model.definition = { ...model.definition, layout: convertirEnGrille(model.definition) };
+  model.definition = { ...model.definition, layout: convertirEnFlux(model.definition) };
   validerDefinition(model.definition);
 }
 

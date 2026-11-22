@@ -9,7 +9,7 @@ beforeAll(() => { ({ db } = freshDatabase()); });
 
 describe('Migration 016 — réparation sans_photo_motif', () => {
   it('ajoute la colonne manquante d\'une base où 013 avait été enregistrée sans elle', () => {
-    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(16);
+    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(17);
     db.exec('ALTER TABLE anomalies DROP COLUMN sans_photo_motif');
     db.prepare('DELETE FROM schema_migrations WHERE version=16').run();
     expect(colonnePresente()).toBe(false);
@@ -17,7 +17,7 @@ describe('Migration 016 — réparation sans_photo_motif', () => {
     runMigrations(db, { logger: { info() {} } });
 
     expect(colonnePresente()).toBe(true);
-    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(16);
+    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(17);
     expect(db.pragma('integrity_check', { simple: true })).toBe('ok');
     expect(db.pragma('foreign_key_check')).toEqual([]);
   });

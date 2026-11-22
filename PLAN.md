@@ -133,3 +133,4 @@ Les scénarios V14 189 (« Aujourd’hui »), 190 (`profile.php`) et 191 (territ
 
 ### Résumés V15 (5 lignes maximum par phase)
 - **Phase 1** : instrumentation JSON/captures centralisée (`v15-instrumentation.js`), `AUDIT_V15.md` avec causes mesurées S1–S9. Neuf tests rouges exécutés puis retirés (TDD), remplacés par les scénarios verts 192–201. Migration 017 et décalage de numérotation consignés dans `DECISIONS.md`. QA vert : 754 Vitest, 11 API, 171 Playwright, lint (1 avertissement préexistant), styles et a11y. Reste : phases 2 à 7.
+- **Phase 2** : modèle de flux (`shared/src/flux.js`), migration 017 testée sur copie, conversion idempotente des définitions personnelles, modèle système réécrit en 12 + 4/8. Scénario 192 vert à 1280/1440 px (aucune intersection, KPI 4 sur une ligne). QA vert : 766 Vitest, 11 API, 173 Playwright, lint/styles/a11y. Reste : cadre/widget, visualisations, impression, galerie, recette.
