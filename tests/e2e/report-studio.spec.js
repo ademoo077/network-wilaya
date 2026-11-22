@@ -1,3 +1,4 @@
+import { todayAlgiers, weekStart } from '@anm/shared';
 import { test, expect } from './fixture.js';
 import { authenticate, collectErrors } from './helpers.js';
 import { expectAccessible, expectNoOverflow } from './geometry.js';
@@ -313,8 +314,10 @@ test('Studio — affichage maximal, barre compacte et retour à la semaine coura
   await page.locator('#report-studio-week').fill('2026-11-01');
   await expect(page).toHaveURL(/semaine=2026-11-01/);
   await page.getByRole('button', { name: 'Revenir à cette semaine' }).click();
-  await expect(page).toHaveURL(/semaine=2026-11-15/);
-  await expect(page.locator('#report-studio-week')).toHaveValue('2026-11-15');
+  // La semaine courante dépend de la date d'exécution (todayAlgiers), pas d'une constante.
+  const semaineCourante = weekStart(todayAlgiers(), 0);
+  await expect(page).toHaveURL(new RegExp(`semaine=${semaineCourante}`));
+  await expect(page.locator('#report-studio-week')).toHaveValue(semaineCourante);
 
   await expectAccessible(page);
   expect(errors.snapshot().pageError).toEqual([]);

@@ -8,5 +8,5 @@ export default function FormActionBar({ children }) {
     measure(); const observer = new ResizeObserver(measure); observer.observe(bar);
     return () => observer.disconnect();
   }, []);
-  return <div ref={ref} data-action-bar className="sticky bottom-0 z-40 mt-6 w-full rounded-md border border-border bg-surface p-3 shadow-3">{children}</div>;
+  return <div ref={ref} data-action-bar className="sticky bottom-0 z-40 mt-6 flex w-full flex-wrap items-center justify-end gap-2 rounded-md border border-border bg-surface p-3 shadow-3">{children}</div>;
 }

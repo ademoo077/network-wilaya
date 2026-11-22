@@ -9,3 +9,12 @@ export const QUICK_VIEWS = [
   { id: 'mes_anomalies', label: 'list.mesAnomalies', filters: { mes: 1 } },
 ];
 export const QUICK_FILTER_KEYS = ['statut', 'priorite', 'ouvertes', 'retard', 'sans_agent', 'mes'];
+
+/** Préréglages de période : la valeur est la largeur de la fenêtre en jours (1 = aujourd’hui). */
+export const PERIOD_OPTIONS = [
+  { value: '', label: 'list.periodAll' },
+  { value: '1', label: 'list.periodToday' },
+  { value: '7', label: 'list.period7' },
+  { value: '30', label: 'list.period30' },
+  { value: '90', label: 'list.period90' },
+];

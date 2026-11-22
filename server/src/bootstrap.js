@@ -7,12 +7,18 @@ import { ensureSystemModels } from './synthese/systemModels.js';
 import { startVeilleScheduler, ensureVeilleJobs } from './veille/scheduler.js';
 import { collectSource } from './veille/collect.js';
 import { maybePurge } from './veille/compliance.js';
+import { backfillSourcesV14 } from './services/sourceIdentifiants.js';
 import { config, ensureDirs } from './config/index.js';
 import { logger } from './utils/logger.js';
 
 export async function prepareDatabase({ db = getDb(), seed = true, backup = true, log = logger } = {}) {
   ensureDirs();
   runMigrations(db, { logger: log });
+  // V14 : rétro-remplissage idempotent des identifiants de pages (shared/, jamais de SQL métier).
+  const sourcesV14 = backfillSourcesV14(db);
+  if (sourcesV14.identifiants || sourcesV14.rattachees) {
+    log.info?.(`Pages V14 : ${sourcesV14.identifiants} identifiant(s), ${sourcesV14.rattachees} anomalie(s) rattachée(s)`);
+  }
   const taxonomy = seed ? ensureTaxonomy(db, config.seedCsv, { logger: log }) : null;
   const groups = seed ? ensureDomainGroups(db, config.groupsCsv, { logger: log }) : null;
   const veilleLexicon = seed ? ensureVeilleLexicon(db, config.veilleLexiqueCsv, { logger: log }) : null;

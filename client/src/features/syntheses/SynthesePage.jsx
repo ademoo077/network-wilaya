@@ -5,7 +5,8 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, FilePenLine, Printer, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, FileImage, FilePenLine, Printer, ShieldAlert } from 'lucide-react';
+import { download, queryString } from '../../api/client.js';
 import { useApiQuery } from '../../hooks/useApiQuery.js';
 import { useI18n } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -262,6 +263,18 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
   }, [printSettings.title]);
 
+  const photosPeriode = useMemo(() => {
+    const meta = Object.values(editor.results || {}).find((result) => result?.meta?.periode)?.meta?.periode;
+    return { debut: meta?.debut || periode.debut || '', fin: meta?.fin || periode.fin || '' };
+  }, [editor.results, periode.debut, periode.fin]);
+
+  const handlePlanche = useCallback(async () => {
+    try {
+      await download(`/photos/planche.pdf${queryString({ ...photosPeriode, limite: 12, par_page: 2, lang })}`,
+        `planche-photos-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (error) { push(error.message || t('common.error'), 'danger'); }
+  }, [photosPeriode, lang, push, t]);
+
   // Le studio unifié expose les actions de cette feuille dans sa barre d'outils unique.
   useEffect(() => {
     if (!registerActions) return;
@@ -311,6 +324,9 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
               {modele && peutFiger && !alreadyFrozen && <Button size="sm" variant="secondary" onClick={handleFiger} loading={editionBusy} disabled={editor.saving || editor.evaluating || editionBusy}>
                 <ShieldAlert className="h-4 w-4" aria-hidden="true" />{t('synthese.figer')}
               </Button>}
+              <Button size="sm" variant="secondary" data-planche-pdf onClick={handlePlanche}>
+                <FileImage className="h-4 w-4" aria-hidden="true" />{t('synthese.planchePdf')}
+              </Button>
               <Button size="sm" variant="ghost" onClick={() => setPrintOpen(true)}>
                 <Printer className="h-4 w-4" aria-hidden="true" />{t('common.imprimer')}
               </Button>

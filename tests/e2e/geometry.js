@@ -17,6 +17,17 @@ export async function expectCompactCards(page) {
   expect(stretched, 'Cartes étirées').toEqual([]);
 }
 export async function expectAccessible(page) {
+  // Les transitions d'opacité (boutons désactivés notamment) peuvent faire lire
+  // à axe une couleur intermédiaire : on fige les animations avant l'audit et
+  // on neutralise toute transition déclenchée pendant l'analyse elle-même.
+  await page.evaluate(() => {
+    document.getElementById('anm-a11y-freeze')?.remove();
+    const style = document.createElement('style');
+    style.id = 'anm-a11y-freeze';
+    style.textContent = '*,*::before,*::after{animation:none!important;transition:none!important}';
+    document.head.appendChild(style);
+    for (const animation of document.getAnimations()) { try { animation.finish(); } catch { /* animation infinie */ } }
+  });
   const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
   expect(result.violations.map(({ id, nodes }) => ({ id, nodes: nodes.map(({ target, failureSummary }) => ({ target, failureSummary })) }))).toEqual([]);
 }

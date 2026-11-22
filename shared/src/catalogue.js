@@ -29,9 +29,9 @@ const STATUT_LABELS = {
   traite: ['Traitées', 'معالجة'],
 };
 const VERIFICATION_LABELS = {
-  a_verifier: ['À vérifier', 'بانتظار التحقق'],
-  confirmee: ['Confirmées', 'مؤكدة'],
-  infirmee: ['Infirmées', 'منفية'],
+  a_verifier: ['En attente de classement', 'بانتظار التصنيف'],
+  confirmee: ['Classées', 'مصنفة'],
+  infirmee: ['Sans suite', 'بدون متابعة'],
 };
 const GPS_SOURCE_LABELS = {
   manuel: ['Manuel', 'يدوي'],
@@ -185,9 +185,9 @@ export const DIMENSIONS = [
     'Statut reconstitué à la date de fin de période (`statutAu`).',
     'الحالة المعاد تكوينها في تاريخ نهاية الفترة.',
     { valeurs: enumValues(STATUT_LABELS, STATUTS) }),
-  dim('verification', 'attribute', 'Vérification', 'التحقق',
-    'Résultat de la vérification terrain.',
-    'نتيجة التحقق الميداني.',
+  dim('verification', 'attribute', 'Classement', 'التصنيف',
+    'Résultat du classement du signalement.',
+    'نتيجة تصنيف البلاغ.',
     { valeurs: enumValues(VERIFICATION_LABELS, VERIFICATIONS) }),
   dim('priorite', 'attribute', 'Priorité', 'الأولوية',
     'Niveau de priorité de la fiche.',

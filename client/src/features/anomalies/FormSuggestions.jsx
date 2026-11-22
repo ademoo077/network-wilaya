@@ -21,9 +21,11 @@ export default function FormSuggestions({ model }) {
     }
     set(item.champ, item.valeur, item.source);
   };
-  return <div className="mb-6 grid gap-3 lg:grid-cols-2" aria-live="polite">{state.suggestions.map((item) => <Alert key={item.champ} title={`${historyLabel(item.champ, t)} — ${t('paste.suggestion')}`}>
-    <p className="break-words"><bdi>{readable(item, refs, lang, t)}</bdi></p>
-    <div className="mt-2 flex flex-wrap gap-2"><Button onClick={() => apply(item)}>{t('paste.replace')}</Button>
-      <Button variant="ghost" onClick={() => ui({ suggestions: state.suggestions.filter((suggestion) => suggestion !== item) })}>{t('paste.ignore')}</Button></div>
-  </Alert>)}</div>;
+  return <div className="mb-6 grid gap-3 lg:grid-cols-2" aria-live="polite">{state.suggestions.map((item) => <div key={item.champ} data-testid={`suggestion-${item.champ}`}>
+    <Alert title={`${historyLabel(item.champ, t)} — ${t('paste.suggestion')}`}>
+      <p className="break-words"><bdi>{readable(item, refs, lang, t)}</bdi></p>
+      <div className="mt-2 flex flex-wrap gap-2"><Button onClick={() => apply(item)}>{t('paste.replace')}</Button>
+        <Button variant="ghost" onClick={() => ui({ suggestions: state.suggestions.filter((suggestion) => suggestion !== item) })}>{t('paste.ignore')}</Button></div>
+    </Alert>
+  </div>)}</div>;
 }

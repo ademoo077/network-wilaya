@@ -136,7 +136,7 @@ export const SYSTEM_MODELS = [
   {
     cle: 'qualite-donnees',
     nom: 'Qualité des données',
-    description: 'Géolocalisation, confirmation et vérification des fiches enregistrées.',
+    description: 'Géolocalisation, confirmation et classement des fiches enregistrées.',
     definition: {
       schema_version: 1,
       sections: [
@@ -144,7 +144,7 @@ export const SYSTEM_MODELS = [
           bloc('kpi-qualite', 'kpi', 'Indicateurs qualité', q(['taux_geolocalisation', 'taux_gps_confirme', 'taux_confirmation'])),
         ]),
         section('verification', [
-          bloc('tab-verification', 'tableau', 'État de vérification', q(['recues'], [{ champ: 'verification' }])),
+          bloc('tab-verification', 'tableau', 'État du classement', q(['recues'], [{ champ: 'verification' }])),
         ]),
       ],
     },

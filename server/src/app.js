@@ -31,6 +31,7 @@ import workRoutes from './routes/work.js';
 import veilleRoutes from './routes/veille.js';
 import synthesesRoutes from './routes/syntheses.js';
 import reseauxSociauxRoutes from './routes/reseauxSociaux.js';
+import sourcesRoutes from './routes/reseaux.js';
 import affectationsRoutes from './routes/affectations.js';
 import { setupStatus } from './services/refs.js';
 
@@ -128,6 +129,7 @@ export function createApp() {
   app.use('/api/veille', veilleRoutes);
   app.use('/api/syntheses', synthesesRoutes);
   app.use('/api/reseaux-sociaux', reseauxSociauxRoutes);
+  app.use('/api/reseaux', sourcesRoutes);
   app.use('/api', affectationsRoutes);
   app.use('/api/admin', adminRoutes);
   app.get('/api/setup/status', (_req, res) => res.json(setupStatus(getDb())));

@@ -85,7 +85,7 @@ export default function SynthesesPage({ embedded = false, modeleHref = null } = 
   }, [hrefForModele, navigate, systemes]);
 
   return (
-    <main className={`page-container grid ${embedded ? '' : 'min-h-dvh'}`} data-syntheses-page>
+    <main className={`page-container grid grid-rows-[auto_1fr] ${embedded ? '' : 'min-h-dvh'}`} data-syntheses-page>
       <PageHeader
         eyebrow={t('synthese.eyebrow')}
         title={t('synthese.titreGalerie')}

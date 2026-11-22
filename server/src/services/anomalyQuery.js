@@ -17,6 +17,7 @@ export function buildFilters(params = {}, options = {}) {
     ['statut', 'statut'], ['verification', 'verification'], ['domaine', 'domaine_id'],
     ['type', 'type_id'], ['daira', 'daira_id'], ['commune', 'commune_id'],
     ['epic', 'epic_id'], ['agent', 'agent_id'], ['plateforme', 'plateforme'], ['priorite', 'priorite'],
+    ['source', 'source_reseau_id'],
   ];
   for (const [param, column] of direct) {
     const value = params[param];

@@ -6,7 +6,7 @@ import { MEASURES } from '@anm/shared';
 const groups = {
   cohorte: { labelFr: 'Cohorte', labelAr: 'الدفعة' },
   traitement: { labelFr: 'Traitement', labelAr: 'المعالجة' },
-  verification: { labelFr: 'Vérification', labelAr: 'التحقق' },
+  verification: { labelFr: 'Classement', labelAr: 'التصنيف' },
   intervention: { labelFr: 'Intervention', labelAr: 'التدخل' },
   stock: { labelFr: 'Stock', labelAr: 'المخزون' },
   qualite: { labelFr: 'Qualité', labelAr: 'الجودة' },

@@ -7,8 +7,8 @@ export function emptyFormValues() {
   return { lien_url: '', plateforme: 'autre', contenu_type: null, date_publication: '', date_signalement: todayAlgiers(),
     domaine_id: '', type_id: '', daira_id: '', commune_id: '', adresse_texte: '', lieu_dit: '', gps: null, gps_text: '',
     gps_source: null, gps_precision_m: null, gps_verifiee: 0, priorite: 'normale', observations: '', verification: 'a_verifier',
-    agent_id: '', date_verification: '', statut: 'non_traite', epic_id: '', intervenant_autre: '', date_intervention: '',
-    date_traitement: '', motif: '', lie_a_id: null, date_publication_estimee: 0, legende: '', auteur_publication: '' };
+    agent_id: '', agent_source: '', agent_motif: '', date_verification: '', statut: 'non_traite', epic_id: '', intervenant_autre: '', date_intervention: '',
+    date_traitement: '', motif: '', sans_photo_motif: '', lie_a_id: null, source_reseau_id: '', date_publication_estimee: 0, legende: '', auteur_publication: '' };
 }
 export function initialFormState(values = {}, editing = false) {
   const merged = { ...emptyFormValues(), ...values };

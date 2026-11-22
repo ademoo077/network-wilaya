@@ -1,9 +1,13 @@
 import { isDateString, isFuture, todayAlgiers } from './dates.js';
-import { transitionStatutPermise, transitionVerificationPermise, estRetourArriere } from './statut.js';
+import { transitionStatutPermise, transitionVerificationPermise, estRetourArriere, codesExigences, libelleExigences, dateImpliciteStatut } from './statut.js';
 import { STATUTS, VERIFICATIONS } from './constants.js';
 
 const clean = (value) => value === undefined || value === null ? null : String(value).trim() || null;
 const fail = (code, message, field) => Object.assign(new Error(message), { code, fields: { [field]: message } });
+
+export function estSansSuite(state) {
+  return state?.verification === 'infirmee';
+}
 
 export function needsAnomalyReason(values, previous) {
   return values.verification === 'infirmee' && previous?.verification !== 'infirmee'
@@ -21,11 +25,11 @@ export function validateAnomalyState(state, options = {}) {
     date_verification: state.date_verification || null, date_intervention: state.date_intervention || null,
     date_traitement: state.date_traitement || null };
   if (!STATUTS.includes(out.statut)) throw fail('STATUT_INVALIDE', 'Statut inconnu', 'statut');
-  if (!VERIFICATIONS.includes(out.verification)) throw fail('VERIFICATION_INVALIDE', 'Vérification inconnue', 'verification');
+  if (!VERIFICATIONS.includes(out.verification)) throw fail('VERIFICATION_INVALIDE', 'Classement inconnu', 'verification');
   if (out.verification === 'infirmee') out.statut = 'non_traite';
   if (previous) {
     if (!transitionStatutPermise(previous.statut, out.statut)) throw fail('TRANSITION_INTERDITE', `Transition ${previous.statut} → ${out.statut} non permise`, 'statut');
-    if (!transitionVerificationPermise(previous.verification, out.verification, previous.statut)) throw fail('TRANSITION_INTERDITE', 'Cette transition de vérification n’est pas permise', 'verification');
+    if (!transitionVerificationPermise(previous.verification, out.verification, previous.statut)) throw fail('TRANSITION_INTERDITE', 'Ce changement de classement n’est pas permis', 'verification');
   }
   for (const field of ['date_publication', 'date_signalement', 'date_verification', 'date_intervention', 'date_traitement']) {
     if (out[field] !== null && !isDateString(out[field])) throw fail('DATE_INVALIDE', 'Date invalide (AAAA-MM-JJ attendu)', field);
@@ -47,13 +51,18 @@ export function validateAnomalyState(state, options = {}) {
     out.date_verification = null;
   }
   if (previous && estRetourArriere(previous.statut, out.statut) && !motif) throw fail('MOTIF_REQUIS', 'Un motif est obligatoire pour tout retour en arrière', 'motif');
+  const codes = codesExigences(out.statut);
   if (out.statut === 'non_traite') {
     out.date_intervention = null; out.date_traitement = null;
   } else {
-    if (exiger && out.verification !== 'confirmee') throw fail('VERIFICATION_REQUISE', 'Confirmez d’abord la vérification de l’anomalie', 'statut');
-    if (!out.epic_id && !out.intervenant_autre) throw fail('INTERVENANT_REQUIS', 'Indiquez l’EPIC ou un autre intervenant', 'epic_id');
-    if (out.statut === 'en_cours') { out.date_intervention = out.date_intervention || today; out.date_traitement = null; }
-    else { out.date_traitement = out.date_traitement || today; out.date_intervention = out.date_intervention || out.date_traitement; }
+    if (exiger && out.verification !== 'confirmee') throw fail('VERIFICATION_REQUISE', 'Exigence de classement non satisfaite', 'statut');
+    if (codes.includes('intervenant') && !out.epic_id && !out.intervenant_autre) {
+      throw fail('INTERVENANT_REQUIS', `Indiquez ${libelleExigences(out.statut, 'fr')}`, 'epic_id');
+    }
+    const dateImplicite = dateImpliciteStatut(out.statut);
+    if (dateImplicite === 'date_intervention') { out.date_intervention = out.date_intervention || today; out.date_traitement = null; }
+    if (dateImplicite === 'date_traitement') { out.date_traitement = out.date_traitement || today; }
+    if (dateImplicite === 'date_traitement' && !out.date_intervention) out.date_intervention = out.date_traitement;
   }
   if (out.date_publication && out.date_publication > out.date_signalement) throw fail('ORDRE_DATES', 'La date de publication doit précéder le signalement', 'date_publication');
   if (out.date_intervention && out.date_intervention < out.date_signalement) throw fail('ORDRE_DATES', 'L’intervention ne peut précéder le signalement', 'date_intervention');
@@ -72,9 +81,11 @@ export function anomalyAction(item, field, value) {
       if (!item.date_verification) { fields.push('date_verification'); body.date_verification = todayAlgiers(); }
     }
   } else if (value !== 'non_traite') {
-    if (!item.epic_id && !item.intervenant_autre) fields.push('epic_id', 'intervenant_autre');
-    if (!item.date_intervention) { fields.push('date_intervention'); body.date_intervention = todayAlgiers(); }
-    if (value === 'traite' && !item.date_traitement) { fields.push('date_traitement'); body.date_traitement = todayAlgiers(); }
+    const codes = codesExigences(value);
+    if (codes.includes('intervenant') && !item.epic_id && !item.intervenant_autre) fields.push('epic_id', 'intervenant_autre');
+    const dateImplicite = dateImpliciteStatut(value);
+    if (dateImplicite === 'date_intervention' && !item.date_intervention) { fields.push('date_intervention'); body.date_intervention = todayAlgiers(); }
+    if (dateImplicite === 'date_traitement' && !item.date_traitement) { fields.push('date_traitement'); body.date_traitement = todayAlgiers(); }
   }
   if (needsAnomalyReason(next, item)) fields.push('motif');
   return { body, fields, blocked, needsInput: fields.some((key) => !key.startsWith('date_')) };

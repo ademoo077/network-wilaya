@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { CONTENU_TYPES, PLATEFORMES, PRIORITES, STATUTS, formNeedsReason, todayAlgiers } from '@anm/shared';
-import { Card, CardHeader, Combobox, Input, Select, SegmentedControl, Textarea, Alert, Button } from '../../components/ui/index.js';
+import { CONTENU_TYPES, PLATEFORMES, PRIORITES, STATUTS, formNeedsReason, libelleExigences, libelleStatut, todayAlgiers } from '@anm/shared';
+import { Card, CardHeader, Checkbox, Combobox, Input, Select, SegmentedControl, Textarea, Alert, Button } from '../../components/ui/index.js';
 import { refLabel, useI18n } from '../../i18n/index.jsx';
 import { refOptions } from './helpers.js';
 import FormFeedback from './FormFeedback.jsx';
 import InterventionField from './InterventionField.jsx';
+import AgentAssignmentField from './AgentAssignmentField.jsx';
 import PhotoAttachments from './PhotoAttachments.jsx';
+import SourcePicker from './SourcePicker.jsx';
 
 export function Section({ title, children, className = '' }) {
   return <Card className={className}><CardHeader title={title} /><div className="grid items-start gap-4 p-5 sm:grid-cols-2">{children}</div></Card>;
@@ -20,6 +22,7 @@ export function SourceSection({ model }) {
       <FormFeedback model={model} field="lien" />
       {matches.length > 0 && <Alert variant="warning" className="mt-2" title={t('form.duplicateTitle')}><ul>{matches.map((item) => <li key={item.id}><a className="inline-flex min-h-11 items-center text-brand-700 underline" href={`#/anomalies/${item.id}`}>{item.reference}</a></li>)}</ul></Alert>}
     </div>
+    <SourcePicker model={model} />
     <Select id="plateforme" label={t('field.platform')} value={form.plateforme} hint={state.meta.plateforme?.origin === 'auto' ? t('form.detectedBadge') : undefined}
       onChange={(event) => set('plateforme', event.target.value)} options={PLATEFORMES.map((value) => ({ value, label: t(`platform.${value}`) }))} />
     <Select id="contenu_type" label={t('field.contentType')} placeholder={t('common.choose')} value={form.contenu_type || ''}
@@ -53,29 +56,45 @@ export function ClassificationSection({ model }) {
   </Section>;
 }
 export function ProcessingSection({ model, editing }) {
-  const { t } = useI18n(); const { state, set, errors, refs, lang, user } = model; const form = state.values;
-  // V12 : la section « Options avancées » (statut, dates) n'est proposée qu'à l'administrateur à la création.
+  const { t, lang } = useI18n(); const { state, set, errors, refs, user } = model; const form = state.values;
+  // V13 : les exigences et leurs libellés viennent uniquement de shared/statut.js.
   const needsReason = formNeedsReason(form, state.original);
-  const permitted = Boolean(form.agent_id) && (form.epic_id || form.intervenant_autre.trim());
   const processing = form.statut !== 'non_traite';
-  const agent = refs.agents.find((item) => String(item.id) === form.agent_id);
+  const agent = (refs.agents || []).find((item) => String(item.id) === String(form.agent_id));
   const [open, setOpen] = useState(Boolean(editing) || needsReason);
+  const [sansPhoto, setSansPhoto] = useState(Boolean(form.sans_photo_motif));
   useEffect(() => { if (editing || needsReason) setOpen(true); }, [editing, needsReason]);
   if (!editing && user?.role !== 'admin') return null;
+  const summary = t('form.advancedSummary', { statut: libelleStatut(form.statut, lang), agent: agent ? (agent.full_name || refLabel(agent, lang)) : '—' });
+  const statusHint = form.statut === 'non_traite'
+    ? t('form.statusHelpNext', { statut: libelleStatut('en_cours', lang), exigences: libelleExigences('en_cours', lang) })
+    : t('form.statusHelp');
   return <details data-card data-advanced className="min-w-0 rounded-lg border border-border bg-surface shadow-1" open={open}
     onToggle={(event) => setOpen(event.currentTarget.open)}>
-    <summary className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-4 font-bold hover:bg-surface2">
-      <span>{t('form.advanced')}</span><ChevronDown className="advanced-chevron h-5 w-5 shrink-0" aria-hidden="true" />
+    <summary aria-label={t('form.advanced')} className="flex min-h-14 cursor-pointer items-center justify-between gap-3 px-5 py-4 font-bold hover:bg-surface2">
+      <span className="flex min-w-0 flex-col"><span>{t('form.advanced')}</span><span className="truncate text-xs font-normal text-muted">{summary}</span></span>
+      <ChevronDown className="advanced-chevron h-5 w-5 shrink-0" aria-hidden="true" />
     </summary>
     <div className="grid items-start gap-4 border-t border-border p-5 sm:grid-cols-2">
-      <div><Combobox id="agent_id" label={t('field.agent')} placeholder={t('form.agentSearch')} value={form.agent_id} error={errors.agent_id} options={refOptions(refs.agents, lang, { includeInactive: true })} onChange={(value) => set('agent_id', String(value))} />
-        {agent && <p className="mt-1.5 flex flex-wrap gap-x-2 text-xs text-muted"><bdi>{agent.grade}</bdi><bdi className="break-all">{agent.email}</bdi></p>}</div>
-      <InterventionField refs={refs} values={form} value={form.epic_id} error={errors.epic_id} onChange={(value) => set('epic_id', value)} />
-      {!form.epic_id && <Input id="intervenant_autre" label={t('field.otherParty')} value={form.intervenant_autre} error={errors.intervenant_autre} onChange={(event) => set('intervenant_autre', event.target.value)} />}
-      <Select id="statut" className="sm:col-span-2" label={t('field.status')} value={form.statut} error={errors.statut} hint={t('form.statusHelp')}
-        options={STATUTS.map((value) => ({ value, label: `${t(`status.${value}`)}${value !== 'non_traite' && !permitted ? ` — ${t('form.statusBlocked')}` : ''}`, disabled: value !== form.statut && value !== 'non_traite' && !permitted }))} onChange={(event) => set('statut', event.target.value)} />
+      <div className="sm:col-span-2"><AgentAssignmentField model={model} /></div>
+      <div className="sm:col-span-2"><InterventionField combine refs={refs} values={form} value={form.epic_id}
+        otherValue={form.intervenant_autre} error={errors.epic_id} errorOther={errors.intervenant_autre}
+        onChange={(value) => set('epic_id', value)} onOtherChange={(value) => set('intervenant_autre', value)} /></div>
+      <Select id="statut" className="sm:col-span-2" label={t('field.status')} value={form.statut} error={errors.statut} hint={statusHint}
+        options={STATUTS.map((value) => ({ value, label: libelleStatut(value, lang) }))} onChange={(event) => set('statut', event.target.value)} />
       {processing && <Input id="date_intervention" label={t('field.interventionDate')} type="date" max={todayAlgiers()} value={form.date_intervention} error={errors.date_intervention} onChange={(event) => set('date_intervention', event.target.value)} />}
       {form.statut === 'traite' && <Input id="date_traitement" label={t('field.treatmentDate')} type="date" max={todayAlgiers()} value={form.date_traitement} error={errors.date_traitement} onChange={(event) => set('date_traitement', event.target.value)} />}
+      {form.statut === 'traite' && <div className="space-y-2 rounded-md border border-border p-3 sm:col-span-2">
+        <Checkbox label={t('photo.without')} checked={sansPhoto} onChange={(event) => {
+          setSansPhoto(event.target.checked);
+          if (!event.target.checked) set('sans_photo_motif', '');
+        }} />
+        {!sansPhoto ? <p className="text-xs text-muted">{t('photo.helpApres')}</p> : <>
+          <p className="text-xs text-muted">{t('photo.withoutHelp')}</p>
+          <Textarea id="sans_photo_motif" label={t('photo.withoutReason')} required maxLength={1000}
+            value={form.sans_photo_motif} error={errors.sans_photo_motif} onChange={(event) => set('sans_photo_motif', event.target.value)} />
+        </>}
+      </div>}
       {needsReason && <Textarea id="motif" className="sm:col-span-2" required label={t('field.reason')} maxLength={1000} value={form.motif} error={errors.motif} onChange={(event) => set('motif', event.target.value)} />}
     </div></details>;
 }

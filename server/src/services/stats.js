@@ -21,6 +21,7 @@ export const DIMENSIONS = {
   agent: { join: 'JOIN agents dim ON dim.id = a.agent_id', id: 'dim.id', ar: 'dim.full_name', fr: 'dim.full_name', list: 'SELECT id, full_name AS name_ar, full_name AS name_fr FROM agents ORDER BY full_name', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
   plateforme: { simple: 'a.plateforme', labels: PLATFORM_LABELS, list: PLATEFORMES.map((p) => ({ id: p, ar: PLATFORM_LABELS[p][0], fr: PLATFORM_LABELS[p][1] })) },
   priorite: { simple: 'a.priorite', labels: PRIORITY_LABELS, list: PRIORITES.map((p) => ({ id: p, ar: PRIORITY_LABELS[p][0], fr: PRIORITY_LABELS[p][1] })) },
+  source: { join: 'JOIN comptes_sociaux dim ON dim.id = a.source_reseau_id AND dim.deleted_at IS NULL', id: 'dim.id', ar: 'dim.nom', fr: 'dim.nom', list: 'SELECT id, nom AS name_ar, nom AS name_fr FROM comptes_sociaux WHERE deleted_at IS NULL ORDER BY nom', listId: 'id', listAr: 'name_ar', listFr: 'name_fr' },
 };
 
 function scope(params, from, to) {

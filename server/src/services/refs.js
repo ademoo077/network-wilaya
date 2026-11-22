@@ -11,6 +11,10 @@ const SELECTS = {
   communes: 'SELECT * FROM communes ORDER BY name_fr COLLATE NOCASE',
   epics: 'SELECT * FROM epics ORDER BY name COLLATE NOCASE',
   agents: 'SELECT * FROM agents ORDER BY full_name COLLATE NOCASE',
+  affectations: `SELECT aa.daira_id, aa.agent_id, aa.role, a.full_name, a.grade, a.matricule
+    FROM affectations_agents aa JOIN agents a ON a.id = aa.agent_id
+    WHERE aa.actif = 1 AND a.actif = 1
+    ORDER BY aa.daira_id, aa.role = 'suppleant', a.full_name COLLATE NOCASE`,
 };
 
 export function bootstrap(db) {
@@ -20,6 +24,7 @@ export function bootstrap(db) {
   const communes = db.prepare(SELECTS.communes).all();
   const epics = db.prepare(SELECTS.epics).all();
   const agents = db.prepare(SELECTS.agents).all();
+  const affectations = db.prepare(SELECTS.affectations).all();
   const epicDomaines = db.prepare('SELECT epic_id, domaine_id FROM epic_domaines').all();
   const byEpic = new Map();
   for (const row of epicDomaines) {
@@ -41,6 +46,7 @@ export function bootstrap(db) {
     dairas: dairas.map((d) => ({ ...d, communes: communesByDaira.get(d.id) || [] })),
     epics: epics.map((e) => ({ ...withWorkflow(e), domaine_ids: byEpic.get(e.id) || [] })),
     agents,
+    affectations,
     parametres: publicParams(db),
     taxonomie: {
       domaines: domaines.length,

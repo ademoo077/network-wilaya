@@ -11,8 +11,10 @@ import frV8 from './fr-v8.json';
 import arV8 from './ar-v8.json';
 import frSocial from './fr-reseaux.json';
 import arSocial from './ar-reseaux.json';
+import frV14 from './fr-v14.json';
+import arV14 from './ar-v14.json';
 
-const dictionaries = { fr: { ...fr, ...frV5, ...frV6, ...frV7, ...frV8, ...frSocial }, ar: { ...ar, ...arV5, ...arV6, ...arV7, ...arV8, ...arSocial } };
+const dictionaries = { fr: { ...fr, ...frV5, ...frV6, ...frV7, ...frV8, ...frSocial, ...frV14 }, ar: { ...ar, ...arV5, ...arV6, ...arV7, ...arV8, ...arSocial, ...arV14 } };
 const I18nContext = createContext(null);
 
 function storedLanguage() {

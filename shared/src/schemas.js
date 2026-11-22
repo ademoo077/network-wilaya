@@ -71,6 +71,8 @@ const baseAnomalie = {
   observations: z.string().max(5000).nullable().optional(),
   verification: z.enum(VERIFICATIONS).optional(),
   agent_id: optionalId,
+  agent_source: z.enum(['auto', 'manuel', 'import']).nullable().optional(),
+  agent_motif: z.string().trim().max(1000).nullable().optional(),
   date_verification: optionalDate,
   statut: z.enum(STATUTS).optional(),
   epic_id: optionalId,
@@ -78,6 +80,7 @@ const baseAnomalie = {
   date_intervention: optionalDate,
   date_traitement: optionalDate,
   veille_element_id: optionalId,
+  source_reseau_id: optionalId,
   sans_photo_motif: z.string().trim().max(1000).nullable().optional(),
 };
 
@@ -129,7 +132,7 @@ export const anomalieQuerySchema = z.object({
   verification: z.enum(VERIFICATIONS).optional(),
   domaine: optionalId, type: optionalId, daira: optionalId, commune: optionalId,
   epic: optionalId, agent: optionalId, plateforme: z.enum(PLATEFORMES).optional(),
-  priorite: z.enum(PRIORITES).optional(),
+  priorite: z.enum(PRIORITES).optional(), source: optionalId,
   from: optionalDate, to: optionalDate,
   gps: z.enum(['absent', 'present']).optional(),
   ouvertes: booleanFlag, retard: booleanFlag, verification_retard: booleanFlag, sla_depassee: booleanFlag,
@@ -243,7 +246,7 @@ export const userUpdateSchema = z.object({
 export const statsQuerySchema = anomalieQuerySchema.extend({
   all_periods: booleanFlag,
   include_empty: booleanFlag,
-  by: z.enum(['domaine', 'type', 'daira', 'commune', 'epic', 'agent', 'plateforme', 'priorite']).optional(),
+  by: z.enum(['domaine', 'type', 'daira', 'commune', 'epic', 'agent', 'plateforme', 'priorite', 'source']).optional(),
   granularity: z.enum(['week']).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });

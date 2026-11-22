@@ -21,7 +21,7 @@ router.get('/overview', requireAuth, (req, res) => {
 router.get('/group', requireAuth, (req, res) => {
   const params = parsed(req);
   const by = params.by || req.query.by || 'domaine';
-  if (!['domaine', 'type', 'daira', 'commune', 'epic', 'agent', 'plateforme', 'priorite'].includes(by)) {
+  if (!['domaine', 'type', 'daira', 'commune', 'epic', 'agent', 'plateforme', 'priorite', 'source'].includes(by)) {
     throw badRequest('Dimension invalide', { by: 'Dimension inconnue' });
   }
   res.json({ item: groupStats(getDb(), by, params) });

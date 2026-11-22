@@ -29,6 +29,8 @@
     "check:styles": "node scripts/check-styles.js",
     "check:a11y": "node scripts/check-a11y.js",
     "screens": "node scripts/capture-screens.mjs",
+    "captures:v13": "node scripts/captures-v13.mjs",
+    "captures:v14": "node scripts/captures-v14.mjs",
     "seed:demo": "node scripts/seed-demo.js",
     "seed:demo:purge": "node scripts/seed-demo-purge.js",
     "admin:reset": "node scripts/admin-reset.js",
@@ -38,6 +40,7 @@
     "territoire:import": "node scripts/import-territoire.js",
     "reseaux:import": "node scripts/import-reseaux-sociaux.js",
     "db:check": "node scripts/db-check.js",
+    "photos:rebuild": "node scripts/photos-rebuild.js",
     "https:setup": "node scripts/https-setup.js"
   },
   "devDependencies": {

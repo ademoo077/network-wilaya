@@ -4,7 +4,7 @@ import { ANOMALIE_SELECT } from './anomalyRead.js';
 import { buildFilters, orderBy } from './anomalyQuery.js';
 
 const STATUS_FR = { non_traite: 'Non traité', en_cours: 'En cours', traite: 'Traité' };
-const VERIF_FR = { a_verifier: 'À vérifier', confirmee: 'Confirmée', infirmee: 'Infirmée' };
+const VERIF_FR = { a_verifier: 'En attente de classement', confirmee: 'Classée', infirmee: 'Sans suite' };
 const PRIORITY_FR = { normale: 'Normale', haute: 'Haute', urgente: 'Urgente' };
 const PLATFORM_FR = {
   facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube',
@@ -22,7 +22,7 @@ const COLUMNS = [
   ['Date publication', (r) => formatDate(r.date_publication), 14],
   ['Plateforme', (r) => PLATFORM_FR[r.plateforme] || r.plateforme, 12],
   ['Statut', (r) => STATUS_FR[r.statut] || r.statut, 14],
-  ['Vérification', (r) => VERIF_FR[r.verification] || r.verification, 14],
+  ['Classement', (r) => VERIF_FR[r.verification] || r.verification, 14],
   ['Priorité', (r) => PRIORITY_FR[r.priorite] || r.priorite, 10],
   ['Catégorie', (r) => r.domaine_fr || r.domaine_ar, 26],
   ['Type', (r) => r.type_fr || r.type_ar, 26],
@@ -36,7 +36,7 @@ const COLUMNS = [
   ['Autre intervenant', (r) => r.intervenant_autre, 20],
   ['Date intervention', (r) => formatDate(r.date_intervention), 14],
   ['Date traitement', (r) => formatDate(r.date_traitement), 14],
-  ['Lien', (r) => r.lien_url, 40],
+  ['Lien', (r) => r.lien_url, 40, 'url'],
   ['Observations', (r) => r.observations, 40],
 ];
 
@@ -57,13 +57,28 @@ function buildCsv(rows) {
   return Buffer.from(`\uFEFF${lines.join('\r\n')}`, 'utf8');
 }
 
+function safeHttpUrl(value) {
+  if (typeof value !== 'string' || !value) return null;
+  try {
+    const parsed = new URL(value);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : null;
+  } catch { return null; }
+}
+
 async function buildXlsx(rows) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Cellule technique de numérisation — Wilaya d’Alger';
   const sheet = workbook.addWorksheet('Anomalies', { views: [{ state: 'frozen', ySplit: 1 }] });
   sheet.columns = COLUMNS.map(([header, , width]) => ({ header, width }));
   for (const row of rows) {
-    sheet.addRow(COLUMNS.map(([, getter]) => neutralizeFormula(getter(row))));
+    sheet.addRow(COLUMNS.map(([, getter, , kind]) => {
+      const raw = getter(row);
+      if (kind === 'url') {
+        const url = safeHttpUrl(raw);
+        return url ? { text: 'Ouvrir le lien', hyperlink: url } : '';
+      }
+      return neutralizeFormula(raw);
+    }));
   }
   sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
   sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E8A5A' } };

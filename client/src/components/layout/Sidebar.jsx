@@ -66,5 +66,5 @@ export function Sidebar({ mobileOpen, onMobileClose }) {
         {collapsed ? dir === 'rtl' ? <ChevronLeft /> : <ChevronRight /> : <PanelLeftClose />}</IconButton>}</div>
   </div>;
   if (!desktop) return <Drawer open={mobileOpen} onClose={onMobileClose} title={t('nav.menu')} width="max-w-xs" side="start"><div className="-m-5 min-h-full bg-gradient-to-b from-brand-950 to-brand-800 text-brand-50">{content}</div></Drawer>;
-  return <aside className={`sidebar-pattern sticky top-0 z-30 h-dvh bg-gradient-to-b from-brand-950 to-brand-800 text-brand-50 transition-[width] duration-200 ${collapsed ? 'w-20' : 'w-72'}`}>{content}</aside>;
+  return <aside className={`sidebar-pattern sticky top-0 z-30 h-dvh border-e border-brand-800 bg-gradient-to-b from-brand-950 to-brand-800 text-brand-50 transition-[width] duration-200 ${collapsed ? 'w-20' : 'w-72'}`}>{content}</aside>;
 }

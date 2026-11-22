@@ -9,10 +9,12 @@ export const bootstrapResponseSchema = z.object({
   domaines: z.array(reference.extend({ types: z.array(reference).default([]) })).default([]),
   dairas: z.array(reference.extend({ communes: z.array(reference).default([]) })).default([]),
   epics: z.array(reference).default([]), agents: z.array(reference).default([]),
+  affectations: z.array(z.object({ daira_id: z.number(), agent_id: z.number(), role: z.enum(['titulaire', 'suppleant']),
+    full_name: z.string(), grade: z.string().nullable().optional(), matricule: z.string().nullable().optional() }).passthrough()).default([]),
   parametres: z.record(z.union([z.string(), z.number()])).default(DEFAULT_PARAMS),
   taxonomie: z.object({ domaines: z.number(), types: z.number(), ok: z.boolean() }).optional(),
 }).transform((value) => ({ ...value, parametres: { ...DEFAULT_PARAMS, ...value.parametres } }));
-export const emptyRefs = { domaines: [], dairas: [], epics: [], agents: [], parametres: DEFAULT_PARAMS, taxonomie: {} };
+export const emptyRefs = { domaines: [], dairas: [], epics: [], agents: [], affectations: [], parametres: DEFAULT_PARAMS, taxonomie: {} };
 export const anomalyResponseSchema = z.object({
   id: z.number(), reference: z.string(), version: z.number(), lien_url: z.string(),
   plateforme: z.enum(PLATEFORMES), statut: z.enum(STATUTS), verification: z.enum(VERIFICATIONS),
@@ -31,7 +33,12 @@ const photoPairPieceSchema = z.object({
 export const photoPairsSchema = z.object({
   items: z.array(z.object({
     anomalie_id: z.number().int().positive(), reference: z.string(),
+    date_signalement: z.string().nullable().optional(),
+    date_intervention: z.string().nullable().optional(),
     date_traitement: z.string().nullable(),
+    daira: z.object({ fr: z.string(), ar: z.string() }).passthrough().nullable().optional(),
+    commune: z.object({ fr: z.string(), ar: z.string() }).passthrough().nullable().optional(),
+    intervenant: z.string().nullable().optional(),
     avant: photoPairPieceSchema, apres: photoPairPieceSchema,
   }).passthrough()),
 }).passthrough();
@@ -95,6 +102,30 @@ export const compteSocialHistorySchema = z.object({ item: z.object({
 }).passthrough() });
 export const compteSocialHistoryListSchema = z.object({ items: z.array(compteSocialHistorySchema.shape.item), total: z.number().int().nonnegative() });
 export const compteSocialActionResultSchema = z.object({ item: compteSocialResponseSchema });
+
+// V14 — sélection de la page depuis l'URL (répertoire comptes_sociaux, sans table parallèle).
+const identifiantSourceSchema = z.object({
+  id: z.number().int().positive(), source_id: z.number().int().positive(),
+  reseau: z.string(), type: z.enum(['slug', 'id', 'handle', 'canal']),
+  valeur: z.string(), valeur_norm: z.string(),
+}).passthrough();
+export const sourcePageSchema = compteSocialResponseSchema.extend({
+  identifiants: z.array(identifiantSourceSchema).default([]),
+});
+export const sourceRechercheSchema = z.object({ items: z.array(sourcePageSchema) }).passthrough();
+export const sourceIdentificationSchema = z.object({
+  reseau: z.string(), contenu_type: z.string(), statut: z.enum(['identifie', 'indetermine']),
+  identifiants: z.array(z.object({ type: z.enum(['slug', 'id', 'handle', 'canal']), valeur: z.string() })),
+  page_url: z.string().nullable(),
+  correspondance: sourcePageSchema.nullable(),
+  supprimee: sourcePageSchema.nullable().optional(),
+  similaires: z.array(sourcePageSchema),
+  resolution: z.object({ tentee: z.boolean(), ok: z.boolean() }).passthrough(),
+}).passthrough();
+export const sourceRapideResultSchema = z.object({
+  item: sourcePageSchema, statut: z.number().int(), concurrence: z.boolean().optional(), alias: z.boolean().optional(),
+}).passthrough();
+export const sourceIdentifiantsResultSchema = z.object({ item: sourcePageSchema });
 
 const syntheseEntry = z.object({ id: z.string() }).passthrough();
 export const syntheseCatalogueSchema = z.object({
@@ -184,6 +215,9 @@ export function responseContract(path) {
   const route = path.split('?')[0];
   if (['/auth/me', '/auth/login'].includes(route)) return [authResponseSchema, null];
   if (route === '/ref/bootstrap') return [bootstrapResponseSchema, null];
+  if (route === '/reseaux/identifier') return [sourceIdentificationSchema, null];
+  if (route === '/reseaux/recherche') return [sourceRechercheSchema, { items: [] }];
+  if (/^\/reseaux\/\d+\/identifiants$/.test(route)) return [sourceIdentifiantsResultSchema, { item: null }];
   if (route === '/reseaux-sociaux') return [reseauxSociauxListSchema, null];
   if (route === '/reseaux-sociaux/stats') return [reseauxSociauxStatsSchema, { item: null }];
   if (route === '/reseaux-sociaux/lot') return [compteSocialBatchResultSchema, { item: { created: 0, ids: [], errors: [] } }];

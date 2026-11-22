@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   statutAu, transitionStatutPermise, transitionVerificationPermise,
   estRetourArriere, anomaliesExclues,
+  exigencesStatut, codesExigences, libelleExigences, libelleStatut,
 } from '../src/statut.js';
 
 describe('statutAu', () => {
@@ -44,5 +45,32 @@ describe('transitions', () => {
     expect(anomaliesExclues({ verification: 'infirmee' })).toBe(true);
     expect(anomaliesExclues({ verification: 'infirmee' }, true)).toBe(false);
     expect(anomaliesExclues({ deleted_at: '2026-11-08' }, true)).toBe(true);
+  });
+});
+
+describe('V13 — source unique des exigences de statut', () => {
+  it('expose une liste structurée par statut', () => {
+    expect(exigencesStatut('non_traite')).toEqual([]);
+    expect(codesExigences('en_cours')).toEqual(['intervenant']);
+    expect(codesExigences('traite')).toEqual(['intervenant', 'date_traitement', 'photo_apres']);
+    expect(exigencesStatut('inconnu')).toEqual([]);
+  });
+
+  it('dérive les libellés sans jamais mentionner la vérification', () => {
+    expect(libelleStatut('non_traite', 'fr')).toBe('Non traitée');
+    expect(libelleStatut('en_cours', 'fr')).toBe('En cours — intervenant requis');
+    expect(libelleStatut('traite', 'fr')).toBe('Traitée — intervenant, date, photo après requis');
+    for (const statut of ['non_traite', 'en_cours', 'traite']) {
+      for (const lang of ['fr', 'ar']) {
+        expect(libelleStatut(statut, lang)).not.toMatch(/vérif|verif|التحقق/i);
+        expect(libelleExigences(statut, lang)).not.toMatch(/vérif|verif|التحقق/i);
+      }
+    }
+  });
+
+  it('conservant l’alternative photo après / motif dans la source unique', () => {
+    const photo = exigencesStatut('traite').find((item) => item.code === 'photo_apres');
+    expect(photo.champs).toEqual(['sans_photo_motif']);
+    expect(photo.alternative.code).toBe('motif_sans_photo');
   });
 });

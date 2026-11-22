@@ -40,7 +40,6 @@ export default function AnomalyFormPage() {
         <FormLocation model={model} />
         <div className="lg:col-span-2"><NotesSection model={model} /></div>
       </div>
-      <div className="form-action-space" aria-hidden="true" />
       <FormActionBar>
         <div className="flex items-center gap-2 sm:hidden">
           <Button type="submit" className="flex-1" loading={saving}><Save className="h-4 w-4" aria-hidden="true" />{t('common.save')}</Button>
@@ -58,7 +57,7 @@ export default function AnomalyFormPage() {
           {!id && <><Button variant="secondary" loading={saving} onClick={() => model.save('new')}>{t('form.saveNew')}</Button>
             <Button variant="secondary" loading={saving} onClick={() => model.save('duplicate')}><CopyPlus className="h-4 w-4" />{t('form.saveDuplicate')}</Button></>}
           {state.tasks.submit.status === 'error' && <Button variant="secondary" onClick={() => model.save(state.saveMode)}>{t('common.retry')}</Button>}</div>
-        <p className="mt-2 hidden text-end text-xs text-muted sm:block">{t('form.shortcuts')}</p></FormActionBar>
+        <p className="mt-2 hidden break-words text-center text-xs leading-5 text-muted sm:block sm:text-end" title={t('form.shortcuts')}>{t('form.shortcuts')}</p></FormActionBar>
     </form>
     <Dialog open={state.duplicateDialog} onClose={() => ui({ duplicateDialog: false })} title={t('form.duplicateTitle')} footer={<>
       <Button variant="secondary" onClick={() => ui({ duplicateDialog: false })}>{t('common.cancel')}</Button><Button onClick={() => { ui({ duplicateDialog: false }); model.save(state.saveMode, true); }}>{t('gps.different')}</Button></>}>

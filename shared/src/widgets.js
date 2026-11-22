@@ -113,7 +113,7 @@ export const GALERIE = [
   widget('pieces-jointes-anneau', 'qualite', 'Fiches avec pièces jointes', 'بطاقات مع مرفقات', 'anneau',
     req({ mesures: [m('recues')], dimensions: [d('a_pieces_jointes')] })),
   widget('photos-avant-apres', 'qualite', 'Comparer avant / après', 'مقارنة قبل / بعد', 'avant_apres',
-    req({ mesures: [m('taux_photo_avant'), m('taux_photo_apres')] })),
+    req({ mesures: [m('taux_photo_avant'), m('taux_photo_apres')] }), { limite: 12, par_page: 2 }),
   widget('en-retard-kpi', 'qualite', 'Fiches en retard', 'بطاقات متأخرة', 'kpi',
     req({ mesures: [m('en_retard')], comparaison: 'periode_precedente' })),
 

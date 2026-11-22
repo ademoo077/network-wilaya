@@ -23,7 +23,7 @@ function periodFor(key, weekStartDay, custom) {
   if (key === 'all') return { all_periods: 1 };
   return { from: weekStart(today, weekStartDay), to: weekEnd(today, weekStartDay) };
 }
-const dimensions = [['domaine', 'byCategory'], ['daira', 'byDaira'], ['type', 'byType'], ['commune', 'byCommune'], ['epic', 'byEpic']];
+const dimensions = [['domaine', 'byCategory'], ['daira', 'byDaira'], ['type', 'byType'], ['commune', 'byCommune'], ['epic', 'byEpic'], ['source', 'bySource']];
 export default function DashboardPage() {
   const { t } = useI18n(); const { user } = useAuth(); const { refs } = useRefs(); const navigate = useNavigate();
   const [period, setPeriod] = useState('week'); const [includeDenied, setIncludeDenied] = useState(false);

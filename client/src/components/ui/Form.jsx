@@ -53,7 +53,7 @@ export function Select({ label, error, hint, required, options = [], placeholder
   );
 }
 
-export function Combobox({ label, error, hint, required, options = [], value, onChange, onBlur, disabled, id: givenId, placeholder, className = '' }) {
+export function Combobox({ label, error, hint, required, options = [], value, onChange, onQueryChange, onBlur, disabled, id: givenId, placeholder, className = '' }) {
   const autoId = useId(); const id = givenId || autoId;
   const selected = options.find((option) => String(option.value) === String(value));
   const [query, setQuery] = useState(selected?.label || '');
@@ -85,7 +85,7 @@ export function Combobox({ label, error, hint, required, options = [], value, on
           aria-expanded={open} aria-controls={open && filtered.length ? `${id}-list` : undefined} aria-autocomplete="list" aria-activedescendant={open && filtered[active] ? `${id}-option-${active}` : undefined}
           className={`${fieldClass} ps-10`} value={query} placeholder={placeholder || label}
           onFocus={() => setOpen(true)} onBlur={(event) => { setOpen(false); onBlur?.(event); }} onKeyDown={keyDown}
-          onChange={(event) => { setQuery(event.target.value); setOpen(true); setActive(0); if (!event.target.value) onChange?.(''); }} />
+          onChange={(event) => { setQuery(event.target.value); setOpen(true); setActive(0); onQueryChange?.(event.target.value); if (!event.target.value) onChange?.(''); }} />
         {open && filtered.length > 0 && (
           <ul id={`${id}-list`} role="listbox" aria-label={label} className="absolute z-40 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-surface p-1 shadow-2">
             {filtered.map((option, index) => (

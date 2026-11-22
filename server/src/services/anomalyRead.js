@@ -9,6 +9,7 @@ export const ANOMALIE_SELECT = `
          c.name_ar AS commune_ar, c.name_fr AS commune_fr,
          e.name AS epic_name, e.sigle AS epic_sigle,
          ag.full_name AS agent_nom, ag.matricule AS agent_matricule,
+         src.nom AS source_nom, src.plateforme AS source_plateforme, src.categorie AS source_categorie,
          u.full_name AS saisi_par_nom, u.username AS saisi_par_username,
          (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id) AS pieces_count,
           (SELECT COUNT(*) FROM pieces_jointes p WHERE p.anomalie_id = a.id AND p.role = 'avant') AS photos_avant_count,
@@ -24,6 +25,7 @@ export const ANOMALIE_SELECT = `
   JOIN communes c ON c.id = a.commune_id
   LEFT JOIN epics e ON e.id = a.epic_id
   LEFT JOIN agents ag ON ag.id = a.agent_id
+  LEFT JOIN comptes_sociaux src ON src.id = a.source_reseau_id
   LEFT JOIN users u ON u.id = a.saisi_par
   LEFT JOIN anomalies parent ON parent.id = a.lie_a_id
 `;

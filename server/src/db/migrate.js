@@ -6,6 +6,20 @@ import { parse } from 'csv-parse/sync';
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(dir, 'migrations');
 
+// Directives SQL commentées : une migration appliquée peut avoir omis un ADD COLUMN.
+// Le fichier reste la source de vérité, l'ajout n'est joué que si la colonne manque.
+const DIRECTIVE_COLONNE = /^\s*--\s*@add-column-if-missing\s+([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s+(.+?)\s*$/gim;
+
+function appliquerColonnesManquantes(db, sql, logger) {
+  for (const [, table, colonne, definition] of sql.matchAll(DIRECTIVE_COLONNE)) {
+    if (/[;]|--/.test(definition)) throw new Error(`Définition de colonne invalide : ${table}.${colonne}`);
+    const presentes = db.prepare(`PRAGMA table_info(${table})`).all().map((row) => row.name);
+    if (presentes.includes(colonne)) continue;
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${colonne} ${definition}`);
+    logger.info?.(`Colonne manquante réparée : ${table}.${colonne}`);
+  }
+}
+
 export function appliedVersions(db) {
   db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
     version INTEGER PRIMARY KEY,
@@ -15,16 +29,17 @@ export function appliedVersions(db) {
   return db.prepare('SELECT version, name, applied_at FROM schema_migrations ORDER BY version').all();
 }
 
-export function runMigrations(db, { logger = console } = {}) {
+export function runMigrations(db, { logger = console, dir = migrationsDir } = {}) {
   appliedVersions(db);
-  const files = fs.readdirSync(migrationsDir).filter((f) => /^\d+.*\.sql$/i.test(f)).sort();
+  const files = fs.readdirSync(dir).filter((f) => /^\d+.*\.sql$/i.test(f)).sort();
   const done = new Set(db.prepare('SELECT version FROM schema_migrations').all().map((r) => r.version));
   for (const file of files) {
     const version = Number.parseInt(file, 10);
     if (done.has(version)) continue;
-    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+    const sql = fs.readFileSync(path.join(dir, file), 'utf8');
     db.exec('BEGIN');
     try {
+      appliquerColonnesManquantes(db, sql, logger);
       db.exec(sql);
       db.prepare('INSERT INTO schema_migrations(version, name) VALUES (?, ?)').run(version, file);
       db.exec('COMMIT');

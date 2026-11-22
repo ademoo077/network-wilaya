@@ -1,5 +1,5 @@
 import { normaliserUrl, roundCoordinate, todayAlgiers } from '@anm/shared';
-import { conflict, business, notFound } from '../utils/errors.js';
+import { badRequest, conflict, business, notFound } from '../utils/errors.js';
 import { getAnomalieRaw, getAnomalie, findDuplicateMatches } from './anomalyRead.js';
 import { validerEtat } from './etat.js';
 import { searchNormForAnomaly } from './searchNorm.js';
@@ -13,7 +13,7 @@ const FIELDS = [
   'gps_lat', 'gps_lng', 'verification', 'agent_id', 'date_verification', 'statut',
   'epic_id', 'intervenant_autre', 'date_intervention', 'date_traitement', 'priorite', 'observations',
   'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id', 'contenu_type',
-  'date_publication_estimee', 'legende', 'auteur_publication', 'sans_photo_motif',
+  'date_publication_estimee', 'legende', 'auteur_publication', 'sans_photo_motif', 'source_reseau_id',
 ];
 
 const HISTORY_FIELDS = [
@@ -61,6 +61,18 @@ function normalizeLink(data) {
     lien_normalise: parsed.url,
     plateforme: data.plateforme || parsed.plateforme,
   };
+}
+
+/** V14 : la page choisie doit exister et ne pas être en corbeille. */
+function normalizeSource(db, data) {
+  if (data.source_reseau_id === undefined || data.source_reseau_id === null || data.source_reseau_id === '') return data;
+  const id = Number(data.source_reseau_id);
+  if (!Number.isInteger(id) || id < 1) {
+    throw badRequest('Page source invalide', { source_reseau_id: 'Page invalide' });
+  }
+  const source = db.prepare('SELECT id FROM comptes_sociaux WHERE id=? AND deleted_at IS NULL').get(id);
+  if (!source) throw business('Page source introuvable', 'SOURCE_INTROUVABLE', { source_reseau_id: 'Page introuvable' });
+  return { ...data, source_reseau_id: id };
 }
 
 function checkDoublons(db, state, { force = false, excludeId = null } = {}) {
@@ -119,7 +131,7 @@ function normalizeV5(db, target, data, currentId = null) {
 
 export function createAnomalie(db, input, userId, settings = {}) {
   const today = settings.today || todayAlgiers();
-  let data = normalizeLink({ ...input });
+  let data = normalizeSource(db, normalizeLink({ ...input }));
   data = {
     ...data,
     date_signalement: data.date_signalement || today,
@@ -148,7 +160,7 @@ export function createAnomalie(db, input, userId, settings = {}) {
       'date_signalement', 'domaine_id', 'type_id', 'daira_id', 'commune_id', 'adresse_texte',
       'lieu_dit', 'gps_lat', 'gps_lng', 'verification', 'agent_id', 'date_verification',
       'statut', 'epic_id', 'intervenant_autre', 'date_intervention', 'date_traitement',
-      'priorite', 'observations', 'search_norm', 'saisi_par', 'veille_element_id'];
+      'priorite', 'observations', 'source_reseau_id', 'search_norm', 'saisi_par', 'veille_element_id'];
     columns.splice(columns.length - 2, 0, 'gps_source', 'gps_precision_m', 'gps_verifiee', 'lie_a_id',
       'contenu_type', 'date_publication_estimee', 'legende', 'auteur_publication');
     const values = columns.map((c) => row[c] === undefined ? null : row[c]);
@@ -161,7 +173,7 @@ export function createAnomalie(db, input, userId, settings = {}) {
     // Affectation V12 : un agent fourni explicitement est manuel et n'est jamais écrasé.
     if (state.agent_id) {
       affecterAgent(db, newId, {
-        manualAgentId: state.agent_id, manualMotif: input.motif || 'Affectation manuelle à la création',
+        manualAgentId: state.agent_id, manualMotif: input.agent_motif || input.motif || 'Affectation manuelle à la création',
         user_id: userId, skipIfManuel: false, bumpVersion: false,
       });
     } else if (state.daira_id) {
@@ -228,8 +240,8 @@ export function updateAnomalie(db, id, data, userId, settings = {}) {
   if (Number(data.version) !== Number(current.version)) {
     throw conflict('VERSION_CONFLICT', 'Cette fiche a été modifiée par un autre utilisateur — rechargez');
   }
-  let input = data;
-  if (data.lien_url !== undefined) input = normalizeLink(data);
+  let input = normalizeSource(db, data);
+  if (data.lien_url !== undefined) input = normalizeLink(input);
   const merged = { ...current };
   for (const field of FIELDS) {
     if (input[field] !== undefined && !['gps_lat', 'gps_lng'].includes(field)) merged[field] = input[field];
@@ -270,7 +282,7 @@ export function updateAnomalie(db, id, data, userId, settings = {}) {
   // sinon réaffectation auto si la daïra a changé et que le statut n'est pas traité.
   if (agentChanged && data.agent_id) {
     affecterAgent(db, id, {
-      manualAgentId: data.agent_id, manualMotif: data.motif || 'Affectation manuelle',
+      manualAgentId: data.agent_id, manualMotif: data.agent_motif || data.motif || 'Affectation manuelle',
       user_id: userId, skipIfManuel: false, bumpVersion: false,
     });
   } else if (!agentChanged && dairaChanged && next.statut !== 'traite' && current.agent_source !== 'manuel') {

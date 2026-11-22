@@ -56,8 +56,8 @@ describe('Photos avant/après V12', () => {
     expect(piece.role).toBe('avant');
     expect(piece.legende).toBe('Façade');
     expect(piece.prise_le).toBe('2026-07-04');
-    expect(piece.thumb_url).toBe(`/api/photos/${piece.id}/thumb`);
-    expect(piece.url).toBe(`/api/photos/${piece.id}/file`);
+    expect(piece.thumb_url).toBe(`/api/photos/${piece.id}/thumb?v=${piece.hash.slice(0, 16)}`);
+    expect(piece.url).toBe(`/api/photos/${piece.id}/file?v=${piece.hash.slice(0, 16)}`);
 
     const file = await admin.get(`/api/photos/${piece.id}/file`);
     expect(file.status).toBe(200);
@@ -158,7 +158,7 @@ describe('Photos avant/après V12', () => {
     expect(paire).toBeDefined();
     expect(paire.avant.role).toBe('avant');
     expect(paire.apres.role).toBe('apres');
-    expect(paire.avant.thumb_url).toBe(`/api/photos/${avant.body.item.id}/thumb`);
+    expect(paire.avant.thumb_url).toBe(`/api/photos/${avant.body.item.id}/thumb?v=${avant.body.item.hash.slice(0, 16)}`);
 
     const horsPeriode = await admin.get('/api/photos/paires?debut=2026-11-01&fin=2026-11-30');
     expect(horsPeriode.body.items.some((entry) => entry.anomalie_id === item.id)).toBe(false);

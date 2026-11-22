@@ -12,7 +12,7 @@ export default function QuickViews({ filters, update }) {
     {QUICK_VIEWS.map((view) => <button key={view.id} type="button" aria-pressed={selected === view.id}
       className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-sm font-semibold transition ${selected === view.id ? 'border-brand-700 bg-brand-100 text-ink' : 'border-border bg-surface text-ink2 hover:bg-surface2'}`}
       onClick={() => update({ ...Object.fromEntries(QUICK_FILTER_KEYS.map((key) => [key, ''])), ...view.filters, page: 1 })}>
-      {t(view.label)} <span className="rounded-full bg-surface2 px-2 text-xs text-ink">{counts.data?.item?.[view.id] ?? '…'}</span>
+      {t(view.label)} <span className="inline-flex h-5 w-6 items-center justify-center rounded-full bg-surface2 text-xs tabular-nums text-ink">{counts.data?.item?.[view.id] ?? '…'}</span>
     </button>)}
     {counts.error && <button className="min-h-11 text-sm text-danger underline" onClick={() => counts.refetch()}>{t('common.retry')}</button>}
   </div>;

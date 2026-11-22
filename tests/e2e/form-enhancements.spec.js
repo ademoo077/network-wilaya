@@ -54,7 +54,7 @@ test('photos locales : vignettes, retrait, limites et erreurs de fichiers visibl
   await page.getByRole('button', { name: 'Retirer terrain.png', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Photo à joindre : terrain.png', exact: true })).toHaveCount(0);
   await page.locator('#attachments').setInputFiles([{ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('message') }]);
-  await expect(page.getByText(/notes.txt.*PNG, JPEG ou WebP/)).toBeVisible();
+  await expect(page.getByText(/notes.txt.*PNG, JPEG, WebP ou HEIC/)).toBeVisible();
   await page.locator('#attachments').setInputFiles(Array.from({ length: 6 }, (_, i) => ({ name: `photo-${i}.png`, mimeType: 'image/png', buffer: png })));
   await expect(page.getByRole('img', { name: /Photo à joindre/ })).toHaveCount(5);
   await expect(page.getByText(/photo-5.png.*5 photos maximum/)).toBeVisible();

@@ -31,10 +31,10 @@
   "form.communePlaceholder": "اختر بلدية…",
   "form.chooseDaira": "اختر الدائرة أولاً",
   "form.advanced": "خيارات متقدمة",
-  "form.statusHelp": "للانتقال إلى قيد المعالجة أو معالَجة: يلزم تأكيد التحقق وتحديد العون والمتدخل.",
-  "form.statusBlocked": "يلزم التحقق والعون والمتدخل",
+  "form.statusHelp": "المتطلبات موضحة في تسمية الحالة.",
+  "form.statusBlocked": "أكمل متطلبات الحالة",
   "form.unassigned": "غير مسند",
-  "form.errorSummary": "تحقق من الحقول التالية",
+  "form.errorSummary": "صحح الحقول التالية",
   "form.saveNew": "حفظ وإضافة جديد",
   "validation.required": "هذا الحقل مطلوب",
   "validation.invalid": "قيمة غير صالحة",
@@ -61,12 +61,12 @@
   "date.estimee": "تاريخ نشر تقديري: {date} (قابل للتعديل)",
   "gps.ok": "موقع معروف: {lat}, {lng} · {source}",
   "gps.invalide": "تنسيق الإحداثيات غير معروف",
-  "gps.horsZone": "يبدو أن الموقع خارج ولاية الجزائر — يرجى التحقق",
+  "gps.horsZone": "يبدو أن الموقع خارج ولاية الجزائر — راجعه",
   "gps.destination": "مسار: تم اعتماد الوجهة النهائية",
   "gps.source.olc": "رمز Plus Code",
   "gps.source.polygone": "الحدود الإقليمية",
   "gps.openMaps": "فتح في الخرائط",
-  "gps.deviceError": "موقع الجهاز غير متاح. تحقق من إذن تحديد الموقع.",
+  "gps.deviceError": "موقع الجهاز غير متاح. راجع إذن تحديد الموقع.",
   "gps.linked": "تم ربط البلاغ المتكرر بالبطاقة",
   "smart.ctrlC": "حدد الإحداثيات ثم اضغط Ctrl+C.",
   "resolve.encours": "جارٍ حل الرابط المختصر…",
@@ -89,7 +89,7 @@
   "locate.ok": "تم تحديد البلدية حسب حدودها الإقليمية",
   "locate.suggestion": "بلدية مقترحة حسب البلاغات المجاورة — تحتاج تأكيدًا",
   "locate.aucune": "لم يتم تحديد البلدية — اخترها يدويًا",
-  "dup.loading": "جارٍ التحقق من التكرار…",
+  "dup.loading": "جارٍ البحث عن التكرار…",
   "dup.lien": "هذا الرابط مستخدم في بطاقة أخرى",
   "dup.strict": "تم تسجيل هذه الحالة سابقًا",
   "dup.geo": "توجد حالة مماثلة قريبة",
@@ -111,11 +111,11 @@
   "activity.change": "تعديل واحد",
   "activity.created": "تم إنشاء الحالة",
   "dashboard.openStock": "المخزون المفتوح"
-  ,"action.VERIFICATION_REQUISE": "أكد التحقق بواسطة عون أولاً."
+  ,"action.VERIFICATION_REQUISE": "أكمل متطلبات الحالة المختارة."
   ,"action.TRANSITION_INTERDITE": "هذا الانتقال غير مسموح في الحالة الحالية."
   ,"list.late": "متأخرة"
   ,"list.quickViews": "عروض سريعة"
-  ,"work.verification": "تحققات متأخرة"
+  ,"work.verification": "متابعة الآجال"
   ,"work.urgent": "تجاوز الآجال المستهدفة"
   ,"work.incomplete": "بطاقات للاستكمال"
   ,"work.noPhoto": "بدون صورة"
@@ -154,7 +154,7 @@
   ,"form.goTo": "الانتقال إلى {section}"
   ,"form.recentTypes": "آخر 5 أنواع استخدمتها"
   ,"form.reuseType": "إعادة استخدام {type}"
-  ,"form.agentSearch": "اسم العون أو رتبته أو بريده…"
+  ,"form.agentSearch": "عون نشط"
   ,"form.saveDuplicate": "حفظ وتكرار الإدخال"
   ,"form.duplicateReady": "حالة جديدة من نفس المنشور · {reference}"
   ,"form.duplicateHelp": "اختر نوعاً أو بلدية أخرى ثم حدد الموقع الجديد. تم الاحتفاظ بالرابط والتواريخ."
@@ -168,7 +168,7 @@
   ,"attachments.help": "PNG أو JPEG أو WebP · 5 ميغابايت للصورة · 5 صور كحد أقصى"
   ,"attachments.count": "{count}/5 صور"
   ,"attachments.existing": "{count} صورة محفوظة مسبقاً ويمكن عرضها في البطاقة."
-  ,"attachments.format": "التنسيق المقبول: PNG أو JPEG أو WebP"
+  ,"attachments.format": "التنسيق المقبول: PNG أو JPEG أو WebP أو HEIC"
   ,"attachments.size": "الصورة كبيرة جداً: 5 ميغابايت كحد أقصى"
   ,"attachments.limit": "5 صور كحد أقصى لكل حالة"
   ,"attachments.duplicate": "هذه الصورة مرفقة مسبقاً"
@@ -183,7 +183,7 @@
   ,"map.filtersAndList": "فلاتر الخريطة والحالات"
   ,"map.expand": "تكبير مساحة الخريطة"
   ,"map.exitExpanded": "الخروج من الخريطة الموسعة"
-  ,"map.period": "الفترة والتحقق"
+  ,"map.period": "الفترة"
   ,"map.emptyHelp": "عدّل الفلاتر أو راجع البطاقات التي لا تحتوي على موقع."
   ,"map.zoomIn": "تكبير"
   ,"map.zoomOut": "تصغير"

@@ -22,7 +22,7 @@ const COMPARAISON_OPTIONS = [
 const GESTION_MESURES = [
   { group: 'cohorte', labelFr: 'Cohorte', labelAr: 'الدفعة', ids: ['recues', 'cohorte_non_traitees', 'cohorte_en_cours', 'cohorte_traitees', 'cohorte_pct_non_traitees', 'cohorte_pct_en_cours', 'cohorte_pct_traitees', 'taux_traitement'] },
   { group: 'traitement', labelFr: 'Traitement', labelAr: 'المعالجة', ids: ['traitees_periode', 'taux_sla', 'nb_hors_sla', 'delai_moyen', 'delai_median', 'delai_p90', 'delai_min', 'delai_max'] },
-  { group: 'verification', labelFr: 'Vérification', labelAr: 'التحقق', ids: ['taux_confirmation', 'taux_infirmation', 'delai_verification_moyen'] },
+  { group: 'verification', labelFr: 'Classement', labelAr: 'التصنيف', ids: ['taux_confirmation', 'taux_infirmation', 'delai_verification_moyen'] },
   { group: 'intervention', labelFr: 'Intervention', labelAr: 'التدخل', ids: ['delai_intervention_moyen'] },
   { group: 'stock', labelFr: 'Stock', labelAr: 'المخزون', ids: ['stock_fin', 'stock_debut', 'variation_stock', 'taux_traitement_cumule', 'age_moyen_stock', 'age_max_stock', 'en_retard', 'urgentes_ouvertes'] },
   { group: 'qualite', labelFr: 'Qualité', labelAr: 'الجودة', ids: ['taux_geolocalisation', 'taux_gps_confirme', 'nb_liens_distincts', 'nb_communes_touchees', 'nb_dairas_touchees', 'nb_recurrents', 'indice_recurrence'] },
@@ -241,6 +241,12 @@ export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t
         <Select label={t('synthese.widget.heightMode')} value={bloc.options?.hauteur_mode || 'auto'} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur_mode: event.target.value } })} options={[{ value: 'auto', label: t('synthese.widget.heightAuto') }, { value: 'fixe', label: t('synthese.widget.heightFixed') }]} />
         {bloc.options?.hauteur_mode !== 'fixe' && <div className="grid gap-4 sm:grid-cols-2"><Input type="number" min="1" max="40" label={t('synthese.widget.heightMin')} value={bloc.options?.hauteur_min || 1} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur_min: Number(event.target.value) } })} /><Input type="number" min="1" max="40" label={t('synthese.widget.heightMax')} value={bloc.options?.hauteur_max || 40} onChange={(event) => onPatch({ options: { ...bloc.options, hauteur_max: Number(event.target.value) } })} /></div>}
         <Select label={t('synthese.widget.printVisibility')} value={bloc.options?.masquer_impression ? 'masque' : 'visible'} onChange={(event) => onPatch({ options: { ...bloc.options, masquer_impression: event.target.value === 'masque' } })} options={[{ value: 'visible', label: t('synthese.widget.printVisible') }, { value: 'masque', label: t('synthese.widget.printHidden') }]} />
+        {bloc.type === 'avant_apres' && <div className="grid gap-2 rounded-lg border border-border bg-surface2 p-3">
+          <Input type="number" min="1" max="24" label={t('synthese.pairsPerPage')}
+            value={bloc.options?.limite || 12}
+            onChange={(event) => onPatch({ options: { ...bloc.options, limite: Math.min(24, Math.max(1, Number(event.target.value) || 1)) } })} />
+          <p className="text-[11px] text-muted">{t('synthese.pairsPerPageHelp')}</p>
+        </div>}
         {bloc.type === 'tableau' && <div className="flex justify-end"><Button size="sm" variant="secondary" onClick={() => setColumnsOpen(true)}>{t('synthese.columns.button')}</Button></div>}
         <hr className="border-border" />
         <div className="grid gap-4 rounded-lg border border-border bg-surface2 p-3">

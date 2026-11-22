@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { parse as parseCsv } from 'csv-parse/sync';
-import { normalize, normaliserUrl, parseGps, isFuture, todayAlgiers, MAX_IMPORT_ROWS } from '@anm/shared';
+import { normalize, normaliserUrl, parseGps, isFuture, todayAlgiers, MAX_IMPORT_ROWS, libelleExigences } from '@anm/shared';
 import { config } from '../config/index.js';
 import { getParams } from './settings.js';
 import { createAnomalie } from './anomalies.js';
@@ -233,7 +233,7 @@ function buildCandidate(db, row, refs, bbox, options = {}) {
   if (statutInfo.error) warnings.push(statutInfo.error);
   let statut = statutInfo.statut || 'non_traite';
   let verification = codeOf(row.verification, VERIF_MAP, 'a_verifier');
-  if (row.verification && !codeOf(row.verification, VERIF_MAP)) errors.push(`Vérification inconnue : ${row.verification}`);
+  if (row.verification && !codeOf(row.verification, VERIF_MAP)) errors.push(`Classement inconnu : ${row.verification}`);
   const priorite = codeOf(row.priorite, PRIORITE_MAP, 'normale');
 
   let agentId = row.agent ? refs.entities.agents.get(normalize(row.agent)) : null;
@@ -255,7 +255,7 @@ function buildCandidate(db, row, refs, bbox, options = {}) {
   if (statut !== 'non_traite') {
     const intervenant = epicId || row.intervenant_autre;
     if (!agentId || !intervenant) {
-      warnings.push(`Statut « ${row.statut} » non appliqué : agent de vérification et EPIC requis — ligne importée « Non traitée »`);
+      warnings.push(`Statut « ${row.statut} » non appliqué : ${libelleExigences(statut, 'fr')} requis — ligne importée « Non traitée »`);
       statut = 'non_traite';
       dateIntervention = null;
       dateTraitement = null;
@@ -264,7 +264,7 @@ function buildCandidate(db, row, refs, bbox, options = {}) {
       dateVerification = dateVerification || dateSignalement;
       dateIntervention = dateIntervention || dateSignalement;
       if (statut === 'traite') dateTraitement = dateTraitement || dateSignalement;
-      warnings.push(`Statut « ${row.statut} » appliqué avec la date du signalement — à vérifier`);
+      warnings.push(`Statut « ${row.statut} » appliqué avec la date du signalement — classement à confirmer`);
     }
   }
 
@@ -324,7 +324,7 @@ function publicRow(row) {
 
 function validateImportOptions(db, options) {
   if (options.agent_id && !db.prepare('SELECT 1 FROM agents WHERE id = ? AND actif = 1').get(options.agent_id)) {
-    throw badRequest('Agent de vérification inconnu');
+    throw badRequest('Agent affecté inconnu');
   }
   if (options.epic_id && !db.prepare('SELECT 1 FROM epics WHERE id = ? AND actif = 1').get(options.epic_id)) {
     throw badRequest('EPIC inconnu');

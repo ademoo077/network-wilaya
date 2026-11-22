@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatValue } from '@anm/shared';
+import { formatDate, formatValue } from '@anm/shared';
 import { colonnesAffichees } from '@anm/shared';
 import {
   classeAccentStyle, classeAlignementStyle, classeDensiteStyle, normaliserStyle,
@@ -241,7 +241,7 @@ function TexteWidget({ bloc, lang, t, alignement = 'auto' }) {
 
 function PhotoPairsWidget({ bloc, result, t, lang, actions }) {
   const periode = result?.meta?.periode || {};
-  const limite = bloc.options?.limite || 12;
+  const limite = Math.min(24, Math.max(1, Number(bloc.options?.limite) || 12));
   const debut = periode.debut || '';
   const fin = periode.fin || '';
   const [state, setState] = useState({ items: [], loading: true, error: null });
@@ -260,22 +260,34 @@ function PhotoPairsWidget({ bloc, result, t, lang, actions }) {
   if (!state.items.length) return <><CardHeader title={title} action={actions} /><EmptyState title={title} description={t('photo.noPairs')} /></>;
   return <>
     <CardHeader title={title} action={actions} />
-    <div data-photo-pairs className="grid min-w-0 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
-      {state.items.map((pair) => <article key={`${pair.anomalie_id}-${pair.avant.id}-${pair.apres.id}`}
-        data-photo-pair={pair.anomalie_id} className="min-w-0 overflow-hidden rounded-lg border border-border bg-surface2">
-        <div className="grid grid-cols-2 gap-px bg-border">
-          {[pair.avant, pair.apres].map((piece) => <figure key={piece.id} className="min-w-0 bg-surface">
-            <img src={piece.thumb_url || piece.url} alt={`${t(piece.role === 'avant' ? 'photo.avant' : 'photo.apres')} — ${pair.reference}`}
-              className="aspect-[4/3] w-full object-cover" loading="lazy" />
-            <figcaption className="truncate px-2 py-1 text-[11px] text-muted" title={piece.legende || piece.nom_original || ''}>
-              <bdi>{t(piece.role === 'avant' ? 'photo.avant' : 'photo.apres')}</bdi>
-            </figcaption>
-          </figure>)}
-        </div>
-        <Link to={`/anomalies/${pair.anomalie_id}`} className="block truncate px-3 py-2 text-xs font-semibold text-brand-700">
-          <bdi>{pair.reference}</bdi>
-        </Link>
-      </article>)}
+    <div data-photo-pairs data-photo-pairs-per-page={limite} className="grid min-w-0 grid-cols-1 gap-3 p-4 sm:grid-cols-2">
+      {state.items.map((pair) => {
+        const lieu = [pair.commune?.[lang] || pair.commune?.fr, pair.daira?.[lang] || pair.daira?.fr].filter(Boolean).join(' / ');
+        return <article key={`${pair.anomalie_id}-${pair.avant.id}-${pair.apres.id}`}
+          data-photo-pair={pair.anomalie_id} className="min-w-0 overflow-hidden rounded-lg border border-border bg-surface2">
+          <div className="grid grid-cols-2 gap-px bg-border">
+            {[pair.avant, pair.apres].map((piece) => <figure key={piece.id} className="min-w-0 bg-surface">
+              <img src={piece.thumb_url || piece.url} width="320" height="240"
+                alt={`${t(piece.role === 'avant' ? 'photo.avant' : 'photo.apres')} — ${pair.reference}`}
+                className="aspect-[4/3] w-full object-cover" loading="lazy" />
+              <figcaption className="truncate px-2 py-1 text-[11px] text-muted" title={piece.legende || piece.nom_original || ''}>
+                <bdi>{t(piece.role === 'avant' ? 'photo.avant' : 'photo.apres')}</bdi>
+              </figcaption>
+            </figure>)}
+          </div>
+          <div data-photo-legend className="space-y-0.5 px-3 py-2 text-[11px] text-ink2">
+            <Link to={`/anomalies/${pair.anomalie_id}`} className="block truncate font-bold text-brand-700">
+              <bdi>{pair.reference}</bdi>
+            </Link>
+            {lieu && <p className="truncate"><bdi>{lieu}</bdi></p>}
+            <p className="flex flex-wrap gap-x-2 tabular-nums text-muted">
+              {pair.date_signalement && <time dateTime={pair.date_signalement}>{formatDate(pair.date_signalement)}</time>}
+              {pair.date_traitement && <time dateTime={pair.date_traitement}>{formatDate(pair.date_traitement)}</time>}
+            </p>
+            {pair.intervenant && <p className="truncate"><bdi>{pair.intervenant}</bdi></p>}
+          </div>
+        </article>;
+      })}
     </div>
   </>;
 }

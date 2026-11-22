@@ -245,8 +245,8 @@ export function faitsMarquants(db, ctx) {
     facts.push({
       gravite: 'attention',
       code: 'VERIFICATION_EN_RETARD',
-      fr: `${aVerifierRetard} fiche(s) « à vérifier » depuis plus de ${verifTarget} j.`,
-      ar: `${aVerifierRetard} بطاقة «للتحقق» منذ أكثر من ${verifTarget} يوم.`,
+      fr: `${aVerifierRetard} fiche(s) en attente de classement depuis plus de ${verifTarget} j.`,
+      ar: `${aVerifierRetard} بطاقة بانتظار التصنيف منذ أكثر من ${verifTarget} يوم.`,
       filtre: { verification: 'a_verifier' },
     });
   }

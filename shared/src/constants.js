@@ -83,8 +83,14 @@ export const MAX_IMPORT_ROWS = 5000;
 export const ALLOWED_MIME = {
   'image/png': [[0x89, 0x50, 0x4e, 0x47]],
   'image/jpeg': [[0xff, 0xd8, 0xff]],
-  'image/webp': [[0x52, 0x49, 0x46, 0x46]],
+  'image/webp': [[0x52, 0x49, 0x46, 0x46], [0x52, 0x49, 0x46, 0x46, 0x57, 0x45, 0x42, 0x50]],
+  // HEIC/HEIF : le conteneur ISO BMFF est identifié par la marque `ftyp`.
+  // La signature ci-dessous est volontairement courte ; le contrôle fin est fait côté serveur.
+  'image/heic': [[0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70]],
+  'image/heif': [[0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70]],
 };
+
+export const PHOTO_EXTENSIONS = Object.freeze(['png', 'jpg', 'jpeg', 'webp', 'heic', 'heif']);
 
 export const AUDIT_ACTIONS = [
   'LOGIN_OK', 'LOGIN_FAIL', 'LOGOUT', 'PASSWORD_CHANGE',

@@ -31,10 +31,10 @@
   "form.communePlaceholder": "Choisir une commune…",
   "form.chooseDaira": "Choisissez d'abord la daïra",
   "form.advanced": "Options avancées",
-  "form.statusHelp": "Pour passer en en cours ou traité : vérification confirmée, agent et intervenant requis.",
-  "form.statusBlocked": "Vérification, agent et intervenant requis",
+  "form.statusHelp": "Les exigences sont indiquées dans le libellé du statut.",
+  "form.statusBlocked": "Exigences du statut à compléter",
   "form.unassigned": "Non affecté",
-  "form.errorSummary": "Vérifiez les champs suivants",
+  "form.errorSummary": "Corrigez les champs suivants",
   "form.saveNew": "Enregistrer et nouveau",
   "validation.required": "Ce champ est requis",
   "validation.invalid": "Valeur invalide",
@@ -61,12 +61,12 @@
   "date.estimee": "Date de publication estimée : {date} (modifiable)",
   "gps.ok": "Position reconnue : {lat}, {lng} · {source}",
   "gps.invalide": "Format de coordonnées non reconnu",
-  "gps.horsZone": "Cette position semble hors de la wilaya d'Alger — vérifiez",
+  "gps.horsZone": "Cette position semble hors de la wilaya d'Alger — contrôlez",
   "gps.destination": "Itinéraire : la destination a été retenue",
   "gps.source.olc": "Plus Code",
   "gps.source.polygone": "Limites territoriales",
   "gps.openMaps": "Ouvrir dans Maps",
-  "gps.deviceError": "Position de l'appareil indisponible. Vérifiez l'autorisation de localisation.",
+  "gps.deviceError": "Position de l'appareil indisponible. Contrôlez l'autorisation de localisation.",
   "gps.linked": "Signalement répété lié à la fiche",
   "smart.ctrlC": "Sélectionnez les coordonnées puis faites Ctrl+C.",
   "resolve.encours": "Résolution du lien court…",
@@ -89,7 +89,7 @@
   "locate.ok": "Commune identifiée par ses limites territoriales",
   "locate.suggestion": "Commune suggérée par les anomalies voisines — à confirmer",
   "locate.aucune": "Aucune commune identifiée — choisissez-la manuellement",
-  "dup.loading": "Vérification des doublons…",
+  "dup.loading": "Recherche des doublons…",
   "dup.lien": "Ce lien est déjà utilisé dans une fiche",
   "dup.strict": "Cette anomalie a déjà été enregistrée",
   "dup.geo": "Une anomalie similaire est proche",
@@ -111,11 +111,11 @@
   "activity.change": "1 modification",
   "activity.created": "Anomalie créée",
   "dashboard.openStock": "Stock ouvert"
-  ,"action.VERIFICATION_REQUISE": "Confirmez d'abord la vérification avec un agent."
+  ,"action.VERIFICATION_REQUISE": "Complétez les exigences du statut choisi."
   ,"action.TRANSITION_INTERDITE": "Cette transition n'est pas permise dans l'état actuel."
   ,"list.late": "En retard"
   ,"list.quickViews": "Vues rapides"
-  ,"work.verification": "Vérifications en retard"
+  ,"work.verification": "Suivi des délais"
   ,"work.urgent": "Délais cibles dépassés"
   ,"work.incomplete": "Fiches à compléter"
   ,"work.noPhoto": "Sans photo"
@@ -140,7 +140,7 @@
   ,"workflow.suggestions": "Intervenants proposés pour cette catégorie et ce territoire"
   ,"workflow.recommended": "Compétence correspondante"
   ,"workflow.conditional": "Conditions à confirmer"
-  ,"workflow.outside": "La daïra sélectionnée est hors du périmètre déclaré de cet intervenant. Vérifiez l'affectation."
+  ,"workflow.outside": "La daïra sélectionnée est hors du périmètre déclaré de cet intervenant. Contrôlez l'affectation."
   ,"typeHints.title": "Types suggérés d'après le message"
   ,"typeHints.help": "Libellés reconnus dans le texte. Choisissez le type correspondant à la situation."
   ,"typeHints.empty": "Aucun type reconnu dans ce texte. Recherchez un type dans Classification."
@@ -154,7 +154,7 @@
   ,"form.goTo": "Aller à {section}"
   ,"form.recentTypes": "Vos 5 derniers types utilisés"
   ,"form.reuseType": "Réutiliser {type}"
-  ,"form.agentSearch": "Nom, grade ou e-mail de l'agent…"
+  ,"form.agentSearch": "Agent actif"
   ,"form.saveDuplicate": "Enregistrer et dupliquer"
   ,"form.duplicateReady": "Nouvelle anomalie de la même publication · {reference}"
   ,"form.duplicateHelp": "Choisissez un autre type ou une autre commune, puis placez la nouvelle position. Le lien et les dates sont conservés."
@@ -168,7 +168,7 @@
   ,"attachments.help": "PNG, JPEG ou WebP · 5 Mo par photo · 5 photos maximum"
   ,"attachments.count": "{count}/5 photos"
   ,"attachments.existing": "{count} photo(s) déjà enregistrée(s), consultables sur la fiche."
-  ,"attachments.format": "Format accepté : PNG, JPEG ou WebP"
+  ,"attachments.format": "Format accepté : PNG, JPEG, WebP ou HEIC"
   ,"attachments.size": "Photo trop volumineuse : 5 Mo maximum"
   ,"attachments.limit": "5 photos maximum par anomalie"
   ,"attachments.duplicate": "Cette photo est déjà jointe"
@@ -183,7 +183,7 @@
   ,"map.filtersAndList": "Filtres et anomalies de la carte"
   ,"map.expand": "Agrandir la carte"
   ,"map.exitExpanded": "Quitter la carte agrandie"
-  ,"map.period": "Période et vérification"
+  ,"map.period": "Période"
   ,"map.emptyHelp": "Ajustez les filtres ou consultez les fiches sans position."
   ,"map.zoomIn": "Zoom avant"
   ,"map.zoomOut": "Zoom arrière"

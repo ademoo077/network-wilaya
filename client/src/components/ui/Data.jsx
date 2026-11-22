@@ -3,12 +3,40 @@ import { Button, IconButton } from './Button.jsx';
 import { Checkbox } from './Form.jsx';
 import { useI18n } from '../../i18n/index.jsx';
 
-export function DataTable({ columns, rows, rowKey = 'id', sort, dir, onSort, selected = [], onSelect, onRowClick, empty, scrollClassName = '', scrollLabel }) {
+export function DataTable({ columns, rows, rowKey = 'id', sort, dir, onSort, selected = [], onSelect, onRowClick, empty,
+  scrollClassName = '', scrollLabel, fixed = false, density = 'comfortable', zebra = false, activeIndex = -1, onRowFocus,
+  onResizeColumn }) {
+  const { t } = useI18n();
   const selectedSet = new Set(selected.map(String));
   const selectable = Boolean(onSelect);
   const allSelected = rows.length > 0 && rows.every((row) => selectedSet.has(String(row[rowKey])));
   const toggleAll = () => onSelect(allSelected ? [] : rows.map((row) => row[rowKey]));
-  return <div tabIndex={0} role={scrollLabel ? 'region' : undefined} aria-label={scrollLabel} className={`max-w-full overflow-auto ${scrollClassName}`}><table className="w-full min-w-[760px] border-separate border-spacing-0 text-start text-sm"><thead className="sticky top-0 z-10 bg-surface2"><tr>{selectable && <th className="w-12 border-b border-border px-3 py-2"><Checkbox aria-label="✓" checked={allSelected} onChange={toggleAll} /></th>}{columns.map((column) => <th key={column.key} className={`whitespace-nowrap border-b border-border px-3 py-3 text-start text-xs font-bold uppercase tracking-wide text-muted ${column.className || ''}`}>{column.sortable ? <button className="inline-flex min-h-8 items-center gap-1" onClick={() => onSort?.(column.key)}>{column.label}{sort === column.key ? dir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" /> : <ChevronsUpDown className="h-3.5 w-3.5" />}</button> : column.label}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row[rowKey]} className={`${onRowClick ? 'cursor-pointer' : ''} hover:bg-surface2`} onClick={() => onRowClick?.(row)}>{selectable && <td className="border-b border-border px-3 py-2" onClick={(event) => event.stopPropagation()}><Checkbox aria-label={String(row[rowKey])} checked={selectedSet.has(String(row[rowKey]))} onChange={() => onSelect(selectedSet.has(String(row[rowKey])) ? selected.filter((id) => String(id) !== String(row[rowKey])) : [...selected, row[rowKey]])} /></td>}{columns.map((column) => <td key={column.key} className={`border-b border-border px-3 py-3 align-middle text-ink ${column.cellClassName || ''}`}>{column.render ? column.render(row) : row[column.key] ?? '—'}</td>)}</tr>)}</tbody></table>{!rows.length && empty}</div>;
+  const cellPad = density === 'compact' ? 'py-1.5' : 'py-3';
+  return <div tabIndex={0} role={scrollLabel ? 'region' : undefined} aria-label={scrollLabel} className={`max-w-full overflow-auto ${scrollClassName}`}>
+    <table className={`w-full border-separate border-spacing-0 text-start text-sm ${fixed ? 'table-fixed' : 'min-w-[760px]'}`}>
+      <thead className="sticky top-0 z-10 bg-surface2"><tr>
+        {selectable && <th scope="col" className="w-12 border-b border-border px-3 py-2"><Checkbox aria-label="✓" checked={allSelected} onChange={toggleAll} /></th>}
+        {columns.map((column) => <th key={column.key} scope="col" style={column.width ? { width: `${column.width}px` } : undefined}
+          className={`relative whitespace-nowrap border-b border-border px-3 py-3 text-start text-xs font-bold uppercase tracking-wide text-muted ${column.className || ''}`}>
+          {column.sortable ? <button className="inline-flex min-h-8 items-center gap-1" onClick={() => onSort?.(column.key)}>{column.label}{sort === column.key ? dir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronsUpDown className="h-3.5 w-3.5" aria-hidden="true" />}</button> : column.label}
+          {onResizeColumn && <span role="separator" aria-orientation="vertical" aria-label={`${t('synthese.redimensionner')} ${column.label}`}
+            data-resize-handle={column.key} className="absolute end-0 top-0 h-full w-2 cursor-col-resize touch-none"
+            onPointerDown={(event) => onResizeColumn(event, column.key)} />}
+        </th>)}
+      </tr></thead>
+      <tbody>{rows.map((row, index) => <tr key={row[rowKey]} data-row-index={index} tabIndex={0}
+        className={`${onRowClick ? 'cursor-pointer' : ''} ${zebra && index % 2 ? 'bg-surface2' : ''} ${activeIndex === index ? 'bg-brand-100' : ''} hover:bg-brand-100`.trim()}
+        onClick={() => onRowClick?.(row)} onFocus={() => onRowFocus?.(row, index)}>
+        {selectable && <td className={`border-b border-border px-3 ${cellPad}`} onClick={(event) => event.stopPropagation()}>
+          <Checkbox aria-label={String(row[rowKey])} checked={selectedSet.has(String(row[rowKey]))}
+            onChange={() => onSelect(selectedSet.has(String(row[rowKey])) ? selected.filter((id) => String(id) !== String(row[rowKey])) : [...selected, row[rowKey]])} />
+        </td>}
+        {columns.map((column) => <td key={column.key} className={`border-b border-border px-3 ${cellPad} align-middle text-ink ${column.cellClassName || ''}`}>
+          {column.render ? column.render(row) : row[column.key] ?? '—'}
+        </td>)}
+      </tr>)}</tbody>
+    </table>{!rows.length && empty}
+  </div>;
 }
 
 function pageNumbers(page, totalPages) {

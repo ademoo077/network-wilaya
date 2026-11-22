@@ -8,7 +8,7 @@ Application web interne (single-process) de suivi des anomalies (points noirs) s
 - **Client** : React + Vite + Tailwind CSS + Recharts + Leaflet
 - **Auth** : sessions cookies (httpOnly, SameSite=Strict)
 - **Validation** : Zod sur toutes les entrées
-- **Tests** : Vitest + Supertest (24 tests)
+- **Tests** : Vitest + Supertest (754 tests)
 - **Export** : ExcelJS (xlsx), CSV
 - **Sécurité** : Helmet (CSP), rate limit, SQL paramétré, audit log, sauvegardes
 
@@ -64,8 +64,8 @@ La [configuration réseau locale](docs/RESEAU_LOCAL.md) détaille le démarrage,
 ## Fonctionnalités
 
 - **Authentification** : login/logout, sessions cookies, rôles (admin / operateur / lecteur), changement de mot de passe, verrouillage progressif
-- **Anomalies** : CRUD, intégrité (type dans domaine, commune dans daïra), détection de doublons, duplication contrôlée, pagination/tri/filtres, vues rapides et vues enregistrées, statut bulk, historique, soft delete
-- **Saisie assistée** : collage multi-formats (Facebook, TikTok, Instagram, cartes, GPS, Plus Codes), suggestions de types locaux FR/AR, brouillons automatiques, EXIF côté navigateur, photos avec vignettes
+- **Anomalies** : CRUD, intégrité (type dans domaine, commune dans daïra), détection de doublons, duplication contrôlée, pagination/tri/filtres (dont « Aujourd’hui »), vues rapides et vues enregistrées, statut bulk, historique, soft delete
+- **Saisie assistée** : collage multi-formats (Facebook, TikTok, Instagram, cartes, GPS, Plus Codes), détection de la page sociale depuis l’URL (V14), suggestions de types locaux FR/AR, brouillons automatiques, EXIF côté navigateur, photos avec vignettes
 - **Dashboard** : KPI, entonnoir, tendances, ventilations, statistiques détaillées et drill-downs
 - **File de travail** : page « À faire », cloche de notifications et listes filtrées alimentées par les mêmes requêtes SQL
 - **Rapport hebdomadaire** : synthèse par catégorie/type/daïra/commune/EPIC, export Excel, snapshot, impression
@@ -84,6 +84,7 @@ La [configuration réseau locale](docs/RESEAU_LOCAL.md) détaille le démarrage,
 - `GET /api/stats/overview`, `/group`, `/timeline`, `/detail`
 - `GET /api/reports/weekly`, `POST /api/reports/weekly/snapshot`, `GET /api/reports/weekly/history`, `GET /api/reports/weekly/export`
 - `GET/POST /api/views`, `PATCH/DELETE /api/views/:id`, `GET /api/work`
+- `POST /api/reseaux/identifier`, `GET /api/reseaux/recherche`, `POST /api/reseaux/rapide`, `POST /api/reseaux/:id/identifiants`
 - `POST /api/tools/resolve-link`, `POST /api/tools/parse-paste`, `POST /api/geo/locate`
 - `GET/POST/PATCH /api/admin/users`, `GET /api/admin/audit`, `/api/admin/health`, `/api/admin/backups`, `POST /api/admin/backups/:nom/restore`, `GET/POST/PATCH /api/admin/references/:entite`, `POST /api/admin/references/import/*`, `POST /api/admin/limites/import-geojson`, `GET /api/admin/anomalies/export`
 - `POST /api/client-errors`, `GET /api/health`, `GET /api/config`
@@ -93,9 +94,9 @@ Format d'erreur : `{ error: { code, message, fields? } }`.
 ## Tests
 
 ```bash
-npm test              # Vitest + Supertest (362 tests)
+npm test              # Vitest + Supertest (754 tests)
 npm run test:e2e      # 11 scénarios API de bout en bout
-npm run test:e2e:browser  # Playwright (64 scénarios, FR/AR, clair/sombre, 390–1440 px)
+npm run test:e2e:browser  # Playwright (170 scénarios, FR/AR, clair/sombre, 390–1440 px)
 npm run lint          # ESLint
 npm run check:styles  # Tokens et classes autorisées
 npm run check:a11y    # Contrastes des tokens (clair/sombre)
@@ -103,6 +104,10 @@ npm run qa            # Chaîne complète
 ```
 
 Les captures d'examen humain (FR clair, FR sombre, AR sombre · 1440 et 390 px) sont dans `docs/screens/` et se régénèrent avec `npm run screens`.
+
+Les captures de la recette V13 (liste, fiche photos avant/après, création avancée, synthèses, tableau de bord — FR/AR × clair/sombre × 1440/390 px) sont dans `docs/captures-v13/` et se régénèrent avec `npm run captures:v13` après `npm run build`.
+
+Les captures V14 (sélecteur de page, ajout, fiche, liste filtrée, tableau de bord — FR/AR × clair/sombre × 390/768/1024/1440 px) sont dans `docs/captures-v14/` et se régénèrent avec `npm run captures:v14` après `npm run build`.
 
 ### Lot local de 30 anomalies fictives
 
