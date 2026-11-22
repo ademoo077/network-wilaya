@@ -9,6 +9,11 @@ const lireRecents = (key) => {
   try { return (JSON.parse(localStorage.getItem(key) || '[]') || []).filter(Number).slice(0, 8); }
   catch { return []; }
 };
+const idNumerique = (valeur) => {
+  if (valeur === '' || valeur === null || valeur === undefined) return null;
+  const nombre = Number(valeur);
+  return Number.isInteger(nombre) && nombre > 0 ? nombre : null;
+};
 const libelleCommune = (source, lang) => (lang === 'ar' ? source.commune_ar : source.commune_fr) || source.commune_libelle || '—';
 
 /** V14 — sélection de la page depuis l'URL, sans scraping ni écriture silencieuse. */
@@ -156,7 +161,7 @@ export default function SourcePicker({ model }) {
         identifiants: identite?.identifiants || [],
         page_url: identite?.page_url || form.page_url,
         nom: form.nom.trim(), nature: form.nature,
-        commune_id: values.commune_id || null, daira_id: values.daira_id || null,
+        commune_id: idNumerique(values.commune_id), daira_id: idNumerique(values.daira_id),
         observations: form.observations,
       } });
       appliquer(reponse.item, 'ajout'); setPanneau(false); charger();

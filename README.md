@@ -96,7 +96,7 @@ Format d'erreur : `{ error: { code, message, fields? } }`.
 ```bash
 npm test              # Vitest + Supertest (754 tests)
 npm run test:e2e      # 11 scénarios API de bout en bout
-npm run test:e2e:browser  # Playwright (170 scénarios, FR/AR, clair/sombre, 390–1440 px)
+npm run test:e2e:browser  # Playwright (171 scénarios, FR/AR, clair/sombre, 390–1440 px)
 npm run lint          # ESLint
 npm run check:styles  # Tokens et classes autorisées
 npm run check:a11y    # Contrastes des tokens (clair/sombre)

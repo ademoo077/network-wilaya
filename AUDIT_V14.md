@@ -57,3 +57,10 @@ Point de départ : tag annoté `avant-v14` sur `ff51512` (V13 et correctifs R1/R
 - Correctif dans `shared/src/reseaux.js` : pour Facebook, un identifiant numérique d’au moins 12 chiffres est suggéré en `page`. Les identifiants courts (`profile.php?id=42`, `/people/…`) restent `profil` et la réservation admin demeure inchangée.
 - Régression : 2 assertions Vitest (`reseaux.test.js`) et scénario Playwright 190 (opérateur, URL et nom exacts, catégorie `page`, identifiant lié, aucun `pageError`).
 - QA complet vert : 754 Vitest (72 fichiers), 11 scénarios API, 170 Playwright, lint (1 avertissement préexistant), `check:styles`, `check:a11y`.
+
+## 8. Correctif — « Données invalides » sur « Ajouter une page » (22/11/2026)
+
+- Symptôme : depuis `/#/anomalies/nouvelle`, « Ajouter une page » renvoyait « Données invalides » dès que la daïra/commune était déjà renseignée (sélection manuelle ou suggestion acceptée). Le formulaire stocke ces identifiants en texte (`String(...)`), alors que `sourceRapideSchema` exige `z.number()` : Zod rejetait `commune_id: "1"`.
+- Correctif dans `client/src/features/anomalies/SourcePicker.jsx` : `idNumerique()` convertit les identifiants en entiers positifs (ou `null` si vides/invalides) avant `POST /reseaux/rapide`. Le schéma serveur et la validation Zod restent inchangés.
+- Régression : scénario Playwright 191 (territoire accepté depuis une suggestion, changement de lien confirmé, page créée avec les ids numériques attendus, aucun `pageError`).
+- QA complet vert : 754 Vitest (72 fichiers), 11 scénarios API, 171 Playwright, lint (1 avertissement préexistant), `check:styles`, `check:a11y`. Build Vite régénéré (`assets/index-DK120sIX.js`) ; service à redémarrer pour le servir.

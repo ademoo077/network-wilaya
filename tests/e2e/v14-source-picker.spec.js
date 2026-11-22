@@ -185,3 +185,34 @@ test('190 — Page Facebook profile.php à identifiant long : ajout par un opér
   ]));
   expect(errors.snapshot().pageError).toEqual([]);
 });
+
+test('191 — Ajout de page avec territoire déjà renseigné : identifiants numériques acceptés', async ({ page, baseURL, testServer }) => {
+  const session = await loginAs(baseURL, 'admin');
+  const errors = collectErrors(page);
+  const nom = '[DEMO] 6000 logement Maktaa Kheira Q25/Site01/Ex Cosider';
+  await seedPage(baseURL, session, testServer.refs, {
+    page_url: 'https://facebook.com/page-avec-territoire', nom: '[DEMO] Page Avec Territoire',
+  });
+  await authenticate(page, baseURL);
+  await page.goto('/#/anomalies/nouvelle');
+  await page.fill('#lien_url', 'https://facebook.com/page-avec-territoire/posts/1');
+  const suggestion = page.locator('[data-testid="suggestion-commune_id"]');
+  await expect(suggestion).toBeVisible();
+  await suggestion.getByRole('button', { name: 'Remplacer' }).click();
+  await expect(suggestion).toHaveCount(0);
+  await page.fill('#lien_url', 'https://www.facebook.com/profile.php?id=61590719786996');
+  await expect(page.getByText('Le lien a changé après la sélection')).toBeVisible();
+  await page.getByRole('button', { name: 'Confirmer' }).click();
+  const panneau = page.locator('[data-testid="source-add-panel"]');
+  await expect(panneau).toBeVisible();
+  await page.fill('#source_nom', nom);
+  await page.getByRole('button', { name: 'Enregistrer la page et la sélectionner' }).click();
+  await expect(panneau).toHaveCount(0);
+  await expect(page.locator('[data-testid="source-picker"]')).toContainText(nom);
+  const recherche = await callApi(baseURL, session, 'GET', '/api/reseaux/recherche?q=6000%20logement');
+  const trouvee = recherche.body.items.find((item) => item.nom === nom);
+  expect(trouvee).toMatchObject({
+    categorie: 'page', daira_id: testServer.refs.daira, commune_id: testServer.refs.commune,
+  });
+  expect(errors.snapshot().pageError).toEqual([]);
+});
