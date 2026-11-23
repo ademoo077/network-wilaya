@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Eye, MapPin, Share2, Upload } from 'lucide-react';
 import { formatDate } from '@anm/shared';
-import { Button, Checkbox, IconButton, PlatformBadge, PriorityBadge, StatusBadge } from '../../../components/ui/index.js';
+import { Button, Checkbox, IconButton, PlatformBadge, PriorityBadge, StatusBadge } from '../../components/ui/index.js';
 import { anomalyLabel } from './helpers.js';
-import { useI18n } from '../../../i18n/index.jsx';
+import { useI18n } from '../../i18n/index.jsx';
 
 export default function AnomalieCarte({
   row, selected = [], onSelect, onPreview, writable = false,
