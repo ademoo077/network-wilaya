@@ -137,7 +137,7 @@ export default function AnomaliesPage() {
     <SavedViews filters={{ ...filters, q }} apply={applyFilters} />
     <QuickViews filters={{ ...filters, q }} update={update} />
     <AnomalyListToolbar prefs={prefs} period={filters.periode || ''} onPeriod={applyPeriod} />
-    <details data-filters className="mb-4 rounded-md border border-border bg-surface">
+    <details data-filters open className="mb-4 rounded-md border border-border bg-surface">
       <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 text-sm font-bold text-ink">
         {t('common.filters')}
         {active.length > 0 && <span className="rounded-full bg-brand-100 px-2 text-xs text-brand-800">{active.length}</span>}
