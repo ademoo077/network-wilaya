@@ -1,19 +1,26 @@
 import { buildFilters } from './anomalyQuery.js';
 import { ANOMALIE_SELECT, serialize } from './anomalyRead.js';
+import { todayAlgiers } from '@anm/shared';
 
 export function listFil(db, params = {}, user = null) {
+  const today = todayAlgiers();
   const { clause, values } = buildFilters(params, { user });
   const limit = Math.min(Number(params.limite) || 24, 100);
 
-  // Résumé (toujours sur le scope filtré)
+  const scope = params.jour || 'aujourdhui';
+  const scopeSql = scope === 'tout' ? '' : scope === 'traitees' ? ' AND a.date_traitement = @today' : scope === 'maj' ? ' AND date(a.updated_at) = @today' : ' AND a.date_signalement = @today';
+  const scopedClause = clause ? clause + scopeSql : `WHERE 1=1${scopeSql}`;
+  const scopedValues = { ...values, today };
+
+  // Résumé (sur le scope)
   const resume = db.prepare(`
     SELECT 
       COUNT(*) AS signalees,
       COUNT(CASE WHEN a.priorite = 'urgente' AND a.statut <> 'traite' THEN 1 END) AS urgentes,
       COUNT(CASE WHEN a.statut = 'en_cours' THEN 1 END) AS en_cours,
       COUNT(CASE WHEN a.statut = 'traite' THEN 1 END) AS traite
-    FROM anomalies a ${clause}
-  `).get(values);
+    FROM anomalies a ${scopedClause}
+  `).get(scopedValues);
 
   // Détermination du groupe
   const groupBy = params.groupe === 'commune' ? 'c.name_fr' : 
@@ -33,27 +40,29 @@ export function listFil(db, params = {}, user = null) {
     JOIN dairas da ON da.id = a.daira_id
     JOIN communes c ON c.id = a.commune_id
     LEFT JOIN agents ag ON ag.id = a.agent_id
-    ${clause}
+    ${scopedClause}
     GROUP BY cle
     ORDER BY cle DESC
     LIMIT 20
-  `).all(values);
+  `).all(scopedValues);
 
-  // Items (pour le premier groupe ou global si pagination)
-  // On simplifie pour la Phase 1 : on renvoie les N premières anomalies
-  const rows = db.prepare(`${ANOMALIE_SELECT} ${clause} ORDER BY a.date_signalement DESC, a.id DESC LIMIT @limit`)
-    .all({ ...values, limit });
+  // Items
+  const rows = db.prepare(`${ANOMALIE_SELECT} ${scopedClause} ORDER BY a.date_signalement DESC, a.id DESC LIMIT @limit`)
+    .all({ ...scopedValues, limit });
 
   const items = rows.map(row => {
     const s = serialize(row);
-    // Photos payload minimaliste selon SPEC
+    // Photos payload
     const photos = {
       avant: row.photo_avant_id ? { 
-        url: `/api/photos/${row.photo_avant_id}/file`,
-        flou: row.apercu_flou_avant, // On l'ajoutera au SELECT si possible
+        url: `/api/photos/${row.photo_avant_id}/file?taille=moyen`,
         ratio: 1.77
       } : null,
-      n: row.pieces_count
+      apres: row.photo_apres_id ? {
+        url: `/api/photos/${row.photo_apres_id}/file?taille=moyen`,
+        ratio: 1.77
+      } : null,
+      n: (row.photos_avant_count || 0) + (row.photos_apres_count || 0)
     };
     return { ...s, photos };
   });
