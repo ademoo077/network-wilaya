@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, MapPin, Upload, MoreHorizontal } from 'lucide-react';
+import { Eye, MapPin, MoreHorizontal } from 'lucide-react';
 import { formatDate } from '@anm/shared';
 import { Checkbox, IconButton, PlatformBadge, PriorityBadge, StatusBadge } from '../../components/ui/index.js';
 import { anomalyLabel } from './helpers.js';
