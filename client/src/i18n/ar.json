@@ -465,5 +465,9 @@
   "common.loadMore": "تحميل المزيد",
   "common.more": "المزيد من الإجراءات",
   "common.select": "تحديد",
-  "common.yesterday": "أمس"
+  "common.yesterday": "أمس",
+  "anomalies.fil.thisWeek": "هذا الأسبوع",
+  "anomalies.fil.lastWeek": "الأسبوع الماضي",
+  "anomalies.fil.thisMonth": "هذا الشهر",
+  "anomalies.fil.older": "أقدم"
 }

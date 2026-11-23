@@ -465,5 +465,9 @@
   "common.loadMore": "Charger plus",
   "common.more": "Plus d’actions",
   "common.select": "Sélectionner",
-  "common.yesterday": "Hier"
+  "common.yesterday": "Hier",
+  "anomalies.fil.thisWeek": "Cette semaine",
+  "anomalies.fil.lastWeek": "Semaine dernière",
+  "anomalies.fil.thisMonth": "Ce mois",
+  "anomalies.fil.older": "Plus ancien"
 }

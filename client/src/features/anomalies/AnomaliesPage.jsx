@@ -231,35 +231,62 @@ export default function AnomaliesPage() {
         ) : query.isPending ? (
           <ListSkeleton />
         ) : data?.groupes?.length ? (
-          data.groupes.map((groupe) => {
-            const total = groupe.total || 0;
-            const nt = groupe.par_statut?.non_traite || 0;
-            const ec = groupe.par_statut?.en_cours || 0;
-            const tr = groupe.par_statut?.traite || 0;
-            return (
-              <details key={groupe.cle || 'groupe'} open className="mb-4 rounded-md border border-border bg-surface">
-                <summary className="sticky top-0 z-10 flex min-h-11 cursor-pointer items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate font-bold">{groupe.libelle} ({total})</span>
-                    <span className="hidden h-2 w-24 overflow-hidden rounded-full bg-surface2 sm:flex" aria-hidden="true">
-                      <span className="bg-stnon" style={{ width: `${total ? (nt / total) * 100 : 0}%` }} />
-                      <span className="bg-stcours" style={{ width: `${total ? (ec / total) * 100 : 0}%` }} />
-                      <span className="bg-straite" style={{ width: `${total ? (tr / total) * 100 : 0}%` }} />
-                    </span>
+          (() => {
+            const today = todayAlgiers();
+            const yesterday = addDays(today, -1);
+            const weekStart = addDays(today, -((new Date(today + 'T00:00:00Z').getUTCDay() + 6) % 7));
+            const lastWeekStart = addDays(weekStart, -7);
+            const monthStart = today.slice(0, 7) + '-01';
+            const bucketOf = (cle) => {
+              if (!cle) return 'older';
+              if (cle === today) return 'today';
+              if (cle === yesterday) return 'yesterday';
+              if (cle >= weekStart) return 'week';
+              if (cle >= lastWeekStart) return 'lastweek';
+              if (cle >= monthStart) return 'month';
+              return 'older';
+            };
+            const labels = { today: t('anomalies.fil.aujourdHui'), yesterday: t('common.yesterday'), week: t('anomalies.fil.thisWeek', { defaultValue: 'Cette semaine' }), lastweek: t('anomalies.fil.lastWeek', { defaultValue: 'Semaine dernière' }), month: t('anomalies.fil.thisMonth', { defaultValue: 'Ce mois' }), older: t('anomalies.fil.older', { defaultValue: 'Plus ancien' }) };
+            const order = ['today', 'yesterday', 'week', 'lastweek', 'month', 'older'];
+            const displayGroupes = groupeFil === 'date'
+              ? order.map((k) => {
+                  const src = data.groupes.filter((g) => bucketOf(g.cle) === k);
+                  if (!src.length) return null;
+                  const items = src.flatMap((g) => g.items || []);
+                  const par = src.reduce((a, g) => ({ non_traite: a.non_traite + (g.par_statut?.non_traite || 0), en_cours: a.en_cours + (g.par_statut?.en_cours || 0), traite: a.traite + (g.par_statut?.traite || 0) }), { non_traite: 0, en_cours: 0, traite: 0 });
+                  return { cle: k, libelle: labels[k], total: src.reduce((s, g) => s + (g.total || 0), 0), par_statut: par, items };
+                }).filter(Boolean)
+              : data.groupes;
+            return displayGroupes.map((groupe) => {
+              const total = groupe.total || 0;
+              const nt = groupe.par_statut?.non_traite || 0;
+              const ec = groupe.par_statut?.en_cours || 0;
+              const tr = groupe.par_statut?.traite || 0;
+              return (
+                <details key={groupe.cle || 'groupe'} open className="mb-4 rounded-md border border-border bg-surface">
+                  <summary className="sticky top-0 z-10 flex min-h-11 cursor-pointer items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate font-bold">{groupe.libelle} ({total})</span>
+                      <span className="hidden h-2 w-24 overflow-hidden rounded-full bg-surface2 sm:flex" aria-hidden="true">
+                        <span className="bg-stnon" style={{ width: `${total ? (nt / total) * 100 : 0}%` }} />
+                        <span className="bg-stcours" style={{ width: `${total ? (ec / total) * 100 : 0}%` }} />
+                        <span className="bg-straite" style={{ width: `${total ? (tr / total) * 100 : 0}%` }} />
+                      </span>
+                    </div>
+                    {groupeFil === 'date' && typeof groupe.cle === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(groupe.cle) && <Link to={`/anomalies?from=${groupe.cle}&to=${groupe.cle}`} onClick={(e) => e.stopPropagation()} className="text-xs text-brand-700 hover:underline">{t('anomalies.fil.voirTableau')}</Link>}
+                  </summary>
+                  <div className="mx-auto grid max-w-6xl gap-4 p-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {groupe.items.map((row, index) => (
+                      <AnomalieCarte key={row.id} row={row} index={index}
+                        selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
+                        active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
+                      />
+                    ))}
                   </div>
-                  {groupeFil === 'date' && groupe.cle && <Link to={`/anomalies?from=${groupe.cle}&to=${groupe.cle}`} onClick={(e) => e.stopPropagation()} className="text-xs text-brand-700 hover:underline">{t('anomalies.fil.voirTableau')}</Link>}
-                </summary>
-                <div className="mx-auto grid max-w-6xl gap-4 p-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {groupe.items.map((row, index) => (
-                    <AnomalieCarte key={row.id} row={row} index={index}
-                      selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
-                      active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
-                    />
-                  ))}
-                </div>
-              </details>
-            );
-          })
+                </details>
+              );
+            });
+          })()
         ) : (
           <EmptyState icon={ListX} title={t('anomalies.fil.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />
         )}
