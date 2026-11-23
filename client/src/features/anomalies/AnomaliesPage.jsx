@@ -249,7 +249,7 @@ export default function AnomaliesPage() {
                   </div>
                   {groupeFil === 'date' && groupe.cle && <Link to={`/anomalies?from=${groupe.cle}&to=${groupe.cle}`} onClick={(e) => e.stopPropagation()} className="text-xs text-brand-700 hover:underline">{t('anomalies.fil.voirTableau')}</Link>}
                 </summary>
-                <div className="mx-auto grid max-w-6xl gap-4 p-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="mx-auto flex max-w-3xl flex-col gap-4 p-3">
                   {groupe.items.map((row, index) => (
                     <AnomalieCarte key={row.id} row={row} index={index}
                       selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
