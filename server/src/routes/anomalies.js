@@ -27,7 +27,7 @@ import { anomalyMap } from '../services/anomalyMap.js';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 
-const settings = () => ({ exigerVerification: false });
+const settings = (req) => ({ exigerVerification: false, userRole: req?.user?.role });
 const parse = (schema, body) => {
   const result = schema.safeParse(body);
   if (!result.success) throw badRequest('Données invalides', zodFields(result.error));
@@ -92,13 +92,13 @@ router.get('/import/template', requireAuth, (req, res) => {
 router.post('/import/preview', requireWrite, upload.single('file'), asyncHandler(async (req, res) => {
   if (!req.file) throw badRequest('Fichier CSV ou XLSX requis');
   const options = parse(importPreviewOptionsSchema, req.body || {});
-  const result = await previewImport(getDb(), req.file, req.user, settings(), options);
+  const result = await previewImport(getDb(), req.file, req.user, settings(req), options);
   res.json({ item: result });
 }));
 
 router.post('/import/commit', requireWrite, asyncHandler(async (req, res) => {
   const data = parse(importCommitSchema, req.body);
-  const result = await commitImport(getDb(), data.importId, data.mode, req.user, settings());
+  const result = await commitImport(getDb(), data.importId, data.mode, req.user, settings(req));
   audit(req, 'IMPORT_COMMIT', { entite: 'anomalies', details: result.summary });
   res.json({ item: result });
 }));
@@ -112,14 +112,14 @@ router.get('/import/report/:importId', requireWrite, (req, res) => {
 
 router.post('/bulk-statut', requireWrite, (req, res) => {
   const data = parse(bulkStatutSchema, req.body);
-  const result = bulkStatut(getDb(), data, req.user.id, settings());
+  const result = bulkStatut(getDb(), data, req.user.id, settings(req));
   audit(req, 'ANOMALIE_STATUT', { entite: 'anomalies', details: { bulk: true, ids: data.ids, statut: data.statut, ok: result.ok.length, echecs: result.echecs.length } });
   res.json({ item: result });
 });
 
 router.post('/', requireWrite, (req, res) => {
   const data = parse(anomalieCreateSchema, req.body);
-  const item = createAnomalie(getDb(), data, req.user.id, settings());
+  const item = createAnomalie(getDb(), data, req.user.id, settings(req));
   audit(req, 'ANOMALIE_CREATE', { entite: 'anomalies', entiteId: item.id, details: { reference: item.reference } });
   res.status(201).json({ item });
 });
@@ -134,7 +134,7 @@ router.post('/:id/dupliquer', requireWrite, (req, res) => {
   const db = getDb(); const original = getAnomalie(db, Number(req.params.id));
   if (!original) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Anomalie introuvable' } });
   const data = parse(anomalieCreateSchema, { ...duplicateAnomalyValues(original), ...req.body, force_duplicate: true });
-  const item = createAnomalie(db, data, req.user.id, settings());
+  const item = createAnomalie(db, data, req.user.id, settings(req));
   audit(req, 'ANOMALIE_CREATE', { entite: 'anomalies', entiteId: item.id, details: { reference: item.reference, duplique_de: original.id } });
   res.status(201).json({ item });
 });
@@ -147,7 +147,7 @@ router.get('/:id/historique', requireAuth, (req, res) => {
 
 router.patch('/:id', requireWrite, (req, res) => {
   const data = parse(anomaliePatchSchema, req.body);
-  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), data, req.user.id, settings());
+  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), data, req.user.id, settings(req));
   const action = changes.some((c) => c.champ === 'statut') ? 'ANOMALIE_STATUT'
     : changes.some((c) => c.champ === 'verification') ? 'ANOMALIE_VERIFICATION' : 'ANOMALIE_UPDATE';
   audit(req, action, { entite: 'anomalies', entiteId: item.id, details: { champs: changes.map((c) => c.champ) } });
@@ -156,14 +156,14 @@ router.patch('/:id', requireWrite, (req, res) => {
 
 router.post('/:id/statut', requireWrite, (req, res) => {
   const data = parse(statutChangeSchema, req.body);
-  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), data, req.user.id, settings());
+  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), data, req.user.id, settings(req));
   audit(req, 'ANOMALIE_STATUT', { entite: 'anomalies', entiteId: item.id, details: { statut: data.statut, champs: changes.map((c) => c.champ) } });
   res.json({ item });
 });
 
 router.post('/:id/verification', requireWrite, (req, res) => {
   const data = parse(verificationChangeSchema, req.body);
-  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), data, req.user.id, settings());
+  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), data, req.user.id, settings(req));
   audit(req, 'ANOMALIE_VERIFICATION', { entite: 'anomalies', entiteId: item.id, details: { verification: data.verification, champs: changes.map((c) => c.champ) } });
   res.json({ item });
 });
@@ -171,7 +171,7 @@ router.post('/:id/verification', requireWrite, (req, res) => {
 router.post('/:id/sans-suite', requireWrite, (req, res) => {
   const data = parse(sansSuiteSchema, req.body);
   // « Sans suite » = vérification infirmée, statut non traité, motif obligatoire.
-  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), { ...data, verification: 'infirmee' }, req.user.id, settings());
+  const { item, changes } = updateAnomalie(getDb(), Number(req.params.id), { ...data, verification: 'infirmee' }, req.user.id, settings(req));
   audit(req, 'ANOMALIE_SANS_SUITE', { entite: 'anomalies', entiteId: item.id, details: { motif: data.motif, champs: changes.map((c) => c.champ) } });
   res.json({ item });
 });

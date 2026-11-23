@@ -28,7 +28,13 @@ export function validateAnomalyState(state, options = {}) {
   if (!VERIFICATIONS.includes(out.verification)) throw fail('VERIFICATION_INVALIDE', 'Classement inconnu', 'verification');
   if (out.verification === 'infirmee') out.statut = 'non_traite';
   if (previous) {
-    if (!transitionStatutPermise(previous.statut, out.statut)) throw fail('TRANSITION_INTERDITE', `Transition ${previous.statut} → ${out.statut} non permise`, 'statut');
+    const correctionErreur = options.correctionErreur === true;
+    const transitionOk = transitionStatutPermise(previous.statut, out.statut)
+      || (correctionErreur && previous.statut === 'traite' && out.statut !== 'traite');
+    if (!transitionOk) throw fail('TRANSITION_INTERDITE', `Transition ${previous.statut} → ${out.statut} non permise`, 'statut');
+    if (correctionErreur && previous.statut === 'traite' && out.statut !== 'traite' && !motif) {
+      throw fail('MOTIF_REQUIS', 'Un motif est obligatoire pour corriger une anomalie traitée', 'motif');
+    }
     if (!transitionVerificationPermise(previous.verification, out.verification, previous.statut)) throw fail('TRANSITION_INTERDITE', 'Ce changement de classement n’est pas permis', 'verification');
   }
   for (const field of ['date_publication', 'date_signalement', 'date_verification', 'date_intervention', 'date_traitement']) {
@@ -71,7 +77,7 @@ export function validateAnomalyState(state, options = {}) {
 }
 
 /** Ne demander que les informations absentes ; les dates sont proposées à aujourd'hui. */
-export function anomalyAction(item, field, value) {
+export function anomalyAction(item, field, value, options = {}) {
   const next = { ...item, [field]: value }; const body = { version: item.version, [field]: value };
   const fields = []; let blocked = null;
   if (field === 'verification') {
@@ -80,12 +86,20 @@ export function anomalyAction(item, field, value) {
       if (!item.agent_id) fields.push('agent_id');
       if (!item.date_verification) { fields.push('date_verification'); body.date_verification = todayAlgiers(); }
     }
-  } else if (value !== 'non_traite') {
-    const codes = codesExigences(value);
-    if (codes.includes('intervenant') && !item.epic_id && !item.intervenant_autre) fields.push('epic_id', 'intervenant_autre');
-    const dateImplicite = dateImpliciteStatut(value);
-    if (dateImplicite === 'date_intervention' && !item.date_intervention) { fields.push('date_intervention'); body.date_intervention = todayAlgiers(); }
-    if (dateImplicite === 'date_traitement' && !item.date_traitement) { fields.push('date_traitement'); body.date_traitement = todayAlgiers(); }
+  } else {
+    if (field === 'statut') {
+      const correctionErreur = options.correctionErreur === true;
+      const ok = transitionStatutPermise(item.statut, value) || (correctionErreur && item.statut === 'traite' && value !== 'traite');
+      if (!ok) blocked = 'TRANSITION_INTERDITE';
+      if (correctionErreur && item.statut === 'traite' && value !== 'traite') { body.correction_erreur = true; fields.push('motif'); }
+    }
+    if (value !== 'non_traite') {
+      const codes = codesExigences(value);
+      if (codes.includes('intervenant') && !item.epic_id && !item.intervenant_autre) fields.push('epic_id', 'intervenant_autre');
+      const dateImplicite = dateImpliciteStatut(value);
+      if (dateImplicite === 'date_intervention' && !item.date_intervention) { fields.push('date_intervention'); body.date_intervention = todayAlgiers(); }
+      if (dateImplicite === 'date_traitement' && !item.date_traitement) { fields.push('date_traitement'); body.date_traitement = todayAlgiers(); }
+    }
   }
   if (needsAnomalyReason(next, item)) fields.push('motif');
   return { body, fields, blocked, needsInput: fields.some((key) => !key.startsWith('date_')) };

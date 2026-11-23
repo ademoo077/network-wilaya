@@ -26,7 +26,9 @@ export default function AnomalieCarte({
   const daira = daira_fr || daira_ar || '—';
   const desc = row.description?.trim();
   const today = todayAlgiers();
-  const dayLabel = date_signalement === today ? t('anomalies.fil.aujourdHui') : date_signalement === addDays(today, -1) ? t('common.yesterday', { defaultValue: 'Hier' }) : formatDate(date_signalement);
+  const displayDate = (statut === 'traite' && row.date_traitement) ? row.date_traitement : date_signalement;
+  const dayLabel = displayDate === today ? t('anomalies.fil.aujourdHui') : displayDate === addDays(today, -1) ? t('common.yesterday') : formatDate(displayDate);
+  const treatedAt = row.date_traitement ? formatDate(row.date_traitement) : null;
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
@@ -76,27 +78,32 @@ export default function AnomalieCarte({
       </span>}
     </div>
 
-    <div className="flex flex-1 flex-col p-3">
-      <div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted">
-        <span className="truncate"><bdi>{commune}</bdi> · <bdi>{daira}</bdi></span>
-        <span className="shrink-0">{dayLabel}</span>
+    <div className="flex flex-1 flex-col p-4">
+      <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
+        <span className="truncate font-medium"><bdi>{commune}</bdi> <span className="text-border">•</span> <bdi>{daira}</bdi></span>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 font-semibold ${displayDate === today ? 'bg-brand-100 text-brand-800' : 'bg-surface2 text-ink2'}`}>{dayLabel}</span>
       </div>
-      <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink" dir="auto" title={anomalyLabel(row, 'type', lang)}>
+      <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-ink" dir="auto" title={anomalyLabel(row, 'type', lang)}>
         <button type="button" onClick={() => onPreview?.(row)} className="text-start hover:text-brand-700 hover:underline"><bdi>{anomalyLabel(row, 'type', lang)}</bdi></button>
       </h3>
-      {desc && <p className="mt-1 line-clamp-2 text-xs text-ink2" dir="auto">{desc}</p>}
-      <p className="mt-1 text-xs text-muted"><bdi>{reference}</bdi> · {formatDate(date_signalement)}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-1">
+      {desc && <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink2" dir="auto">{desc}</p>}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+        <span className="font-semibold text-brand-700"><bdi>{reference}</bdi></span>
+        <span aria-hidden="true">·</span>
+        <span>{t('field.signalementDate', { defaultValue: 'Signalé' })} {formatDate(date_signalement)}</span>
+        {treatedAt && <><span aria-hidden="true">·</span><span className="font-semibold text-straite">{t('status.traite')} {treatedAt}</span></>}</div>
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {priorite !== 'normale' && <PriorityBadge value={priorite} />}
         <PlatformBadge value={plateforme} />
         {row.epic_nom && <span className="rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-ink2"><bdi>{row.epic_nom}</bdi></span>}
         {row.source_nom && <span className="rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-ink2"><bdi>{row.source_nom}</bdi></span>}
       </div>
-      <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-border">
-        <span className="truncate text-xs text-muted">{agent_nom ? <bdi>{agent_nom}</bdi> : t('list.nonAffectees')}</span>
-        <div className="flex items-center gap-1">
-          <IconButton size="sm" aria-label={t('anomalies.preview')} onClick={() => onPreview?.(row)}><Eye className="h-4 w-4" /></IconButton>
+      <div className="mt-auto flex items-center justify-between gap-2 pt-4 border-t border-border">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-ink2">{agent_nom ? <bdi>{agent_nom}</bdi> : t('list.nonAffectees')}</p>
+          <p className="text-[11px] text-muted">{statut === 'traite' ? t('detail.treatedLocked') : t(`status.${statut}`)}</p>
         </div>
+        <IconButton size="sm" aria-label={t('anomalies.preview')} onClick={() => onPreview?.(row)}><Eye className="h-4 w-4" /></IconButton>
       </div>
     </div>
   </article>;

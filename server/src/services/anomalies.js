@@ -257,10 +257,15 @@ export function updateAnomalie(db, id, data, userId, settings = {}) {
   if (linkChanged) {
     checkDoublons(db, merged, { force: Boolean(data.force_duplicate), excludeId: id });
   }
+  const correctionErreur = data.correction_erreur === true || data.correctionErreur === true;
+  if (correctionErreur && settings.userRole !== 'admin') {
+    throw business('Seul un administrateur peut corriger une anomalie traitée', 'CORRECTION_INTERDITE', { statut: 'Correction réservée à l’administrateur' });
+  }
   const etat = validerEtat(merged, {
     today: settings.today || todayAlgiers(),
     previous: current,
     motif: data.motif,
+    correctionErreur,
   });
   const next = { ...merged, ...etat };
   verifierPhotoApres(db, current, next, data, settings);
@@ -328,6 +333,7 @@ export function bulkStatut(db, payload, userId, settings = {}) {
         date_intervention: payload.date_intervention,
         date_traitement: payload.date_traitement,
         motif: payload.motif || 'Action groupée',
+        correction_erreur: payload.correction_erreur,
       }, userId, { ...settings, ignorePhotoAfter: true });
       ok.push(id);
     } catch (error) {

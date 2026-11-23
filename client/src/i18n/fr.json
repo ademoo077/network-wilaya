@@ -469,5 +469,9 @@
   "anomalies.fil.thisWeek": "Cette semaine",
   "anomalies.fil.lastWeek": "Semaine dernière",
   "anomalies.fil.thisMonth": "Ce mois",
-  "anomalies.fil.older": "Plus ancien"
+  "anomalies.fil.older": "Plus ancien",
+  "detail.correctError": "Corriger une erreur",
+  "detail.correctErrorHelp": "Anomalie traitée : le statut est verrouillé. En cas d’erreur, un administrateur peut corriger avec un motif obligatoire.",
+  "detail.treatedLocked": "Statut traité verrouillé",
+  "field.signalementDate": "Signalé"
 }

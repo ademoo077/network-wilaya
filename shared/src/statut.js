@@ -1,7 +1,7 @@
 export const STATUT_TRANSITIONS = {
   non_traite: ['en_cours', 'traite'],
   en_cours: ['traite', 'non_traite'],
-  traite: ['en_cours', 'non_traite'],
+  traite: [],
 };
 
 export const VERIFICATION_TRANSITIONS = {

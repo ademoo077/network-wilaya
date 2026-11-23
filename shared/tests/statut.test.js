@@ -24,7 +24,8 @@ describe('transitions', () => {
     expect(transitionStatutPermise('non_traite', 'en_cours')).toBe(true);
     expect(transitionStatutPermise('non_traite', 'traite')).toBe(true);
     expect(transitionStatutPermise('en_cours', 'non_traite')).toBe(true);
-    expect(transitionStatutPermise('traite', 'en_cours')).toBe(true);
+    expect(transitionStatutPermise('traite', 'en_cours')).toBe(false);
+    expect(transitionStatutPermise('traite', 'non_traite')).toBe(false);
     expect(transitionStatutPermise('traite', 'traite')).toBe(true);
   });
 

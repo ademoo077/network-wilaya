@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, CircleDot, Clock3, HelpCircle, ShieldAlert } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CircleDot, Clock3, HelpCircle, Lock, ShieldAlert } from 'lucide-react';
 import { useI18n } from '../../i18n/index.jsx';
 
 const statusConfig = {
@@ -17,13 +17,14 @@ const priorityConfig = {
   urgente: ['bg-stnonbg text-stnon', AlertCircle],
 };
 
-function Badge({ value, config, prefix }) {
+function Badge({ value, config, prefix, suffix }) {
   const { t } = useI18n();
   const [classes, Icon] = config[value] || ['bg-surface2 text-muted', CircleDot];
-  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${classes}`}><Icon className="h-3.5 w-3.5" aria-hidden="true" />{t(`${prefix}.${value}`)}</span>;
+  const SuffixIcon = suffix;
+  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${classes}`}><Icon className="h-3.5 w-3.5" aria-hidden="true" />{t(`${prefix}.${value}`)}{SuffixIcon ? <SuffixIcon className="h-3 w-3" aria-hidden="true" /> : null}</span>;
 }
 
-export function StatusBadge({ value }) { return <Badge value={value} config={statusConfig} prefix="status" />; }
+export function StatusBadge({ value }) { return <Badge value={value} config={statusConfig} prefix="status" suffix={value === 'traite' ? Lock : null} />; }
 export function VerificationBadge({ value }) { return <Badge value={value} config={verificationConfig} prefix="verification" />; }
 export function PriorityBadge({ value }) { return <Badge value={value} config={priorityConfig} prefix="priority" />; }
 

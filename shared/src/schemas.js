@@ -95,6 +95,7 @@ export const anomaliePatchSchema = z.object({
   version: idSchema,
   motif: z.string().trim().max(1000).optional(),
   force_duplicate: z.boolean().optional(),
+  correction_erreur: z.boolean().optional(),
 }).partial().extend({ version: idSchema });
 
 export const statutChangeSchema = z.object({
@@ -106,6 +107,7 @@ export const statutChangeSchema = z.object({
   date_traitement: optionalDate,
   motif: z.string().trim().max(1000).optional(),
   sans_photo_motif: z.string().trim().max(1000).nullable().optional(),
+  correction_erreur: z.boolean().optional(),
 });
 
 export const verificationChangeSchema = z.object({
@@ -124,6 +126,7 @@ export const bulkStatutSchema = z.object({
   date_intervention: optionalDate,
   date_traitement: optionalDate,
   motif: z.string().trim().max(1000).optional(),
+  correction_erreur: z.boolean().optional(),
 });
 
 export const anomalieQuerySchema = z.object({

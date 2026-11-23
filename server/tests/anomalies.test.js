@@ -147,15 +147,18 @@ describe('Transitions de vérification et de statut', () => {
     expect(history.body.items.every((h) => h.at && h.user_nom)).toBe(true);
   });
 
-  it('refuse la réouverture sans motif, l’accepte avec motif', async () => {
-    const noMotif = await transition(id, { version, statut: 'en_cours', date_intervention: day(-1) });
+  it('verrouille une anomalie traitée : correction admin avec motif uniquement', async () => {
+    const blocked = await transition(id, { version, statut: 'en_cours', motif: 'Réouverture demandée' });
+    expect(blocked.status).toBe(422);
+    expect(blocked.body.error.code).toBe('TRANSITION_INTERDITE');
+    const noMotif = await transition(id, { version, statut: 'en_cours', correction_erreur: true });
     expect(noMotif.status).toBe(422);
     expect(noMotif.body.error.code).toBe('MOTIF_REQUIS');
-    const reopened = await transition(id, { version, statut: 'en_cours', motif: 'Réouverture demandée' });
-    expect(reopened.status).toBe(200);
-    expect(reopened.body.item.statut).toBe('en_cours');
-    expect(reopened.body.item.date_traitement).toBeNull();
-    version = reopened.body.item.version;
+    const corrected = await transition(id, { version, statut: 'en_cours', correction_erreur: true, motif: 'Erreur de saisie' });
+    expect(corrected.status).toBe(200);
+    expect(corrected.body.item.statut).toBe('en_cours');
+    expect(corrected.body.item.date_traitement).toBeNull();
+    version = corrected.body.item.version;
   });
 
   it('détecte un conflit de version', async () => {

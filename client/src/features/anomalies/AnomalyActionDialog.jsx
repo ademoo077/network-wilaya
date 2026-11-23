@@ -13,6 +13,7 @@ const targets = {
   progress: { field: 'statut', value: 'en_cours', title: 'detail.markProgress' },
   done: { field: 'statut', value: 'traite', title: 'detail.markDone' },
   reopen: { field: 'statut', value: 'en_cours', title: 'detail.reopen' },
+  correct: { field: 'statut', value: 'en_cours', title: 'detail.correctError', correctionErreur: true },
 };
 export default function AnomalyActionDialog({ action, item, pieces = [], onClose, onDone }) {
   const { t, lang } = useI18n(); const { push } = useToast();
@@ -36,7 +37,7 @@ export default function AnomalyActionDialog({ action, item, pieces = [], onClose
   const isDone = target.field === 'statut' && target.value === 'traite';
   const existingAfter = markedAfter || pieces.some((piece) => piece.role === 'apres');
   const hasAfter = existingAfter || Boolean(afterFile);
-  const plan = anomalyAction(item, target.field, target.value);
+  const plan = anomalyAction(item, target.field, target.value, { correctionErreur: target.correctionErreur });
   const markAfter = async (piece) => {
     try {
       await api(`/pieces/${piece.id}`, { method: 'PATCH', body: { role: 'apres', principale: true } });
@@ -79,6 +80,7 @@ export default function AnomalyActionDialog({ action, item, pieces = [], onClose
     footer={<><Button variant="ghost" disabled={mutation.isPending} onClick={onClose}>{t('common.cancel')}</Button>
       <Button type="submit" form="anomaly-action" loading={mutation.isPending} disabled={Boolean(plan.blocked)}>{t('common.confirm')}</Button></>}>
     <form id="anomaly-action" onSubmit={submit} className="space-y-4">
+      {target.correctionErreur && <Alert variant="warning">{t('detail.correctErrorHelp')}</Alert>}
       {plan.blocked && <p role="alert" className="text-danger">{t(`action.${plan.blocked}`)}</p>}
       {(mutation.error || localError) && <Alert variant="danger">{localError || mutation.error.message}</Alert>}
       {plan.fields.includes('agent_id') && <Combobox label={t('field.agent')} required value={form.agent_id} options={refOptions(refs.agents, lang)} onChange={(value) => setForm({ ...form, agent_id: value })} />}
