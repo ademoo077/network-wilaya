@@ -453,7 +453,7 @@
   "anomalies.fil.resume": "{signalees} مبلغ عنها · {urgentes} عاجلة · {en_cours} قيد المعالجة · {traitees} معالجة",
   "anomalies.fil.empty": "لا توجد حالات لليوم.",
   "anomalies.fil.tabSignalees": "المبلغ عنها",
-  "anomalies.fil.tabTraitees": "المعالجة",
+  "anomalies.fil.tabTraitees": "سجل المعالجة",
   "anomalies.fil.tabMaj": "المحدثة",
   "list.fil": "سجل",
   "anomalies.fil.groupBy": "تجميع حسب",

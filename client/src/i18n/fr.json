@@ -453,7 +453,7 @@
   "anomalies.fil.resume": "{signalees} signalées · {urgentes} urgentes · {en_cours} en cours · {traitees} traitées",
   "anomalies.fil.empty": "Aucune anomalie pour aujourd'hui.",
   "anomalies.fil.tabSignalees": "Signalées",
-  "anomalies.fil.tabTraitees": "Traitées",
+  "anomalies.fil.tabTraitees": "Historique traité",
   "anomalies.fil.tabMaj": "Mises à jour",
   "list.fil": "Fil",
   "anomalies.fil.groupBy": "Grouper par",

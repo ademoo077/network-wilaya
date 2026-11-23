@@ -58,4 +58,17 @@ describe('API Fil des anomalies', () => {
     const list = await agent.get('/api/anomalies?from=' + today + '&to=' + today + '&pageSize=100');
     expect(fil.body.resume.signalees).toBe(list.body.total);
   });
+
+  it('jour=traitees retourne l\'historique des anomalies traitées', async () => {
+    const created = await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: yesterday, lien_url: 'https://www.facebook.com/watch/?v=fil-traite1' }));
+    expect(created.status).toBe(201);
+    const id = created.body.item.id;
+    const v = created.body.item.version;
+    const treated = await write(agent, csrf, 'post', `/api/anomalies/${id}/statut`, { version: v, statut: 'traite', epic_id: refs.epicId, date_traitement: today, sans_photo_motif: 'Test' });
+    expect(treated.status).toBe(200);
+    const fil = await agent.get('/api/anomalies/fil?jour=traitees');
+    expect(fil.status).toBe(200);
+    expect(fil.body.resume.signalees).toBeGreaterThanOrEqual(1);
+    expect(fil.body.groupes.some((g) => g.items.some((it) => it.id === id))).toBe(true);
+  });
 });

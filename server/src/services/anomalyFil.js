@@ -9,7 +9,7 @@ export function listFil(db, params = {}, user = null) {
 
   const scope = params.jour || 'aujourdhui';
   const dateField = scope === 'traitees' ? 'a.date_traitement' : scope === 'maj' ? 'date(a.updated_at)' : 'a.date_signalement';
-  const scopeSql = scope === 'tout' ? '' : scope === 'traitees' ? ' AND a.date_traitement = @today' : scope === 'maj' ? ' AND date(a.updated_at) = @today' : ' AND a.date_signalement = @today';
+  const scopeSql = scope === 'tout' ? '' : scope === 'traitees' ? " AND a.statut = 'traite'" : scope === 'maj' ? ' AND date(a.updated_at) = @today' : ' AND a.date_signalement = @today';
   const scopedClause = clause ? clause + scopeSql : `WHERE 1=1${scopeSql}`;
   const scopedValues = { ...values, today };
 
