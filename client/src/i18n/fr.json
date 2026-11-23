@@ -457,5 +457,12 @@
   "anomalies.fil.tabMaj": "Mises à jour",
   "list.fil": "Fil",
   "anomalies.fil.groupBy": "Grouper par",
-  "anomalies.fil.voirTableau": "Voir dans le tableau"
+  "anomalies.fil.voirTableau": "Voir dans le tableau",
+  "anomalies.photoAvant": "Photo avant",
+  "anomalies.photoApres": "Photo après",
+  "anomalies.apres": "Après",
+  "anomalies.avant": "Avant",
+  "common.loadMore": "Charger plus",
+  "common.more": "Plus d’actions",
+  "common.select": "Sélectionner"
 }

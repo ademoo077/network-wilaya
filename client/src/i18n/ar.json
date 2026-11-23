@@ -457,5 +457,12 @@
   "anomalies.fil.tabMaj": "المحدثة",
   "list.fil": "سجل",
   "anomalies.fil.groupBy": "تجميع حسب",
-  "anomalies.fil.voirTableau": "عرض في الجدول"
+  "anomalies.fil.voirTableau": "عرض في الجدول",
+  "anomalies.photoAvant": "صورة قبل",
+  "anomalies.photoApres": "صورة بعد",
+  "anomalies.apres": "بعد",
+  "anomalies.avant": "قبل",
+  "common.loadMore": "تحميل المزيد",
+  "common.more": "المزيد من الإجراءات",
+  "common.select": "تحديد"
 }

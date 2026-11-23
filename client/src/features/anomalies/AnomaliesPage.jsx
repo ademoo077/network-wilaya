@@ -45,9 +45,20 @@ export default function AnomaliesPage() {
   const isFil = prefs.mode === 'fil';
   const jour = filters.jour || 'aujourdhui';
   const groupeFil = filters.groupe || 'date';
-  const query = useApiQuery(isFil ? `/anomalies/fil${queryString({ ...filters, q })}` : `/anomalies${queryString({ ...filters, q })}`);
+  const [filLimit, setFilLimit] = useState(24);
+  const filSentinelRef = useRef(null);
+  useEffect(() => { setFilLimit(24); }, [signature, jour, groupeFil]);
+  const query = useApiQuery(isFil ? `/anomalies/fil${queryString({ ...filters, q, limite: filLimit })}` : `/anomalies${queryString({ ...filters, q })}`);
   const data = query.data;
   const rows = data?.items || data?.data || data?.groupes?.flatMap(g => g.items) || [];
+  const filTotal = isFil ? (data?.groupes?.reduce((s, g) => s + (g.total || 0), 0) || 0) : 0;
+  useEffect(() => {
+    if (!isFil || !filSentinelRef.current) return;
+    if (rows.length >= filTotal) return;
+    const obs = new IntersectionObserver((entries) => { if (entries[0]?.isIntersecting) setFilLimit((n) => n + 24); }, { rootMargin: '200px' });
+    obs.observe(filSentinelRef.current);
+    return () => obs.disconnect();
+  }, [isFil, rows.length, filTotal]);
   const [selected, setSelected] = useState([]); const [previewId, setPreviewId] = useState(null); const [bulk, setBulk] = useState(null);
   const [action, setAction] = useState(null); const [exporting, setExporting] = useState(null);
   const [importOpen, setImportOpen] = useState(false); const [activeRow, setActiveRow] = useState(0);
@@ -246,6 +257,12 @@ export default function AnomaliesPage() {
           })
         ) : (
           <EmptyState icon={ListX} title={t('anomalies.fil.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />
+        )}
+        {data?.groupes?.length > 0 && rows.length < filTotal && (
+          <div className="mb-6 flex flex-col items-center gap-2">
+            <div ref={filSentinelRef} aria-hidden="true" />
+            <Button variant="secondary" onClick={() => setFilLimit((n) => n + 24)}>{t('common.loadMore')}</Button>
+          </div>
         )}
       </section>
     )}
