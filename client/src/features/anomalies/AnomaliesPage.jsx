@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FilterX, ListX, Upload } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { addDays, anomalyAction, PERIOD_OPTIONS, todayAlgiers } from '@anm/shared';
+import { addDays, anomalyAction, formatDate, PERIOD_OPTIONS, todayAlgiers } from '@anm/shared';
 import { download, queryString } from '../../api/client.js';
 import { PageHeader } from '../../components/layout/PageHeader.jsx';
 import { Button, Card, EmptyState, Pagination, useToast } from '../../components/ui/index.js';
@@ -16,6 +16,7 @@ import { useI18n } from '../../i18n/index.jsx';
 import AnomalyFilters from './AnomalyFilters.jsx';
 import AnomalyTable from './AnomalyTable.jsx';
 import AnomalyGallery from './list/AnomalyGallery.jsx';
+import AnomalieCarte from './AnomalieCarte.jsx';
 import AnomalyActionDialog from './AnomalyActionDialog.jsx';
 import BulkStatusDialog from './BulkStatusDialog.jsx';
 import ImportAnomaliesDialog from './ImportAnomaliesDialog.jsx';
@@ -133,9 +134,11 @@ export default function AnomaliesPage() {
     <SavedViews filters={{ ...filters, q }} apply={applyFilters} />
     <QuickViews filters={{ ...filters, q }} update={update} />
     <AnomalyListToolbar prefs={prefs} period={filters.periode || ''} onPeriod={applyPeriod} />
-    <details data-filters open className="mb-4 rounded-md border border-border bg-surface">
-      <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 text-sm font-bold text-ink">{t('common.filters')}
-        {active.length > 0 && <span className="rounded-full bg-brand-100 px-2 text-xs text-brand-800">{active.length}</span>}</summary>
+    <details data-filters className="mb-4 rounded-md border border-border bg-surface">
+      <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 text-sm font-bold text-ink">
+        {t('common.filters')}
+        {active.length > 0 && <span className="rounded-full bg-brand-100 px-2 text-xs text-brand-800">{active.length}</span>}
+      </summary>
       <div className="border-t border-border p-4"><AnomalyFilters filters={filters} setFilter={setFilter} refs={refs} /></div>
     </details>
     {active.length > 0 && <div className="mb-4 flex flex-wrap items-center gap-2">{active.map(([key, value]) => <button key={key}
@@ -170,5 +173,34 @@ export default function AnomaliesPage() {
     {bulk && <BulkStatusDialog open ids={bulk.ids} initialStatus={bulk.statut} onClose={() => setBulk(null)} onDone={() => query.refetch()} />}
     {action && <AnomalyActionDialog item={action.item} action={action} onClose={() => setAction(null)} />}
     {importOpen && <ImportAnomaliesDialog open onClose={() => setImportOpen(false)} refs={refs} onImported={() => { query.refetch(); queryClient.invalidateQueries({ queryKey: ['stats'] }); }} />}
-  </div>;
+
+    {/* === FIL (V16) === */}
+    <section data-fil-section aria-label={t('anomalies.fil.title')}>
+      <header className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-lg border border-border bg-surface">
+        <div className="flex items-center gap-2">
+          <span className="font-bold">{t('anomalies.fil.aujourdHui')} · {formatDate(todayAlgiers())}</span>
+          <span className="text-xs text-muted">{t('anomalies.fil.resume', { signalees: data?.resume?.signalees ?? 0, urgentes: data?.resume?.urgentes ?? 0, en_cours: data?.resume?.en_cours ?? 0, traitees: data?.resume?.traitees ?? 0 })}</span>
+        </div>
+        <div className="flex gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs">
+          <button role="tab" aria-selected="true" className="px-2 py-1 text-ink font-medium">{t('anomalies.fil.tabSignalees')}</button>
+          <button role="tab" aria-selected="false" className="px-2 py-1 text-muted">{t('anomalies.fil.tabTraitees')}</button>
+          <button role="tab" aria-selected="false" className="px-2 py-1 text-muted">{t('anomalies.fil.tabMaj')}</button>
+        </div>
+      </header>
+
+      {rows.length ? (
+        <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {rows.map((row, index) => (
+            <AnomalieCarte key={row.id} row={row} index={index}
+              selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
+              active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState icon={ListX} title={t('anomalies.fil.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />
+      )}
+    </section>
+
+</div>
 }
