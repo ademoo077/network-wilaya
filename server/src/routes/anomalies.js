@@ -14,6 +14,7 @@ import { getAnomalie, listAnomalies, getHistorique, listCorbeille } from '../ser
 import {
   createAnomalie, updateAnomalie, deleteAnomalie, restoreAnomalie, bulkStatut, checkLink,
 } from '../services/anomalies.js';
+import { listFil } from '../services/anomalyFil.js';
 import { exportAnomalies } from '../services/export.js';
 import {
   previewImport, commitImport, importTemplate, importErrorsCsv,
@@ -44,6 +45,13 @@ router.get('/', requireAuth, (req, res) => {
   }
   const result = isTrash ? listCorbeille(db, params) : listAnomalies(db, params, req.user);
   res.json(result);
+});
+
+router.get('/fil', requireAuth, (req, res) => {
+  const db = getDb();
+  const parsed = anomalieQuerySchema.safeParse(req.query);
+  if (!parsed.success) throw badRequest('Filtres invalides', zodFields(parsed.error));
+  res.json(listFil(db, parsed.data, req.user));
 });
 
 router.get('/counts', requireAuth, (req, res) => {
