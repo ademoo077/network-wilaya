@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Eye, MapPin, Share2, Upload } from 'lucide-react';
 import { formatDate } from '@anm/shared';
 import { Button, Checkbox, IconButton, PlatformBadge, PriorityBadge, StatusBadge } from '../../components/ui/index.js';
@@ -14,9 +14,9 @@ export default function AnomalieCarte({
   const timerRef = useRef(null);
   const {
     id, reference, statut, priorite, plateforme, date_signalement,
-    commune_id, daira_id, type_id, type_fr, type_ar,
-    commune_fr, commune_ar, daira_fr, daira_ar,
-    agent_nom, pieces_count, photos, statut_libelle,
+    // _commune_id, _daira_id, _type_id, _type_fr, _type_ar,
+    // _commune_fr, _commune_ar, _daira_fr, _daira_ar,
+    // _agent_nom, _pieces_count, photos, _statut_libelle,
   } = row;
 
   const avant = photos?.avant || null;

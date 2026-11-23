@@ -1,6 +1,5 @@
 import { buildFilters } from './anomalyQuery.js';
 import { ANOMALIE_SELECT, serialize } from './anomalyRead.js';
-import { todayAlgiers } from '@anm/shared';
 
 export function listFil(db, params = {}, user = null) {
   const { clause, values } = buildFilters(params, { user });
