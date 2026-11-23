@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, Pie, PieChart,
+  Bar, BarChart, CartesianGrid, Cell, Label, LabelList, Line, LineChart, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -101,39 +101,55 @@ function AnneauChart({ result, title, t, lang, actions }) {
   const measure = mesuresOf(result)[0];
   const data = chartData(result, lang).slice(0, 8).map((row) => ({ name: row.name, value: row[measure?.id] || 0 }));
   const total = data.reduce((sum, row) => sum + row.value, 0);
+  const totalLabel = formatValue(total, 'entier', lang);
+  const contenuTotal = ({ viewBox }) => {
+    const cx = viewBox?.cx ?? '50%';
+    const cy = viewBox?.cy ?? '50%';
+    return <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" data-anneau-total>
+      <tspan x={cx} dy="-0.25em" fill="var(--ink)" fontSize="22" fontWeight="800" direction="ltr">{totalLabel}</tspan>
+      <tspan x={cx} dy="1.2em" fill="var(--muted)" fontSize="11">{t('common.total')}</tspan>
+    </text>;
+  };
   return <>
     <CardHeader title={title} action={actions} />
     <p className="sr-only">{data.map((row) => `${row.name}: ${row.value}`).join('; ')}</p>
-    <div className="h-56 w-full" aria-hidden="true" data-anneau-chart data-chart>
+    <div className="relative h-56 w-full" aria-hidden="true" data-anneau-chart data-anneau-graphique data-chart>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart accessibilityLayer={false} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
           <Pie rootTabIndex={-1} dataKey="value" nameKey="name" data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={82} paddingAngle={2}>
             {data.map((entry, index) => <Cell key={`${entry.name}-${index}`} fill={colorFor(index)} stroke="var(--surface)" />)}
+            <Label position="center" content={contenuTotal} />
           </Pie><Tooltip />
         </PieChart>
       </ResponsiveContainer>
-      <div className="pointer-events-none absolute inset-x-0 top-0 grid h-56 place-items-center"><div className="text-center"><div className="text-2xl font-black text-ink"><bdi dir="ltr">{formatValue(total, 'entier', lang)}</bdi></div><div className="text-xs text-muted">{t('common.total')}</div></div></div>
     </div>
-    <div data-anneau-legend><ChartLegend t={t} className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2" items={data.map((row, index) => ({
-      label: row.name,
-      color: colorFor(index),
-      value: `${formatValue(row.value, 'entier', lang)} · ${formatValue(total ? (row.value / total) * 100 : 0, 'pourcentage', lang)}`,
-    }))} /></div>
+    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" data-anneau-legende data-chart-legend>
+      {data.map((row, index) => <div key={`${row.name}-${index}`} data-anneau-entree className="flex min-w-0 items-start gap-2 rounded-md border border-border bg-surface2 px-2 py-1.5">
+        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: colorFor(index) }} aria-hidden="true" />
+        <bdi className="min-w-0 flex-1 break-words text-xs font-semibold text-ink">{row.name}</bdi>
+        <bdi dir="ltr" className="shrink-0 text-xs font-bold tabular-nums text-ink">
+          {formatValue(row.value, 'entier', lang)} · {formatValue(total ? (row.value / total) * 100 : 0, 'pourcentage', lang)}
+        </bdi>
+      </div>)}
+    </div>
   </>;
 }
 
-function MiniChart({ result, lang, t }) {
-  const data = chartData(result, lang).slice(0, 12);
+function MiniChart({ result, lang, dir, t }) {
+  const data = chartData(result, lang);
   const measures = mesuresOf(result);
-  return <div className="mb-3" data-chart>
-    <div className="h-36 w-full" aria-hidden="true">
+  const hauteur = Math.max(150, data.length * 34 + 24);
+  return <div className="mb-3" data-chart data-graphique-horizontal>
+    <div className="w-full" style={{ height: hauteur }} aria-hidden="true">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 6, right: 8, bottom: 6, left: 8 }}>
-          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} height={26} />
-          <YAxis allowDecimals={false} width={34} tick={{ fontSize: 9, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+        <BarChart layout="vertical" data={data} margin={{ top: 6, right: 52, bottom: 6, left: 8 }}>
+          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" horizontal={false} />
+          <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={118} orientation={dir === 'rtl' ? 'right' : 'left'} tick={{ fontSize: 10, fill: 'var(--ink-2)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
           <Tooltip />
-          {measures.map((measure, index) => <Bar key={measure.id} dataKey={measure.id} name={measureLabel(measure.id, lang)} fill={colorFor(index)} radius={[3, 3, 0, 0]} />)}
+          {measures.map((measure, index) => <Bar key={measure.id} dataKey={measure.id} name={measureLabel(measure.id, lang)} fill={colorFor(index)} radius={[0, 3, 3, 0]} barSize={18}>
+            {measures.length === 1 && <LabelList dataKey={measure.id} position="right" formatter={(value) => formatValue(value, measure.format || 'entier', lang)} style={{ fontSize: 10, fill: 'var(--ink-2)' }} />}
+          </Bar>)}
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -169,10 +185,10 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions, role }) {
   const Next = dir === 'rtl' ? ChevronLeft : ChevronRight;
   return <>
     <CardHeader title={title} action={actions} />
-    {bloc.options?.avec_graphique && <MiniChart result={result} lang={lang} t={t} />}
+    {bloc.options?.avec_graphique && <MiniChart result={result} lang={lang} dir={dir} t={t} />}
     <div className="overflow-x-auto rounded-md border border-border lg:overflow-x-visible" role="region" aria-label={title} tabIndex={0}>
       <table className="w-full text-sm" data-widget-table><thead className="sticky top-0 z-10 bg-surface2"><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-2 text-xs font-bold text-ink2 lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
-        <tbody>{pageRows.length === 0 ? <tr><td colSpan={Math.max(1, dims.length)} className="px-4 py-5 text-center text-muted">{t('synthese.aucuneLigne')}</td></tr> : pageRows.map((row, rowIndex) => <tr key={rowIndex} className="border-b border-border last:border-0">
+        <tbody>{pageRows.length === 0 ? <tr><td colSpan={Math.max(1, dims.length)} className="px-4 py-5 text-center text-muted">{t('synthese.aucuneLigne')}</td></tr> : pageRows.map((row, rowIndex) => <tr key={rowIndex} data-ligne className="border-b border-border last:border-0">
           {dims.map((column, index) => {
             if (column.source === 'dimension') {
               return <td key={`${column.id}-${index}`} className={`px-2 py-2 text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi>{rowDimensionLabel(row, { id: column.champ, champ: column.champ }, index, lang)}</bdi></td>;

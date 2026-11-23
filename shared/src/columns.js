@@ -110,12 +110,17 @@ export function colonnesAffichees(bloc, resultat, { role = 'operateur', impressi
   }
   if (resultat?.colonnes) {
     const available = new Set([
-      ...(resultat.colonnes.dimensions || []).map((d) => colonneId('dimension', d.champ)),
-      ...(resultat.colonnes.mesures || []).map((m) => colonneId('mesure', m.id)),
+      ...(resultat.colonnes.dimensions || []).map((d) => colonneId('dimension', d.champ || d.id)),
+      ...(resultat.colonnes.mesures || []).map((m) => colonneId('mesure', m.id || m.champ)),
     ]);
     colonnes = colonnes.filter((column) => available.has(column.id));
   }
-  return colonnes;
+  // V15 : une dimension est toujours libellée avant les mesures, même si une
+  // ancienne configuration rangeait les mesures en tête.
+  return [
+    ...colonnes.filter((column) => column.source === 'dimension'),
+    ...colonnes.filter((column) => column.source !== 'dimension'),
+  ];
 }
 
 export const COLONNES_PRESETS = {

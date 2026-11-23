@@ -159,7 +159,7 @@ test('113 — Studio : grille 12 colonnes, KPI lisibles, anneau entier et tablea
       widths: [...grid.children].map((child) => child.getBoundingClientRect().width),
       labels: [...document.querySelectorAll('[data-kpi-label]')].map((el) => ({ text: el.textContent, scroll: el.scrollWidth, client: el.clientWidth })),
       values: [...document.querySelectorAll('[data-kpi-value]')].map((el) => ({ height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) })),
-      ring: box(ring), ringCard: box(ring?.closest('[data-widget-card]')), svg: box(ring?.querySelector('svg')), legend: box(document.querySelector('[data-anneau-legend]')),
+      ring: box(ring), ringCard: box(ring?.closest('[data-widget-card]')), svg: box(ring?.querySelector('svg')), legend: box(document.querySelector('[data-anneau-legende]')),
       cards: [...document.querySelectorAll('[data-card]')].map((card) => ({ scroll: card.scrollWidth, client: card.clientWidth })),
       table: tableRegion && { scroll: tableRegion.scrollWidth, client: tableRegion.clientWidth },
     };

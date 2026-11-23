@@ -110,7 +110,8 @@ export async function mesurerDonut(page) {
   return page.evaluate(() => {
     const widget = [...document.querySelectorAll('[data-widget-id]')]
       .find((element) => /Répartition des statuts/i.test(element.getAttribute('aria-label') || element.textContent || ''));
-    const svg = widget?.querySelector('svg');
+    const svg = widget?.querySelector('[data-anneau-graphique] svg')
+      || [...(widget?.querySelectorAll('svg') || [])].find((item) => item.classList.contains('recharts-surface')) || null;
     const total = widget?.querySelector('[data-anneau-total]') || svg?.querySelector('text');
     const legende = widget?.querySelector('[data-anneau-legende]');
     const anneau = widget?.querySelector('[data-anneau-graphique]') || svg?.getBoundingClientRect();
@@ -136,11 +137,14 @@ export async function mesurerTableau(page, motif = /Par daïra/i) {
       .find((element) => regex.test(element.getAttribute('aria-label') || element.textContent || ''));
     const table = widget?.querySelector('table');
     const entetes = table ? [...table.querySelectorAll('thead th')].map((th) => th.textContent.replace(/\s+/g, ' ').trim()) : [];
-    const lignes = table ? table.querySelectorAll('tbody tr').length : 0;
-    const premiereColonne = table ? [...table.querySelectorAll('tbody tr td:first-child')].map((td) => td.textContent.trim()).filter(Boolean).length : 0;
+    const lignes = table ? table.querySelectorAll('tbody tr[data-ligne]').length : 0;
+    const premiereColonne = table ? [...table.querySelectorAll('tbody tr[data-ligne] td:first-child')].map((td) => td.textContent.trim()).filter(Boolean).length : 0;
+    const graphe = widget?.querySelector('[data-graphique-horizontal]') || null;
+    const etiquettes = graphe ? [...graphe.querySelectorAll('svg text')].map((text) => text.textContent.trim()).filter(Boolean) : [];
     const content = widget?.querySelector('[data-widget-content]');
     return {
       present: Boolean(widget), entetes, lignes, premiereColonne,
+      grapheHorizontal: Boolean(graphe), etiquettes,
       rogne: content ? content.scrollHeight > content.clientHeight + 1 : false,
     };
   }, motif.source);

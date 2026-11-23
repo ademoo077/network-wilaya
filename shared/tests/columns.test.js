@@ -44,6 +44,22 @@ describe('colonnes V11', () => {
     expect(ajusterColonnesImpression(colonnes, { maxColonnes: 1 }).map((c) => c.id)).toEqual(['a']);
   });
 
+  it('V15 : les dimensions précèdent toujours les mesures', () => {
+    const ancien = {
+      ...bloc,
+      options: { colonnes: [
+        { source: 'mesure', champ: 'recues', visible_ecran: true, visible_impression: true },
+        { source: 'dimension', champ: 'commune', visible_ecran: true, visible_impression: true },
+      ] },
+    };
+    expect(colonnesAffichees(ancien, null).map((c) => c.id)).toEqual(['d:commune', 'm:recues']);
+  });
+
+  it('V15 : garde la dimension quand le résultat n’expose que son identifiant', () => {
+    const resultat = { colonnes: { dimensions: [{ id: 'commune' }], mesures: [{ id: 'recues' }] } };
+    expect(colonnesAffichees(bloc, resultat).map((c) => c.id)).toEqual(['d:commune', 'm:recues']);
+  });
+
   it('applique les préréglages de colonnes', () => {
     expect(COLONNES_PRESETS.compact).toBeTruthy();
     expect(colonnesDuBloc({ ...bloc, options: { colonnes: [] } })).toHaveLength(4);
