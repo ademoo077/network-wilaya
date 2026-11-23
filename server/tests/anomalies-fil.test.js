@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { todayAlgiers, addDays } from '@anm/shared';
 import { createApp } from '../src/app.js';
 import { freshDatabase, login, write, anomalyPayload } from './helpers.js';
 
@@ -6,30 +7,40 @@ let app;
 let refs;
 let agent;
 let csrf;
+let today;
+let yesterday;
 
 beforeAll(async () => {
   ({ refs } = freshDatabase());
   app = createApp();
   ({ agent, csrf } = await login(app, 'admin'));
-  // Créer quelques anomalies
-  await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: '2026-11-23', priorite: 'urgente' }));
-  await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: '2026-11-23' }));
-  await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: '2026-11-22' }));
+  today = todayAlgiers();
+  yesterday = addDays(today, -1);
+  await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: today, priorite: 'urgente', lien_url: 'https://www.facebook.com/watch/?v=fil1' }));
+  await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: today, lien_url: 'https://www.facebook.com/watch/?v=fil2' }));
+  await write(agent, csrf, 'post', '/api/anomalies', anomalyPayload(refs, { date_signalement: yesterday, lien_url: 'https://www.facebook.com/watch/?v=fil3' }));
 });
 
 describe('API Fil des anomalies', () => {
-  it('renvoie un résumé et des groupes par date', async () => {
+  it('renvoie un résumé et des groupes par date (aujourd\'hui par défaut)', async () => {
     const res = await agent.get('/api/anomalies/fil');
     expect(res.status).toBe(200);
-    expect(res.body.resume.signalees).toBe(3);
+    expect(res.body.resume.signalees).toBe(2);
     expect(res.body.resume.urgentes).toBe(1);
-    expect(res.body.groupes.length).toBeGreaterThanOrEqual(2);
-    expect(res.body.groupes[0].total).toBe(2); // 2026-11-23
+    expect(res.body.groupes.length).toBe(1);
+    expect(res.body.groupes[0].total).toBe(2);
   });
 
   it('filtre les groupes comme le tableau', async () => {
     const res = await agent.get('/api/anomalies/fil?priorite=urgente');
     expect(res.body.resume.signalees).toBe(1);
     expect(res.body.groupes[0].total).toBe(1);
+  });
+
+  it('jour=tout retourne tous les groupes', async () => {
+    const res = await agent.get('/api/anomalies/fil?jour=tout');
+    expect(res.status).toBe(200);
+    expect(res.body.resume.signalees).toBe(3);
+    expect(res.body.groupes.length).toBe(2);
   });
 });

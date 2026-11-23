@@ -447,5 +447,13 @@
   "list.resetWidths": "Largeurs d’origine",
   "synthese.planchePdf": "Planche PDF",
   "synthese.pairsPerPage": "Paires par page",
-  "synthese.pairsPerPageHelp": "Deux paires par ligne ; le nombre choisi est la page imprimée."
+  "synthese.pairsPerPageHelp": "Deux paires par ligne ; le nombre choisi est la page imprimée.",
+  "anomalies.fil.title": "Fil des anomalies",
+  "anomalies.fil.aujourdHui": "Aujourd'hui",
+  "anomalies.fil.resume": "{signalees} signalées · {urgentes} urgentes · {en_cours} en cours · {traitees} traitées",
+  "anomalies.fil.empty": "Aucune anomalie pour aujourd'hui.",
+  "anomalies.fil.tabSignalees": "Signalées",
+  "anomalies.fil.tabTraitees": "Traitées",
+  "anomalies.fil.tabMaj": "Mises à jour",
+  "list.fil": "Fil"
 }

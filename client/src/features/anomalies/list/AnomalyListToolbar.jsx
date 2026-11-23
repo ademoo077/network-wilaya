@@ -9,7 +9,7 @@ const idleClass = 'border-border bg-surface text-ink2 hover:bg-surface2';
 
 export default function AnomalyListToolbar({ prefs, period, onPeriod }) {
   const { t } = useI18n();
-  const modes = [['standard', 'list.standard'], ['complet', 'list.complete'], ['galerie', 'list.gallery']];
+  const modes = [['standard', 'list.standard'], ['complet', 'list.complete'], ['galerie', 'list.gallery'], ['fil', 'list.fil']];
   const densities = [['comfortable', 'list.comfortable'], ['compact', 'list.compact']];
   return <div data-list-toolbar className="mb-4 flex flex-wrap items-center gap-2">
     <div role="group" aria-label={t('list.view')} className="flex flex-wrap gap-1">

@@ -142,6 +142,11 @@ export const anomalieQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(200).optional(),
   sort: z.enum(['reference', 'date_signalement', 'statut', 'domaine', 'type', 'daira', 'commune', 'epic', 'priorite', 'verification', 'created_at']).optional(),
   dir: z.enum(['asc', 'desc']).optional(),
+  // Fil V16
+  jour: z.enum(['aujourdhui', 'traitees', 'maj', 'tout']).optional(),
+  groupe: z.enum(['date', 'commune', 'daira', 'agent', 'categorie', 'statut']).optional(),
+  curseur: z.string().max(200).optional(),
+  limite: z.coerce.number().int().min(1).max(200).optional(),
 });
 
 const nameFr = z.string().trim().max(200).nullable().optional();

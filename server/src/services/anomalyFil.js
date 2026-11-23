@@ -22,6 +22,7 @@ export function listFil(db, params = {}, user = null) {
     FROM anomalies a ${scopedClause}
   `).get(scopedValues);
 
+
   // Détermination du groupe
   const groupBy = params.groupe === 'commune' ? 'c.name_fr' : 
                   params.groupe === 'daira' ? 'da.name_fr' :

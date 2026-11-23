@@ -14,9 +14,8 @@ export default function AnomalieCarte({
   const timerRef = useRef(null);
   const {
     id, reference, statut, priorite, plateforme, date_signalement,
-    // _commune_id, _daira_id, _type_id, _type_fr, _type_ar,
-    // _commune_fr, _commune_ar, _daira_fr, _daira_ar,
-    // _agent_nom, _pieces_count, photos, _statut_libelle,
+    commune_fr, commune_ar, daira_fr, daira_ar,
+    agent_nom, photos, statut_libelle,
   } = row;
 
   const avant = photos?.avant || null;
@@ -57,13 +56,13 @@ export default function AnomalieCarte({
       {apres && <img src={apres.url} width="800" height="450" alt={t('anomalies.photoApres')}
         className={`w-full h-full object-cover absolute inset-0 ${hover ? 'opacity-100 z-20' : 'opacity-0 z-10'} transition-opacity duration-1000`} loading="lazy" />}
       {/* Surcouches */}
-      <span className="absolute top-2 left-2 z-20 inline-flex min-h-6 items-center rounded-md border border-white bg-black/60 px-2 py-0.5 text-xs font-bold text-white">
+      <span className="absolute top-2 left-2 z-20 inline-flex min-h-6 items-center rounded-md border border-white bg-black/60 px-2 py-0.5 text-xs font-bold text-brand-800">
         {priorite === 'urgente' ? t('anomalies.urgente') : t('common.statut', { statut: statut_libelle || t(`status.${statut}`) })}
       </span>
-      {(nPlus > 0 || (avant && apres)) && <span className="absolute bottom-2 right-2 z-20 inline-flex min-h-6 items-center rounded-md border border-white bg-black/60 px-2 py-0.5 text-xs font-bold text-white">
+      {(nPlus > 0 || (avant && apres)) && <span className="absolute bottom-2 right-2 z-20 inline-flex min-h-6 items-center rounded-md border border-white bg-black/60 px-2 py-0.5 text-xs font-bold text-brand-800">
         {nPlus > 0 ? `+${nPlus}` : t('anomalies.apres')}
       </span>}
-      {apres && <span className="absolute bottom-2 left-2 z-20 inline-flex min-h-6 items-center rounded-md border border-white bg-black/60 px-2 py-0.5 text-xs text-white">
+      {apres && <span className="absolute bottom-2 left-2 z-20 inline-flex min-h-6 items-center rounded-md border border-white bg-black/60 px-2 py-0.5 text-xs font-bold text-brand-800">
         {t('anomalies.apres')}
       </span>}
     </div>

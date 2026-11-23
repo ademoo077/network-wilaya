@@ -447,5 +447,13 @@
   "list.resetWidths": "العروض الأصلية",
   "synthese.planchePdf": "لوحة PDF",
   "synthese.pairsPerPage": "الأزواج في الصفحة",
-  "synthese.pairsPerPageHelp": "زوجان في كل سطر؛ العدد المحدد هو عدد الأزواج في الصفحة المطبوعة."
+  "synthese.pairsPerPageHelp": "زوجان في كل سطر؛ العدد المحدد هو عدد الأزواج في الصفحة المطبوعة.",
+  "anomalies.fil.title": "سجل الحالات",
+  "anomalies.fil.aujourdHui": "اليوم",
+  "anomalies.fil.resume": "{signalees} مبلغ عنها · {urgentes} عاجلة · {en_cours} قيد المعالجة · {traitees} معالجة",
+  "anomalies.fil.empty": "لا توجد حالات لليوم.",
+  "anomalies.fil.tabSignalees": "المبلغ عنها",
+  "anomalies.fil.tabTraitees": "المعالجة",
+  "anomalies.fil.tabMaj": "المحدثة",
+  "list.fil": "سجل"
 }

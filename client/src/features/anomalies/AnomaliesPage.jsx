@@ -42,7 +42,10 @@ export default function AnomaliesPage() {
   const [searchParams, setSearchParams] = useSearchParams(); const signature = searchParams.toString();
   const filters = useMemo(() => Object.fromEntries(new URLSearchParams(signature).entries()), [signature]);
   const q = useDebounced(filters.q || '');
-  const query = useApiQuery(`/anomalies${queryString({ ...filters, q })}`); const data = query.data; const rows = data?.items || [];
+  const isFil = prefs.mode === 'fil';
+  const query = useApiQuery(isFil ? `/anomalies/fil${queryString({ ...filters, q })}` : `/anomalies${queryString({ ...filters, q })}`); 
+  const data = query.data; 
+  const rows = data?.items || data?.groupes?.flatMap(g => g.items) || [];
   const [selected, setSelected] = useState([]); const [previewId, setPreviewId] = useState(null); const [bulk, setBulk] = useState(null);
   const [action, setAction] = useState(null); const [exporting, setExporting] = useState(null);
   const [importOpen, setImportOpen] = useState(false); const [activeRow, setActiveRow] = useState(0);
@@ -146,7 +149,7 @@ export default function AnomaliesPage() {
       <span>{key === 'periode' ? t(periodLabels[value] || filterLabels[key]) : <>{t(filterLabels[key])}: <bdi>{key === 'gps' ? t(`gps.${value}`) : value}</bdi></>}</span><span aria-hidden="true">×</span></button>)}
       <Button size="sm" variant="ghost" onClick={() => setSearchParams({}, { replace: true })}><FilterX className="h-4 w-4" />{t('common.clearFilters')}</Button></div>}
     {query.isFetching && !query.isPending && <p role="status" className="mb-2 text-sm text-muted">{t('common.loading')}</p>}
-    <Card className="overflow-hidden"><QueryContent query={query} loading={<ListSkeleton />}>
+    {!isFil && <Card className="overflow-hidden"><QueryContent query={query} loading={<ListSkeleton />}>
       <div data-list-mode={prefs.mode} data-list-density={prefs.density}>
         {rows.length ? <><div className="min-w-0">
           {prefs.mode === 'galerie' ? <AnomalyGallery rows={rows} selected={selected} onSelect={setSelected}
@@ -161,7 +164,7 @@ export default function AnomaliesPage() {
           <Pagination page={data.page} pageSize={data.pageSize} total={data.total} onPage={(page) => update({ page })} onPageSize={(pageSize) => update({ pageSize, page: 1 })} /></>
           : <EmptyState icon={ListX} title={t('anomalies.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />}
       </div>
-    </QueryContent></Card>
+    </QueryContent></Card>}
     {selected.length > 0 && writable && <Card className="sticky bottom-0 z-40 mt-4 flex flex-wrap items-center gap-3 p-3">
       <span>{t('anomalies.selected', { count: selected.length })}</span><Button onClick={() => setBulk({ ids: selected, statut: 'en_cours' })}>{t('anomalies.bulk')}</Button><Button variant="ghost" onClick={() => setSelected([])}>{t('common.cancel')}</Button>
     </Card>}
@@ -175,32 +178,34 @@ export default function AnomaliesPage() {
     {importOpen && <ImportAnomaliesDialog open onClose={() => setImportOpen(false)} refs={refs} onImported={() => { query.refetch(); queryClient.invalidateQueries({ queryKey: ['stats'] }); }} />}
 
     {/* === FIL (V16) === */}
-    <section data-fil-section aria-label={t('anomalies.fil.title')}>
-      <header className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-lg border border-border bg-surface">
-        <div className="flex items-center gap-2">
-          <span className="font-bold">{t('anomalies.fil.aujourdHui')} · {formatDate(todayAlgiers())}</span>
-          <span className="text-xs text-muted">{t('anomalies.fil.resume', { signalees: data?.resume?.signalees ?? 0, urgentes: data?.resume?.urgentes ?? 0, en_cours: data?.resume?.en_cours ?? 0, traitees: data?.resume?.traitees ?? 0 })}</span>
-        </div>
-        <div className="flex gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs">
-          <button role="tab" aria-selected="true" className="px-2 py-1 text-ink font-medium">{t('anomalies.fil.tabSignalees')}</button>
-          <button role="tab" aria-selected="false" className="px-2 py-1 text-muted">{t('anomalies.fil.tabTraitees')}</button>
-          <button role="tab" aria-selected="false" className="px-2 py-1 text-muted">{t('anomalies.fil.tabMaj')}</button>
-        </div>
-      </header>
+    {isFil && (
+      <section data-fil-section aria-label={t('anomalies.fil.title')}>
+        <header className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-lg border border-border bg-surface">
+          <div className="flex items-center gap-2">
+            <span className="font-bold">{t('anomalies.fil.aujourdHui')} · {formatDate(todayAlgiers())}</span>
+            <span className="text-xs text-muted">{t('anomalies.fil.resume', { signalees: data?.resume?.signalees ?? 0, urgentes: data?.resume?.urgentes ?? 0, en_cours: data?.resume?.en_cours ?? 0, traitees: data?.resume?.traite ?? 0 })}</span>
+          </div>
+        </header>
 
-      {rows.length ? (
-        <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {rows.map((row, index) => (
-            <AnomalieCarte key={row.id} row={row} index={index}
-              selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
-              active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState icon={ListX} title={t('anomalies.fil.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />
-      )}
-    </section>
+        {data?.groupes?.length ? (
+          data.groupes.map((groupe) => (
+            <div key={groupe.cle} className="mb-6">
+              <h3 className="font-bold mb-2">{groupe.libelle} ({groupe.total})</h3>
+              <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {groupe.items.map((row, index) => (
+                  <AnomalieCarte key={row.id} row={row} index={index}
+                    selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
+                    active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <EmptyState icon={ListX} title={t('anomalies.fil.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />
+        )}
+      </section>
+    )}
 
 </div>
 }

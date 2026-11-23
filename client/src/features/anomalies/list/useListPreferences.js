@@ -31,7 +31,7 @@ const writeText = (name, userId, value) => {
   try { localStorage.setItem(storageKey(name, userId), value); } catch { /* stockage indisponible */ }
 };
 
-const MODES = ['standard', 'complet', 'galerie'];
+const MODES = ['standard', 'complet', 'galerie', 'fil'];
 const LARGEURS_MIN = { reference: 104, date_signalement: 88, statut: 120, photos: 120, actions: 104 };
 /* Largeurs initiales : sans elles, table-fixed répartit également l'espace
    (≈95 px/colonne) et le contenu déborde de chaque cellule. */
