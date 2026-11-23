@@ -26,9 +26,7 @@ export default function AnomalieCarte({
   const daira = daira_fr || daira_ar || '—';
   const desc = row.description?.trim();
   const today = todayAlgiers();
-  const dayLabel = date_signalement === today ? t('anomalies.fil.aujourdHui') : date_signalement === addDays(today, -1) ? t('common.yesterday') : formatDate(date_signalement);
-  const initials = (agent_nom || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('') || '?';
-  const treatedAt = row.date_traitement ? formatDate(row.date_traitement) : null;
+  const dayLabel = date_signalement === today ? t('anomalies.fil.aujourdHui') : date_signalement === addDays(today, -1) ? t('common.yesterday', { defaultValue: 'Hier' }) : formatDate(date_signalement);
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
@@ -50,7 +48,6 @@ export default function AnomalieCarte({
     onFocus={() => onRowFocus?.(row, index)}
     onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setShowApres(false); }}
     className={`group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border ${accent} border-s-4 bg-surface shadow-sm focus-within:ring-2 focus-within:ring-brand-500 focus-within:outline-none`}>
-    {statut === 'traite' && <div className="h-1 w-full bg-straite" aria-hidden="true" />}
     <div className="relative aspect-video overflow-hidden bg-surface2">
       {mainSrc ? (
         <>
@@ -95,15 +92,11 @@ export default function AnomalieCarte({
         {row.epic_nom && <span className="rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-ink2"><bdi>{row.epic_nom}</bdi></span>}
         {row.source_nom && <span className="rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-ink2"><bdi>{row.source_nom}</bdi></span>}
       </div>
-      <div className="mt-auto flex items-center justify-between gap-3 pt-3 border-t border-border">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-bold text-brand-800" aria-hidden="true"><bdi>{initials}</bdi></span>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-ink2">{agent_nom ? <bdi>{agent_nom}</bdi> : t('list.nonAffectees')}</p>
-            <p className="truncate text-[11px] text-muted">{statut === 'traite' && treatedAt ? `${t('status.traite')} · ${treatedAt}` : dayLabel}</p>
-          </div>
+      <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-border">
+        <span className="truncate text-xs text-muted">{agent_nom ? <bdi>{agent_nom}</bdi> : t('list.nonAffectees')}</span>
+        <div className="flex items-center gap-1">
+          <IconButton size="sm" aria-label={t('anomalies.preview')} onClick={() => onPreview?.(row)}><Eye className="h-4 w-4" /></IconButton>
         </div>
-        <IconButton size="sm" aria-label={t('anomalies.preview')} onClick={() => onPreview?.(row)}><Eye className="h-4 w-4" /></IconButton>
       </div>
     </div>
   </article>;
