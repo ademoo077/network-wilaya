@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Eye, MapPin, MoreHorizontal } from 'lucide-react';
-import { formatDate } from '@anm/shared';
+import { Eye, MapPin } from 'lucide-react';
+import { addDays, formatDate, todayAlgiers } from '@anm/shared';
 import { Checkbox, IconButton, PlatformBadge, PriorityBadge, StatusBadge } from '../../components/ui/index.js';
 import { anomalyLabel } from './helpers.js';
 import { useI18n } from '../../i18n/index.jsx';
@@ -24,6 +24,9 @@ export default function AnomalieCarte({
   const nPlus = Math.max(0, (photos?.n || 0) - (avant ? 1 : 0) - (apres ? 1 : 0));
   const commune = commune_fr || commune_ar || '—';
   const daira = daira_fr || daira_ar || '—';
+  const desc = row.description?.trim();
+  const today = todayAlgiers();
+  const dayLabel = date_signalement === today ? t('anomalies.fil.aujourdHui') : date_signalement === addDays(today, -1) ? t('common.yesterday', { defaultValue: 'Hier' }) : formatDate(date_signalement);
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
@@ -37,12 +40,14 @@ export default function AnomalieCarte({
   const toggle = () => onSelect(checked ? selected.filter((i) => i !== id) : [...selected, id]);
   const overlay = 'absolute z-20 inline-flex min-h-6 items-center rounded-md bg-ink/70 px-2 py-0.5 text-[11px] font-bold text-surface';
 
+  const accent = statut === 'traite' ? 'border-s-straite' : statut === 'en_cours' ? 'border-s-stcours' : 'border-s-stnon';
+
   return <article data-anomalie-card={id} data-card-active={active ? 'true' : 'false'}
     tabIndex={0} role="listitem"
     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onPreview?.(row); } }}
     onFocus={() => onRowFocus?.(row, index)}
     onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setShowApres(false); }}
-    className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm focus-within:ring-2 focus-within:ring-brand-500 focus-within:outline-none">
+    className={`group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border ${accent} border-s-4 bg-surface shadow-sm focus-within:ring-2 focus-within:ring-brand-500 focus-within:outline-none`}>
     <div className="relative aspect-video overflow-hidden bg-surface2">
       {mainSrc ? (
         <>
@@ -72,27 +77,25 @@ export default function AnomalieCarte({
     </div>
 
     <div className="flex flex-1 flex-col p-3">
-      <div className="mb-1 flex items-start justify-between gap-2">
-        <button type="button" onClick={() => onPreview?.(row)} className="min-w-0 text-start text-xs font-bold text-brand-700 hover:underline">
-          <bdi>{reference}</bdi>
-        </button>
+      <div className="mb-1 flex items-center justify-between gap-2 text-xs text-muted">
+        <span className="truncate"><bdi>{commune}</bdi> · <bdi>{daira}</bdi></span>
+        <span className="shrink-0">{dayLabel}</span>
       </div>
       <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink" dir="auto" title={anomalyLabel(row, 'type', lang)}>
-        <bdi>{anomalyLabel(row, 'type', lang)}</bdi>
+        <button type="button" onClick={() => onPreview?.(row)} className="text-start hover:text-brand-700 hover:underline"><bdi>{anomalyLabel(row, 'type', lang)}</bdi></button>
       </h3>
-      <p className="mt-1 text-xs text-muted"><bdi>{commune}</bdi> · <bdi>{daira}</bdi></p>
-      <p className="mt-1 text-xs text-muted">{formatDate(date_signalement)} · <bdi>{reference}</bdi></p>
+      {desc && <p className="mt-1 line-clamp-2 text-xs text-ink2" dir="auto">{desc}</p>}
+      <p className="mt-1 text-xs text-muted"><bdi>{reference}</bdi> · {formatDate(date_signalement)}</p>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {priorite !== 'normale' && <PriorityBadge value={priorite} />}
         <PlatformBadge value={plateforme} />
         {row.epic_nom && <span className="rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-ink2"><bdi>{row.epic_nom}</bdi></span>}
         {row.source_nom && <span className="rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-ink2"><bdi>{row.source_nom}</bdi></span>}
       </div>
-      <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+      <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-border">
         <span className="truncate text-xs text-muted">{agent_nom ? <bdi>{agent_nom}</bdi> : t('list.nonAffectees')}</span>
         <div className="flex items-center gap-1">
           <IconButton size="sm" aria-label={t('anomalies.preview')} onClick={() => onPreview?.(row)}><Eye className="h-4 w-4" /></IconButton>
-          {writable && <IconButton size="sm" aria-label={t('common.more')} onClick={(e) => e.stopPropagation()}><MoreHorizontal className="h-4 w-4" /></IconButton>}
         </div>
       </div>
     </div>

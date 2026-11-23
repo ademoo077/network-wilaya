@@ -464,5 +464,6 @@
   "anomalies.avant": "Avant",
   "common.loadMore": "Charger plus",
   "common.more": "Plus d’actions",
-  "common.select": "Sélectionner"
+  "common.select": "Sélectionner",
+  "common.yesterday": "Hier"
 }

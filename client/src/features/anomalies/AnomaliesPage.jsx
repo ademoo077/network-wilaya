@@ -198,7 +198,12 @@ export default function AnomaliesPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="font-bold">{t('anomalies.fil.aujourdHui')} · {formatDate(todayAlgiers())}</h2>
-              <p className="text-xs text-muted">{t('anomalies.fil.resume', { signalees: data?.resume?.signalees ?? 0, urgentes: data?.resume?.urgentes ?? 0, en_cours: data?.resume?.en_cours ?? 0, traitees: data?.resume?.traite ?? 0 })}</p>
+              <div className="mt-1 flex flex-wrap gap-1.5 text-xs">
+                <span className="rounded-full bg-surface2 px-2 py-0.5 font-semibold text-ink2">{data?.resume?.signalees ?? 0} {t('anomalies.fil.tabSignalees')}</span>
+                <span className="rounded-full bg-stnonbg px-2 py-0.5 font-semibold text-stnon">{data?.resume?.urgentes ?? 0} {t('priority.urgente')}</span>
+                <span className="rounded-full bg-stcoursbg px-2 py-0.5 font-semibold text-stcours">{data?.resume?.en_cours ?? 0} {t('status.en_cours')}</span>
+                <span className="rounded-full bg-straitebg px-2 py-0.5 font-semibold text-straite">{data?.resume?.traite ?? 0} {t('status.traite')}</span>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {[['aujourdhui', 'anomalies.fil.tabSignalees'], ['traitees', 'anomalies.fil.tabTraitees'], ['maj', 'anomalies.fil.tabMaj']].map(([val, label]) => (
@@ -244,7 +249,7 @@ export default function AnomaliesPage() {
                   </div>
                   {groupeFil === 'date' && groupe.cle && <Link to={`/anomalies?from=${groupe.cle}&to=${groupe.cle}`} onClick={(e) => e.stopPropagation()} className="text-xs text-brand-700 hover:underline">{t('anomalies.fil.voirTableau')}</Link>}
                 </summary>
-                <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="mx-auto grid max-w-6xl gap-4 p-3 sm:grid-cols-2 xl:grid-cols-3">
                   {groupe.items.map((row, index) => (
                     <AnomalieCarte key={row.id} row={row} index={index}
                       selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
