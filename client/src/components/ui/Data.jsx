@@ -17,7 +17,7 @@ export function DataTable({ columns, rows, rowKey = 'id', sort, dir, onSort, sel
       <thead className="sticky top-0 z-10 bg-surface2"><tr>
         {selectable && <th scope="col" className="w-12 border-b border-border px-3 py-2"><Checkbox aria-label="✓" checked={allSelected} onChange={toggleAll} /></th>}
         {columns.map((column) => <th key={column.key} scope="col" style={column.width ? { width: `${column.width}px` } : undefined}
-          className={`relative whitespace-nowrap border-b border-border px-3 py-3 text-start text-xs font-bold uppercase tracking-wide text-muted ${column.className || ''}`}>
+          className={`relative whitespace-nowrap border-b border-border px-3 py-3 text-start text-xs font-bold text-muted ${column.className || ''}`}>
           {column.sortable ? <button className="inline-flex min-h-8 items-center gap-1" onClick={() => onSort?.(column.key)}>{column.label}{sort === column.key ? dir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" /> : <ChevronsUpDown className="h-3.5 w-3.5" aria-hidden="true" />}</button> : column.label}
           {onResizeColumn && <span role="separator" aria-orientation="vertical" aria-label={`${t('synthese.redimensionner')} ${column.label}`}
             data-resize-handle={column.key} className="absolute end-0 top-0 h-full w-2 cursor-col-resize touch-none"

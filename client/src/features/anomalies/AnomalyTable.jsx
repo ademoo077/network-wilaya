@@ -42,7 +42,7 @@ function AnomalyTable({ rows, selected, onSelect, sort, dir, onSort, onPreview, 
     ? <img src={`/api/photos/${id}/thumb`} alt={t(`photo.${role}`)} className="h-12 w-12 shrink-0 rounded-sm object-cover" loading="lazy" />
     : <span className="grid h-12 w-12 shrink-0 place-items-center rounded-sm bg-surface2 text-xs text-muted">—</span>;
   const renderers = {
-    reference: (row) => <bdi title={row.reference} className={`block max-w-full truncate font-bold text-brand-700 ${compact ? 'text-xs' : 'text-sm'}`}>{row.reference}</bdi>,
+    reference: (row) => <bdi title={row.reference} className={`block whitespace-nowrap font-bold text-brand-700 ${compact ? 'text-xs' : 'text-sm'}`}>{row.reference}</bdi>,
     date_signalement: (row) => <span className="whitespace-nowrap text-xs">{formatDate(row.date_signalement)}</span>,
     statut: (row) => writable ? stateSelect(row) : <StatusBadge value={row.statut} />,
     photos: (row) => <span className="inline-flex items-center gap-1" data-photo-cell>
@@ -52,7 +52,9 @@ function AnomalyTable({ rows, selected, onSelect, sort, dir, onSort, onPreview, 
     </span>,
     categorie: (row) => <span className="block max-w-56 truncate text-xs"><bdi>{anomalyLabel(row, 'domaine', lang)}</bdi> <span className="text-muted">›</span> <bdi>{anomalyLabel(row, 'type', lang)}</bdi></span>,
     commune: (row) => <span className="block max-w-40 truncate text-xs"><bdi>{anomalyLabel(row, 'commune', lang)}</bdi><span className="block text-muted"><bdi>{anomalyLabel(row, 'daira', lang)}</bdi></span></span>,
-    agent: (row) => <bdi className="block max-w-32 truncate text-xs">{row.agent_name || '—'}</bdi>,
+    agent: (row) => row.agent_name
+      ? <bdi className="block max-w-32 truncate text-xs">{row.agent_name}</bdi>
+      : <span className="inline-flex rounded-full bg-surface2 px-2 py-0.5 text-xs font-semibold text-muted">{t('list.nonAffectees')}</span>,
     epic: (row) => <bdi className="block max-w-32 truncate text-xs">{row.epic_name || row.intervenant_autre || '—'}</bdi>,
     priorite: (row) => <PriorityBadge value={row.priorite} />,
     source: (row) => <PlatformBadge value={row.plateforme} />,

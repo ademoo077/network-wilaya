@@ -43,9 +43,11 @@ export default function AnomaliesPage() {
   const filters = useMemo(() => Object.fromEntries(new URLSearchParams(signature).entries()), [signature]);
   const q = useDebounced(filters.q || '');
   const isFil = prefs.mode === 'fil';
-  const query = useApiQuery(isFil ? `/anomalies/fil${queryString({ ...filters, q })}` : `/anomalies${queryString({ ...filters, q })}`); 
-  const data = query.data; 
-  const rows = data?.items || data?.groupes?.flatMap(g => g.items) || [];
+  const jour = filters.jour || 'aujourdhui';
+  const groupeFil = filters.groupe || 'date';
+  const query = useApiQuery(isFil ? `/anomalies/fil${queryString({ ...filters, q })}` : `/anomalies${queryString({ ...filters, q })}`);
+  const data = query.data;
+  const rows = data?.items || data?.data || data?.groupes?.flatMap(g => g.items) || [];
   const [selected, setSelected] = useState([]); const [previewId, setPreviewId] = useState(null); const [bulk, setBulk] = useState(null);
   const [action, setAction] = useState(null); const [exporting, setExporting] = useState(null);
   const [importOpen, setImportOpen] = useState(false); const [activeRow, setActiveRow] = useState(0);
@@ -129,15 +131,16 @@ export default function AnomaliesPage() {
   };
   const active = Object.entries(filters).filter(([key, value]) => filterLabels[key] && value);
   const previewItem = rows.find((row) => row.id === previewId) || null;
+  const count = isFil ? (data?.resume?.signalees ?? 0) : (data?.total ?? 0);
   return <div className="page-container">
-    <PageHeader title={t('anomalies.title')} description={t('anomalies.count', { count: data?.total || 0 })} actions={<>
+    <PageHeader title={t('anomalies.title')} description={t('anomalies.count', { count })} actions={<>
       <Button variant="secondary" loading={exporting === 'csv'} disabled={Boolean(exporting)} onClick={() => exportFile('csv')}><Download className="h-4 w-4" />{t('anomalies.exportCsv')}</Button>
       <Button variant="secondary" loading={exporting === 'xlsx'} disabled={Boolean(exporting)} onClick={() => exportFile('xlsx')}><Download className="h-4 w-4" />{t('anomalies.exportXlsx')}</Button>
       {writable && <Button variant="secondary" aria-label={t('import.button')} onClick={() => setImportOpen(true)}><Upload className="h-4 w-4" aria-hidden="true" /><span className="hidden sm:inline">{t('import.button')}</span></Button>}</>} />
     <SavedViews filters={{ ...filters, q }} apply={applyFilters} />
     <QuickViews filters={{ ...filters, q }} update={update} />
     <AnomalyListToolbar prefs={prefs} period={filters.periode || ''} onPeriod={applyPeriod} />
-    <details data-filters open className="mb-4 rounded-md border border-border bg-surface">
+    <details data-filters open={active.length > 0 || !isFil} className="mb-4 rounded-md border border-border bg-surface">
       <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 text-sm font-bold text-ink">
         {t('common.filters')}
         {active.length > 0 && <span className="rounded-full bg-brand-100 px-2 text-xs text-brand-800">{active.length}</span>}
@@ -180,27 +183,67 @@ export default function AnomaliesPage() {
     {/* === FIL (V16) === */}
     {isFil && (
       <section data-fil-section aria-label={t('anomalies.fil.title')}>
-        <header className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-lg border border-border bg-surface">
-          <div className="flex items-center gap-2">
-            <span className="font-bold">{t('anomalies.fil.aujourdHui')} · {formatDate(todayAlgiers())}</span>
-            <span className="text-xs text-muted">{t('anomalies.fil.resume', { signalees: data?.resume?.signalees ?? 0, urgentes: data?.resume?.urgentes ?? 0, en_cours: data?.resume?.en_cours ?? 0, traitees: data?.resume?.traite ?? 0 })}</span>
+        <header className="mb-3 rounded-lg border border-border bg-surface p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-bold">{t('anomalies.fil.aujourdHui')} · {formatDate(todayAlgiers())}</h2>
+              <p className="text-xs text-muted">{t('anomalies.fil.resume', { signalees: data?.resume?.signalees ?? 0, urgentes: data?.resume?.urgentes ?? 0, en_cours: data?.resume?.en_cours ?? 0, traitees: data?.resume?.traite ?? 0 })}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {[['aujourdhui', 'anomalies.fil.tabSignalees'], ['traitees', 'anomalies.fil.tabTraitees'], ['maj', 'anomalies.fil.tabMaj']].map(([val, label]) => (
+                <button key={val} type="button" onClick={() => update({ jour: val, page: 1 })}
+                  className={`min-h-11 rounded-full border px-3 text-xs font-semibold ${jour === val ? 'border-brand-500 bg-brand-100 text-brand-800' : 'border-border bg-surface text-ink-2 hover:bg-surface2'}`}
+                  aria-pressed={jour === val}>{t(label)}</button>
+              ))}
+              <label className="flex items-center gap-1 text-xs text-ink-2">
+                <span>{t('anomalies.fil.groupBy')}</span>
+                <select className="min-h-11 rounded-md border border-border bg-surface px-2 text-xs" value={groupeFil} onChange={(e) => update({ groupe: e.target.value, page: 1 })}>
+                  <option value="date">{t('field.date_signalement')}</option>
+                  <option value="commune">{t('field.commune')}</option>
+                  <option value="daira">{t('field.daira')}</option>
+                  <option value="agent">{t('field.agent')}</option>
+                  <option value="categorie">{t('field.domaine')}</option>
+                  <option value="statut">{t('field.statut')}</option>
+                </select>
+              </label>
+            </div>
           </div>
         </header>
 
-        {data?.groupes?.length ? (
-          data.groupes.map((groupe) => (
-            <div key={groupe.cle} className="mb-6">
-              <h3 className="font-bold mb-2">{groupe.libelle} ({groupe.total})</h3>
-              <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {groupe.items.map((row, index) => (
-                  <AnomalieCarte key={row.id} row={row} index={index}
-                    selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
-                    active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
+        {query.isError ? (
+          <p role="alert" className="rounded-md border border-danger bg-surface p-4 text-sm text-danger">{t('common.error')}</p>
+        ) : query.isPending ? (
+          <ListSkeleton />
+        ) : data?.groupes?.length ? (
+          data.groupes.map((groupe) => {
+            const total = groupe.total || 0;
+            const nt = groupe.par_statut?.non_traite || 0;
+            const ec = groupe.par_statut?.en_cours || 0;
+            const tr = groupe.par_statut?.traite || 0;
+            return (
+              <details key={groupe.cle || 'groupe'} open className="mb-4 rounded-md border border-border bg-surface">
+                <summary className="sticky top-0 z-10 flex min-h-11 cursor-pointer items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate font-bold">{groupe.libelle} ({total})</span>
+                    <span className="hidden h-2 w-24 overflow-hidden rounded-full bg-surface2 sm:flex" aria-hidden="true">
+                      <span className="bg-stnon" style={{ width: `${total ? (nt / total) * 100 : 0}%` }} />
+                      <span className="bg-stcours" style={{ width: `${total ? (ec / total) * 100 : 0}%` }} />
+                      <span className="bg-straite" style={{ width: `${total ? (tr / total) * 100 : 0}%` }} />
+                    </span>
+                  </div>
+                  {groupeFil === 'date' && groupe.cle && <Link to={`/anomalies?from=${groupe.cle}&to=${groupe.cle}`} onClick={(e) => e.stopPropagation()} className="text-xs text-brand-700 hover:underline">{t('anomalies.fil.voirTableau')}</Link>}
+                </summary>
+                <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {groupe.items.map((row, index) => (
+                    <AnomalieCarte key={row.id} row={row} index={index}
+                      selected={selected} onSelect={setSelected} onPreview={openPreview} writable={writable}
+                      active={activeRow === index} onRowFocus={(r, i) => { activeRef.current = i; setActiveRow(i); }}
+                    />
+                  ))}
+                </div>
+              </details>
+            );
+          })
         ) : (
           <EmptyState icon={ListX} title={t('anomalies.fil.empty')} action={writable && <Button as={Link} to="/anomalies/nouvelle">{t('nav.new')}</Button>} />
         )}

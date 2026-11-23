@@ -455,5 +455,7 @@
   "anomalies.fil.tabSignalees": "المبلغ عنها",
   "anomalies.fil.tabTraitees": "المعالجة",
   "anomalies.fil.tabMaj": "المحدثة",
-  "list.fil": "سجل"
+  "list.fil": "سجل",
+  "anomalies.fil.groupBy": "تجميع حسب",
+  "anomalies.fil.voirTableau": "عرض في الجدول"
 }

@@ -455,5 +455,7 @@
   "anomalies.fil.tabSignalees": "Signalées",
   "anomalies.fil.tabTraitees": "Traitées",
   "anomalies.fil.tabMaj": "Mises à jour",
-  "list.fil": "Fil"
+  "list.fil": "Fil",
+  "anomalies.fil.groupBy": "Grouper par",
+  "anomalies.fil.voirTableau": "Voir dans le tableau"
 }
