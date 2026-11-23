@@ -43,4 +43,19 @@ describe('API Fil des anomalies', () => {
     expect(res.body.resume.signalees).toBe(3);
     expect(res.body.groupes.length).toBe(2);
   });
+
+  it('comptes groupes = comptes tableau pour les mêmes filtres', async () => {
+    const fil = await agent.get('/api/anomalies/fil?jour=tout&groupe=date');
+    const list = await agent.get('/api/anomalies?from=' + yesterday + '&to=' + today + '&pageSize=100');
+    expect(fil.status).toBe(200);
+    expect(list.status).toBe(200);
+    const filTotal = fil.body.groupes.reduce((s, g) => s + g.total, 0);
+    expect(filTotal).toBe(list.body.total);
+  });
+
+  it('resume Aujourd\'hui = anomalies du jour fuseau Alger', async () => {
+    const fil = await agent.get('/api/anomalies/fil?jour=aujourdhui');
+    const list = await agent.get('/api/anomalies?from=' + today + '&to=' + today + '&pageSize=100');
+    expect(fil.body.resume.signalees).toBe(list.body.total);
+  });
 });
