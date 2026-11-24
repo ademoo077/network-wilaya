@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Clipboard, FileDown, LockKeyhole, Printer } 
 import { addDays, formatDate, formatDateTime, todayAlgiers, weekStart } from '@anm/shared';
 import { api, download, queryString } from '../../api/client.js';
 import { PageHeader } from '../../components/layout/PageHeader.jsx';
-import { Alert, Button, Card, EmptyState, ErrorState, IconButton, LoadingBlock, StatusBadge, useToast } from '../../components/ui/index.js';
+import { Alert, Button, Card, EmptyState, ErrorState, IconButton, LoadingBlock, useToast } from '../../components/ui/index.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useRefs } from '../../context/RefsContext.jsx';
 import { useFetch } from '../../hooks/useFetch.js';
@@ -26,7 +26,6 @@ export default function WeeklyReportView({ week, version = null, onWeek, onVersi
   if (loading) return <div className="page-container"><LoadingBlock /></div>;
   if (error) return <div className="page-container"><ErrorState message={error.message} onRetry={reload} /></div>;
   const k = report.kpis;
-  const v = report.veille;
   const hasData = k.recues > 0 || k.traitees_semaine > 0 || k.stock_fin > 0;
   return <div className="page-container">
 <div className="no-print">
@@ -66,31 +65,6 @@ export default function WeeklyReportView({ week, version = null, onWeek, onVersi
 <ReportTable title={t('dashboard.byDaira')} rows={report.groupes.daira} lang={lang} t={t} />
 <ReportTable title={t('dashboard.byCommune')} rows={report.groupes.commune} lang={lang} t={t} />
 <ReportTable title={t('dashboard.byEpic')} rows={report.groupes.epic} lang={lang} t={t} />
-<ListSection title={t('report.openLate', { days: report.meta.delai_retard_jours })} rows={report.listes.retard} />
-{v && <section className="mt-8 break-before-auto">
-<h2 className="mb-3 text-lg font-black">{t('report.veille.title')}</h2>
-<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-<ReportKpi label={t('report.veille.collected')} value={v.totaux.collectes} />
-<ReportKpi label={t('report.veille.relevant')} value={v.totaux.pertinents} />
-<ReportKpi label={t('report.veille.retained')} value={v.totaux.retenus} />
-<ReportKpi label={t('report.veille.converted')} value={v.totaux.convertis} />
-<ReportKpi label={t('report.veille.reaction')} value={v.qualite.delai_median_heures === null ? '—' : `${v.qualite.delai_median_heures} h`} />
-<ReportKpi label={t('report.veille.precision')} value={v.qualite.precision_estimee === null ? '—' : `${Math.round(v.qualite.precision_estimee * 1000) / 10} %`} />
-<ReportKpi label={t('report.veille.recall')} value={v.qualite.rappel_estime === null ? '—' : `${Math.round(v.qualite.rappel_estime * 1000) / 10} %`} />
-<ReportKpi label={t('report.veille.events')} value={v.evenements.length} />
-</div>
-<div className="mt-4 grid gap-4 sm:grid-cols-2">
-<div>
-<h3 className="mb-2 text-sm font-bold">{t('veille.dashboard.byGroup')}</h3>
-{v.groupes.length ? <table className="w-full text-xs"><thead className="bg-surface2"><tr><th className="p-2 text-start">{t('veille.group')}</th><th>{t('common.total')}</th><th>{t('veille.dashboard.retained')}</th></tr></thead><tbody>{v.groupes.map((row) => <tr key={row.id} className="border-t border-border"><td className="p-2"><bdi>{lang === 'ar' ? row.name_ar || row.name_fr : row.name_fr}</bdi></td><td className="text-center">{row.total}</td><td className="text-center">{row.retenus}</td></tr>)}</tbody></table> : <p className="text-sm text-muted">—</p>}
-</div>
-<div>
-<h3 className="mb-2 text-sm font-bold">{t('veille.dashboard.byCommune')}</h3>
-{v.communes.length ? <table className="w-full text-xs"><thead className="bg-surface2"><tr><th className="p-2 text-start">{t('veille.commune')}</th><th>{t('common.total')}</th><th>{t('veille.dashboard.retained')}</th></tr></thead><tbody>{v.communes.map((row) => <tr key={row.id} className="border-t border-border"><td className="p-2"><bdi>{lang === 'ar' ? row.name_ar || row.name_fr : row.name_fr}</bdi></td><td className="text-center">{row.total}</td><td className="text-center">{row.retenus}</td></tr>)}</tbody></table> : <p className="text-sm text-muted">—</p>}
-</div>
-</div>
-{v.evenements.length > 0 && <div className="mt-4"><h3 className="mb-2 text-sm font-bold">{t('veille.dashboard.events')}</h3><ul className="grid gap-2">{v.evenements.map((event) => <li key={event.id} className="flex flex-wrap justify-between gap-2 rounded-sm border border-border p-2 text-xs"><span><bdi>{lang === 'ar' ? event.groupe_ar || event.groupe_fr || '—' : event.groupe_fr || '—'}</bdi> · <bdi>{lang === 'ar' ? event.commune_ar || event.commune_fr || '—' : event.commune_fr || '—'}</bdi></span><span className="text-muted">{t('report.veille.eventLine', { elements: event.nb_elements, sources: event.nb_sources })}</span></li>)}</ul></div>}
-</section>}
 <footer className="mt-12 grid grid-cols-2 gap-12">
 <div className="h-24 border-t border-border pt-2 text-xs text-muted">{t('report.signature')}</div>
 <div className="h-24 border-t border-border pt-2 text-xs text-muted">{t('report.signature')}</div>
@@ -101,4 +75,3 @@ export default function WeeklyReportView({ week, version = null, onWeek, onVersi
 
 function ReportKpi({ label, value, testId }) { return <div data-report-kpi={testId} className="rounded-md border border-border bg-surface2 p-3 text-center"><p className="text-xl font-black">{value}</p><p className="mt-1 text-[10px] font-semibold text-muted">{label}</p></div>; }
 function ReportTable({ title, rows, lang, t }) { return <section className="mt-8 break-before-auto"><h2 className="mb-3 text-lg font-black">{title}</h2><div className="overflow-hidden rounded-sm border border-border"><table className="w-full text-xs"><thead className="bg-surface2"><tr><th className="p-2 text-start">{title}</th><th>{t('common.total')}</th><th>{t('status.non_traite')}</th><th>{t('status.en_cours')}</th><th>{t('status.traite')}</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className="border-t border-border"><td className="p-2"><bdi>{lang === 'ar' ? row.label_ar || row.label_fr : row.label_fr || row.label_ar}</bdi></td><td className="text-center">{row.total}</td><td className="text-center">{row.non_traite}</td><td className="text-center">{row.en_cours}</td><td className="text-center">{row.traite}</td></tr>)}</tbody></table></div></section>; }
-function ListSection({ title, rows }) { return <section className="mt-8"><h2 className="mb-3 text-lg font-black">{title}</h2>{rows.length ? <ul className="grid gap-2 sm:grid-cols-2">{rows.map((row) => <li key={row.id} className="flex justify-between gap-2 rounded-sm border border-border p-2 text-xs"><bdi>{row.reference}</bdi><StatusBadge value={row.statut_au} /></li>)}</ul> : <p className="text-sm text-muted">—</p>}</section>; }

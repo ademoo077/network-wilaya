@@ -2,7 +2,7 @@ import { test, expect } from './fixture.js';
 import { authenticate, collectErrors } from './helpers.js';
 import { expectAccessible, expectNoOverflow } from './geometry.js';
 
-test('Rapport officiel — KPIs épurés, sans graphes ni urgentes ouvertes', async ({ page, baseURL }) => {
+test('Rapport officiel — KPIs épurés, sans graphes, urgentes, retard ni veille', async ({ page, baseURL }) => {
   await authenticate(page, baseURL, 'operateur');
   const errors = collectErrors(page);
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -26,8 +26,10 @@ test('Rapport officiel — KPIs épurés, sans graphes ni urgentes ouvertes', as
   await expect(paper.getByRole('heading', { name: 'Urgentes ouvertes' })).toHaveCount(0);
   await expect(paper.getByText('Urgentes ouvertes', { exact: true })).toHaveCount(0);
 
-  await expect(paper.getByRole('heading', { name: /Ouvertes depuis plus de/ })).toBeVisible();
-  await expect(paper.getByRole('heading', { name: 'Veille citoyenne' })).toBeVisible();
+  await expect(paper.getByRole('heading', { name: /Ouvertes depuis plus de/ })).toHaveCount(0);
+  await expect(paper.getByRole('heading', { name: 'Veille citoyenne' })).toHaveCount(0);
+  await expect(paper.getByText('Collectées', { exact: true })).toHaveCount(0);
+  await expect(paper.getByText('Événements multi-sources', { exact: true })).toHaveCount(0);
 
   await expectAccessible(page);
   for (const width of [390, 768, 1024, 1440]) {
