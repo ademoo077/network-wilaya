@@ -131,7 +131,7 @@
 
 @media print {
   @page { margin: 0; size: A4 portrait; }
-  html, body { margin: 0 !important; padding: 0 !important; width: var(--page-w-mm, 210mm); height: auto; overflow: visible !important; background: #fff !important; }
+  html, body { margin: 0 !important; padding: 0 !important; width: var(--page-w-mm, 210mm); height: auto; overflow: visible !important; background: var(--surface) !important; }
   .no-print, aside, header[role='banner'] { display: none !important; }
   .app-grid { display: block !important; }
   .page-container { max-width: none !important; padding: 0 !important; margin: 0 !important; width: var(--page-w-mm, 210mm) !important; }
@@ -148,7 +148,7 @@
 #print-test-root { display: none; }
 @media print {
   body[data-print-test='1'] .app-grid, body[data-print-test='1'] [data-print-document] { display: none !important; }
-  body[data-print-test='1'] #print-test-root { display: block !important; position: fixed; inset: 0; margin: 0; padding: 0; background: #fff; }
+  body[data-print-test='1'] #print-test-root { display: block !important; position: fixed; inset: 0; margin: 0; padding: 0; background: var(--surface); }
 }
 @media screen {
   [data-display-width='print'] [data-print-header],
