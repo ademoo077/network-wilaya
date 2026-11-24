@@ -19,6 +19,7 @@
     "dev:client": "vite --config client/vite.config.js",
     "build": "vite build --config client/vite.config.js",
     "start": "node scripts/start.js",
+    "start:24-7": "node scripts/start-24-7.js",
     "test": "vitest run && node scripts/check-styles.js",
     "test:unit": "vitest run",
     "test:e2e": "node scripts/e2e.js",
