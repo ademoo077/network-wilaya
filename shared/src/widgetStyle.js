@@ -20,16 +20,20 @@ function choix(valeur, autorisees, repli) {
   return autorisees.includes(valeur) ? valeur : repli;
 }
 
-/** Normalise `options.style` ; un style absent retombe sur les valeurs par défaut. */
+/** Normalise `options.style` ; préserve les propriétés de couleur/texte V17. */
 export function normaliserStyle(options) {
   const style = options && typeof options === 'object' && options.style && typeof options.style === 'object'
     ? options.style
     : {};
-  return {
+  const base = {
     alignement: choix(style.alignement, STYLE_ALIGNEMENTS, STYLE_DEFAUT.alignement),
     densite: choix(style.densite, STYLE_DENSITES, STYLE_DEFAUT.densite),
     accent: choix(style.accent, STYLE_ACCENTS, STYLE_DEFAUT.accent),
   };
+  for (const [k, v] of Object.entries(style)) {
+    if (!(k in base) && v !== undefined) base[k] = v;
+  }
+  return base;
 }
 
 const STYLE_CONTRAINTES = [

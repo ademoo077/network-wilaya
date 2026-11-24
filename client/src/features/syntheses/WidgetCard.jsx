@@ -12,12 +12,13 @@ import {
 } from '@anm/shared';
 import { api, queryString } from '../../api/client.js';
 import { ErrorBoundary } from '../../components/ErrorBoundary.jsx';
-import { Button, Card, CardHeader, EmptyState, Skeleton } from '../../components/ui/index.js';
+import { Button, Card, EmptyState, Skeleton } from '../../components/ui/index.js';
 import {
   chartData, dimensionLabel, dimsOf, measureLabel, mesuresOf,
   rowDimensionLabel, rowsOf,
 } from './widgetData.js';
 import { WidgetActionBar, WidgetDialogs } from './WidgetActions.jsx';
+import EditableText from './EditableText.jsx';
 
 const ROWS_PER_PAGE = 12;
 const COLORS = ['var(--brand-600)', 'var(--brand-500)', 'var(--brand-800)', 'var(--brand-900)', 'var(--brand-700)'];
@@ -45,11 +46,11 @@ function summary(data, measures, lang) {
   return data.slice(0, 12).map((row) => `${row.name}: ${measures.map((m) => `${measureLabel(m.id, lang)} ${row[m.id]}`).join(', ')}`).join('; ');
 }
 
-function BarresChart({ result, title, lang, dir, height, actions, t }) {
+function BarresChart({ result, title, lang, dir, height, actions, t , onPatchTitle, style, bloc }) {
   const data = chartData(result, lang).slice(0, 12);
   const measures = mesuresOf(result);
   return <>
-    <CardHeader title={title} action={actions} />
+    <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
     <p className="sr-only">{summary(data, measures, lang)}</p>
     <div className={`${height} w-full`} aria-hidden="true" data-chart>
       <ResponsiveContainer width="100%" height="100%">
@@ -72,11 +73,11 @@ function BarresChart({ result, title, lang, dir, height, actions, t }) {
   </>;
 }
 
-function CourbeChart({ result, title, lang, dir, height, actions, t }) {
+function CourbeChart({ result, title, lang, dir, height, actions, t , onPatchTitle, style, bloc }) {
   const data = chartData(result, lang).slice(0, 40);
   const measures = mesuresOf(result);
   return <>
-    <CardHeader title={title} action={actions} />
+    <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
     <p className="sr-only">{summary(data, measures, lang)}</p>
     <div className={`${height} w-full`} aria-hidden="true" data-chart>
       <ResponsiveContainer width="100%" height="100%">
@@ -97,7 +98,7 @@ function CourbeChart({ result, title, lang, dir, height, actions, t }) {
   </>;
 }
 
-function AnneauChart({ result, title, t, lang, actions }) {
+function AnneauChart({ result, title, t, lang, actions , onPatchTitle, style, bloc }) {
   const measure = mesuresOf(result)[0];
   const data = chartData(result, lang).slice(0, 8).map((row) => ({ name: row.name, value: row[measure?.id] || 0 }));
   const total = data.reduce((sum, row) => sum + row.value, 0);
@@ -111,7 +112,7 @@ function AnneauChart({ result, title, t, lang, actions }) {
     </text>;
   };
   return <>
-    <CardHeader title={title} action={actions} />
+    <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
     <p className="sr-only">{data.map((row) => `${row.name}: ${row.value}`).join('; ')}</p>
     <div className="relative h-56 w-full" aria-hidden="true" data-anneau-chart data-anneau-graphique data-chart>
       <ResponsiveContainer width="100%" height="100%">
@@ -158,7 +159,7 @@ function MiniChart({ result, lang, dir, t }) {
   </div>;
 }
 
-function TableauWidget({ bloc, result, title, lang, dir, t, actions, role }) {
+function TableauWidget({ bloc, result, title, lang, dir, t, actions, role , onPatchTitle, style,  }) {
   const rows = rowsOf(result);
   const [page, setPage] = useState(0);
   const colonnes = colonnesAffichees(bloc, result, { role });
@@ -184,7 +185,7 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions, role }) {
   const Previous = dir === 'rtl' ? ChevronRight : ChevronLeft;
   const Next = dir === 'rtl' ? ChevronLeft : ChevronRight;
   return <>
-    <CardHeader title={title} action={actions} />
+    <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
     {bloc.options?.avec_graphique && <MiniChart result={result} lang={lang} dir={dir} t={t} />}
     <div className="overflow-x-auto rounded-md border border-border lg:overflow-x-visible" role="region" aria-label={title} tabIndex={0}>
       <table className="w-full text-sm" data-widget-table><thead className="sticky top-0 z-10 bg-surface2"><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-2 text-xs font-bold text-ink2 lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
@@ -208,7 +209,7 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions, role }) {
   </>;
 }
 
-function KpiWidget({ bloc, result, title, lang, actions }) {
+function KpiWidget({ bloc, result, title, lang, actions , onPatchTitle, style,  }) {
   const measures = mesuresOf(result);
   const count = measures.length;
   const objectifs = bloc.options?.objectifs || {};
@@ -243,7 +244,7 @@ function KpiWidget({ bloc, result, title, lang, actions }) {
     return 'border-border bg-surface2';
   };
 
-  return <><CardHeader title={title} action={actions} /><div ref={grilleRef} style={styleColonnes} className={`grid gap-2 p-2 ${cols}`} data-kpi-grid data-kpi-count={count}>
+  return <><TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} /><div ref={grilleRef} style={styleColonnes} className={`grid gap-2 p-2 ${cols}`} data-kpi-grid data-kpi-count={count}>
     {measures.map((measure) => {
       const value = firstValue(result, measure.id);
       const variation = firstVariation(result, measure.id);
@@ -266,7 +267,7 @@ function TexteWidget({ bloc, lang, t, alignement = 'auto' }) {
   return <div className={`whitespace-pre-wrap p-2 text-sm leading-relaxed text-ink2 ${classeAlignementStyle(alignement)}`}>{text || t('synthese.texteAjouter')}</div>;
 }
 
-function PhotoPairsWidget({ bloc, result, t, lang, actions }) {
+function PhotoPairsWidget({ bloc, result, t, lang, actions , onPatchTitle, style,  }) {
   const periode = result?.meta?.periode || {};
   const limite = Math.min(24, Math.max(1, Number(bloc.options?.limite) || 12));
   const debut = periode.debut || '';
@@ -282,11 +283,11 @@ function PhotoPairsWidget({ bloc, result, t, lang, actions }) {
     return () => { alive = false; };
   }, [debut, fin, limite]);
   const title = bloc.titre || (lang === 'ar' ? 'مقارنة قبل / بعد' : 'Comparer avant / après');
-  if (state.loading) return <><CardHeader title={title} action={actions} /><div className="p-4"><Skeleton className="h-24 w-full" /></div></>;
-  if (state.error) return <><CardHeader title={title} action={actions} /><div className="p-4 text-sm text-danger">{state.error.message}</div></>;
-  if (!state.items.length) return <><CardHeader title={title} action={actions} /><EmptyState title={title} description={t('photo.noPairs')} /></>;
+  if (state.loading) return <><TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} /><div className="p-4"><Skeleton className="h-24 w-full" /></div></>;
+  if (state.error) return <><TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} /><div className="p-4 text-sm text-danger">{state.error.message}</div></>;
+  if (!state.items.length) return <><TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} /><EmptyState title={title} description={t('photo.noPairs')} /></>;
   return <>
-    <CardHeader title={title} action={actions} />
+    <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
     <div data-photo-pairs data-photo-pairs-per-page={limite} className="grid min-w-0 grid-cols-1 gap-3 p-4 sm:grid-cols-2">
       {state.items.map((pair) => {
         const lieu = [pair.commune?.[lang] || pair.commune?.fr, pair.daira?.[lang] || pair.daira?.fr].filter(Boolean).join(' / ');
@@ -324,16 +325,28 @@ function typeLabel(type, lang) {
   return lang === 'ar' ? 'عنصر' : (labels[type] || type);
 }
 
-function RenderWidget({ bloc, result, t, lang, dir, actions, role, style }) {
+function TitleBlock({ bloc, title, actions, onPatchTitle, style }) {
+  const color = style?.titreCouleur || undefined;
+  return <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
+    <div className="min-w-0">
+      <h2 className="text-base font-bold text-ink" style={color ? { color } : undefined}>
+        <EditableText value={title} onChange={onPatchTitle} propId="titre" blockId={bloc?.id} className="min-w-[4rem]" />
+      </h2>
+    </div>
+    {actions && <div className="min-w-0 max-w-full">{actions}</div>}
+  </div>;
+}
+function RenderWidget({ bloc, result, t, lang, dir, actions, role, style, onPatchTitle }) {
   const title = bloc.titre || typeLabel(bloc.type, lang);
   const height = heightClass(bloc);
-  if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><CardHeader title={title} action={actions} /><TexteWidget bloc={bloc} lang={lang} t={t} alignement={style.alignement} /></>;
-  if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} actions={actions} />;
-  if (bloc.type === 'avant_apres') return <PhotoPairsWidget bloc={bloc} result={result} t={t} lang={lang} actions={actions} />;
-  if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} role={role} />;
-  if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
-  if (bloc.type === 'anneau') return <AnneauChart result={result} title={title} t={t} lang={lang} actions={actions} />;
-  if (['barres', 'histogramme', 'carte_thermique', 'pareto', 'cascade', 'treemap', 'radar', 'nuage', 'entonnoir'].includes(bloc.type)) return <BarresChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} />;
+  const H = () => <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
+  if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><H /><TexteWidget bloc={bloc} lang={lang} t={t} alignement={style.alignement} /></>;
+  if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
+  if (bloc.type === 'avant_apres') return <PhotoPairsWidget bloc={bloc} result={result} t={t} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
+  if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} role={role} onPatchTitle={onPatchTitle} style={style} />;
+  if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} onPatchTitle={onPatchTitle} style={style} bloc={bloc} />;
+  if (bloc.type === 'anneau') return <AnneauChart result={result} title={title} t={t} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} bloc={bloc} />;
+  if (['barres', 'histogramme', 'carte_thermique', 'pareto', 'cascade', 'treemap', 'radar', 'nuage', 'entonnoir'].includes(bloc.type)) return <BarresChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} onPatchTitle={onPatchTitle} style={style} bloc={bloc} />;
   return <EmptyState title={title} description={t('synthese.visuelNonRendu', { visuel: bloc.type })} />;
 }
 
@@ -350,12 +363,18 @@ export default function WidgetCard({ bloc, result, t, lang, dir, onVoirFiches, e
   const style = normaliserStyle(bloc.options);
   const densite = classeDensiteStyle(style.densite);
   const accent = classeAccentStyle(style.accent);
+  const onPatchTitle = editorActions?.onPatch ? (v) => editorActions.onPatch({ titre: v }) : undefined;
+  const cardStyle = {
+    ...(style.fond ? { backgroundColor: style.fond } : {}),
+    ...(style.bordure ? { borderColor: style.bordure } : {}),
+    ...(style.texteCouleur ? { color: style.texteCouleur } : {}),
+  };
   const body = needsResult && !result
-    ? <><CardHeader title={title} action={actions} /><div className="p-4"><Skeleton className="h-24 w-full" /></div></>
-    : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={actions} role={role} style={style} />;
-  const fullBody = needsResult && !result ? <Skeleton className="h-24 w-full" /> : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={null} role={role} style={style} />;
+    ? <><TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} /><div className="p-4"><Skeleton className="h-24 w-full" /></div></>
+    : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={actions} role={role} style={style} onPatchTitle={onPatchTitle} />;
+  const fullBody = needsResult && !result ? <Skeleton className="h-24 w-full" /> : <RenderWidget bloc={bloc} result={result} t={t} lang={lang} dir={dir} actions={null} role={role} style={style} onPatchTitle={onPatchTitle} />;
   return <ErrorBoundary fallback={({ error, reset }) => <WidgetError error={error} reset={reset} t={t} bloc={bloc} />}>
-    <Card data-testid={`widget-${bloc.id}`} data-widget-card data-style-align={style.alignement} data-style-accent={style.accent} className={`${densite} ${accent}`}>{body}</Card>
+    <Card data-testid={`widget-${bloc.id}`} data-widget-card data-style-align={style.alignement} data-style-accent={style.accent} className={`${densite} ${accent}`} style={cardStyle}>{body}</Card>
     <WidgetDialogs dialog={dialog} onClose={() => setDialog(null)} title={title} result={result} lang={lang} t={t} fullBody={fullBody} />
   </ErrorBoundary>;
 }

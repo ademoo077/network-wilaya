@@ -3,13 +3,14 @@ import { Download, Save, X, Plus, Trash2 } from 'lucide-react';
 import {
   BLOC_TYPES, GALERIE, formatDateShort, MEASURES, CATALOGUE,
   COLONNES_PRESETS, COLONNE_PRIORITES, appliquerPresetColonnes, colonnesDisponibles, colonnesDuBloc,
-  normaliserStyle,
+  normaliserStyle, proprietesPourBloc, getByPath, setByPath,
 } from '@anm/shared';
 import {
   Button, Card, Dialog, Drawer, Input, Select, SegmentedControl, Skeleton, Textarea, Checkbox,
 } from '../../components/ui/index.js';
 import { Chip } from '../../components/ui/Chip.jsx';
 import WidgetCard from './WidgetCard.jsx';
+import ColorPicker from './ColorPicker.jsx';
 
 const COMPARAISON_OPTIONS = [
   { value: 'aucune', labelFr: 'Aucune', labelAr: 'لا شيء' },
@@ -218,6 +219,8 @@ export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t
   const periode = requete.periode || { mode: 'herite' };
   const style = normaliserStyle(bloc.options);
   const updateStyle = (patch) => onPatch({ options: { ...bloc.options, style: { ...style, ...patch } } });
+  const propsRegistre = proprietesPourBloc(bloc);
+
 
   const updateRequete = (patch) => onPatch({ requete: { ...requete, ...patch } });
   const updateMesures = (next) => updateRequete({ mesures: next });
@@ -255,6 +258,16 @@ export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t
           <Select label={t('synthese.style.densite')} value={style.densite} onChange={(event) => updateStyle({ densite: event.target.value })} options={[{ value: 'normal', label: t('synthese.style.densiteNormal') }, { value: 'compact', label: t('synthese.style.densiteCompacte') }]} />
           <Select label={t('synthese.style.accent')} value={style.accent} onChange={(event) => updateStyle({ accent: event.target.value })} options={[{ value: 'none', label: t('synthese.style.accentNone') }, { value: 'brand', label: t('synthese.style.accentBrand') }, { value: 'warning', label: t('synthese.style.accentWarning') }, { value: 'danger', label: t('synthese.style.accentDanger') }, { value: 'info', label: t('synthese.style.accentInfo') }]} />
           <p className="text-[11px] text-muted">{t('synthese.style.help')}</p>
+          <div className="grid gap-3 border-t border-border pt-3">
+            <p className="text-xs font-bold text-ink2">Propriétés (V17)</p>
+            {propsRegistre.filter((p) => p.type === 'text' && p.path !== 'titre').map((p) => (
+              <Input key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} onChange={(e) => onPatch(setByPath(bloc, p.path, e.target.value))} />
+            ))}
+            {propsRegistre.filter((p) => p.type === 'color').map((p) => (
+              <ColorPicker key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} contrastAgainst={style.fond || undefined}
+                onChange={(v) => onPatch(setByPath(bloc, p.path, v))} />
+            ))}
+          </div>
         </div>
         {bloc.type === 'texte' && <div className="grid gap-4 rounded-lg border border-border bg-surface2 p-3">
           <p className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.contenuAr')}</p>
