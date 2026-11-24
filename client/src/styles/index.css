@@ -120,6 +120,11 @@
 [data-print-document] table { width: 100%; table-layout: fixed; }
 [data-print-document] thead { display: table-header-group; }
 [data-print-document] tr { break-inside: avoid; page-break-inside: avoid; }
+[data-print-document] .official-print-body { font-size: calc(1rem * var(--print-font-scale, 1)); }
+[data-print-document][data-small='1'] [data-synthese-grid] { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+[data-print-document][data-small='1'] [data-largeur='simple'],
+[data-print-document][data-small='1'] [data-largeur='double'] { grid-column: span 6 / span 6 !important; }
+[data-print-document][data-small='1'] [data-largeur='pleine'] { grid-column: span 6 / span 6 !important; }
 
 @media print {
   @page { margin: 0; size: A4 portrait; }
@@ -129,7 +134,11 @@
   .page-container { max-width: none !important; padding: 0 !important; margin: 0 !important; width: var(--page-w-mm, 210mm) !important; }
   .report-paper { margin: 0 !important; padding: 0 !important; box-shadow: none !important; width: var(--page-w-mm, 210mm) !important; max-width: none !important; border: 0 !important; border-radius: 0 !important; }
   [data-print-document] { width: var(--page-w-mm, 210mm) !important; max-width: none !important; margin: 0 !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; overflow: visible !important; }
-  [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: 6mm !important; }
+  [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: 4mm !important; }
+  [data-print-document][data-small='1'] [data-synthese-grid] { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 3mm !important; }
+  [data-print-document][data-small='1'] [data-largeur='simple'],
+  [data-print-document][data-small='1'] [data-largeur='double'],
+  [data-print-document][data-small='1'] [data-largeur='pleine'] { grid-column: span 6 / span 6 !important; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
 

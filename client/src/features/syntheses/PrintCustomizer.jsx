@@ -8,6 +8,7 @@ const FORMATS = [
   { value: 'a4', label: 'A4' },
   { value: 'a3', label: 'A3' },
   { value: 'letter', label: 'Lettre' },
+  { value: 'custom', label: 'Personnalisé' },
 ];
 
 export function createPrintSettings({ modele, periode, user, t }) {
@@ -26,14 +27,17 @@ export function createPrintSettings({ modele, periode, user, t }) {
     footerNote: t('synthese.print.defaultFooter'),
     orientation: 'portrait',
     format: 'a4',
+    customW: 210,
+    customH: 297,
     margins: { top: 10, right: 10, bottom: 10, left: 10, gutter: 0 },
   };
 }
 
 function PrintPreview({ settings, blocs = [], t, lang }) {
-  const dims = formatDims(settings.format, settings.orientation);
+  const custom = { w: settings.customW, h: settings.customH };
+  const dims = formatDims(settings.format, settings.orientation, custom);
   const m = normalizeMargins(settings.margins, settings.format);
-  const u = utileZone(settings.format, settings.orientation, settings.margins);
+  const u = utileZone(settings.format, settings.orientation, settings.margins, custom);
   const landscape = settings.orientation === 'landscape';
   const titles = blocs.map((bloc) => bloc.titre).filter(Boolean).slice(0, 4);
   const ratio = dims.w / dims.h;
@@ -89,14 +93,19 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
         <fieldset className="grid gap-3">
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.layout')}</legend>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Select label={t('synthese.print.format', { defaultValue: 'Format' })} value={settings.format || 'a4'} onChange={(e) => { const f = e.target.value; const def = PRINT_FORMATS[f]?.margin ?? 10; onChange({ ...settings, format: f, margins: { top: def, right: def, bottom: def, left: def, gutter: 0 } }); }} options={FORMATS} />
+            <Select label={t('synthese.print.format', { defaultValue: 'Format' })} value={settings.format || 'a4'} onChange={(e) => { const f = e.target.value; const def = PRINT_FORMATS[f]?.margin ?? 8; onChange({ ...settings, format: f, margins: { top: def, right: def, bottom: def, left: def, gutter: settings.margins?.gutter || 0 } }); }} options={FORMATS} />
             <Select label={t('synthese.print.orientation')} value={settings.orientation} onChange={set('orientation')} options={[{ value: 'portrait', label: t('synthese.print.portrait') }, { value: 'landscape', label: t('synthese.print.landscape') }]} />
           </div>
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Input type="number" min={0} step="1" label={t('synthese.print.marginTop', { defaultValue: 'Marge haut (mm)' })} value={m.top} onChange={setMargin('top')} />
-            <Input type="number" min={0} step="1" label={t('synthese.print.marginRight', { defaultValue: 'Marge droite (mm)' })} value={m.right} onChange={setMargin('right')} />
-            <Input type="number" min={0} step="1" label={t('synthese.print.marginBottom', { defaultValue: 'Marge bas (mm)' })} value={m.bottom} onChange={setMargin('bottom')} />
-            <Input type="number" min={0} step="1" label={t('synthese.print.marginLeft', { defaultValue: 'Marge gauche (mm)' })} value={m.left} onChange={setMargin('left')} />
+          {settings.format === 'custom' && <div className="grid gap-4 sm:grid-cols-2">
+            <Input type="number" min={100} step="1" label={t('synthese.print.customW', { defaultValue: 'Largeur (mm)' })} value={settings.customW || 210} onChange={(e) => onChange({ ...settings, customW: Number(e.target.value) })} />
+            <Input type="number" min={100} step="1" label={t('synthese.print.customH', { defaultValue: 'Hauteur (mm)' })} value={settings.customH || 297} onChange={(e) => onChange({ ...settings, customH: Number(e.target.value) })} />
+          </div>}
+          <div className="grid gap-3 sm:grid-cols-5">
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginTop', { defaultValue: 'Haut (mm)' })} value={m.top} onChange={setMargin('top')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginRight', { defaultValue: 'Droite (mm)' })} value={m.right} onChange={setMargin('right')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginBottom', { defaultValue: 'Bas (mm)' })} value={m.bottom} onChange={setMargin('bottom')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginLeft', { defaultValue: 'Gauche (mm)' })} value={m.left} onChange={setMargin('left')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.gutter', { defaultValue: 'Reliure (mm)' })} value={m.gutter} onChange={setMargin('gutter')} />
           </div>
           {warnMargin && <p className="text-xs text-stcours" role="status">{t('synthese.print.marginWarn', { defaultValue: 'Marge sous le minimum : risque de coupure par l’imprimante.' })}</p>}
         </fieldset>
@@ -107,9 +116,13 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
 }
 
 export function OfficialPrintDocument({ settings, t, lang, children }) {
-  const dims = formatDims(settings.format || 'a4', settings.orientation || 'portrait');
+  const custom = { w: settings.customW, h: settings.customH };
+  const dims = formatDims(settings.format || 'a4', settings.orientation || 'portrait', custom);
   const m = normalizeMargins(settings.margins, settings.format || 'a4');
+  const u = utileZone(settings.format || 'a4', settings.orientation || 'portrait', settings.margins, custom);
   const format = `${dims.w}mm ${dims.h}mm`;
+  const scale = Math.max(0.75, Math.min(1.15, u.width / 190));
+  const small = u.width < 140;
   useEffect(() => {
     const id = 'print-page-size';
     let el = document.getElementById(id);
@@ -128,8 +141,9 @@ export function OfficialPrintDocument({ settings, t, lang, children }) {
     '--marge-right-mm': `${m.right}mm`,
     '--marge-bottom-mm': `${m.bottom}mm`,
     '--marge-left-mm': `${m.left + (m.gutter || 0)}mm`,
+    '--print-font-scale': String(scale),
   };
-  return <div data-print-document data-orientation={settings.orientation} data-format={settings.format || 'a4'} style={style} className="report-paper mx-auto rounded-xl bg-surface shadow-2 print:rounded-none print:shadow-none">
+  return <div data-print-document data-orientation={settings.orientation} data-format={settings.format || 'a4'} data-small={small ? '1' : '0'} style={style} className="report-paper mx-auto rounded-xl bg-surface shadow-2 print:rounded-none print:shadow-none">
     <div className="print-page">
       <header data-print-header className="official-print-header hidden border-b-2 border-brand-700 pb-4 text-center print:block">
         <p className="text-sm font-black"><bdi>{settings.organization}</bdi></p>
