@@ -1,5 +1,4 @@
 import { ChevronLeft, ChevronRight, Clipboard, FileDown, LockKeyhole, Printer } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
 import { addDays, formatDate, formatDateTime, todayAlgiers, weekStart } from '@anm/shared';
 import { api, download, queryString } from '../../api/client.js';
 import { PageHeader } from '../../components/layout/PageHeader.jsx';
@@ -29,12 +28,6 @@ export default function WeeklyReportView({ week, version = null, onWeek, onVersi
   const k = report.kpis;
   const v = report.veille;
   const hasData = k.recues > 0 || k.traitees_semaine > 0 || k.stock_fin > 0;
-  const pieData = [
-    { key: 'non_traite', value: k.non_traite, color: 'var(--st-non)' },
-    { key: 'en_cours', value: k.en_cours, color: 'var(--st-cours)' },
-    { key: 'traite', value: k.traite, color: 'var(--st-traite)' },
-  ];
-  const author = user.full_name;
   return <div className="page-container">
 <div className="no-print">
 <PageHeader title={t('report.title')} actions={<>
@@ -61,46 +54,18 @@ export default function WeeklyReportView({ week, version = null, onWeek, onVersi
 <p className="text-xs text-muted">{report.meta.nom_cellule}</p>
 <h1 className="mt-4 text-2xl font-black">{t('report.title')}</h1>
 <p className="mt-2 font-semibold">{report.semaine.label}</p>
-<p className="mt-2 text-xs text-muted">{formatDateTime(report.meta.genere_le)} · <bdi>{author}</bdi>
-</p>
 </header>{!hasData ? <EmptyState title={t('report.empty')} compact /> : <>
-<section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-<ReportKpi label={t('dashboard.received')} value={k.recues} />
-<ReportKpi label={t('report.weekTreated')} value={k.traitees_semaine} />
-<ReportKpi label={t('status.en_cours')} value={`${k.en_cours} (${k.pct_en_cours ?? '—'} %)`} />
-<ReportKpi label={t('status.non_traite')} value={`${k.non_traite} (${k.pct_non_traite ?? '—'} %)`} />
-<ReportKpi label={t('dashboard.treatmentRate')} value={k.taux_traitement === null ? '—' : `${(k.taux_traitement * 100).toFixed(1)} %`} />
-<ReportKpi label={t('dashboard.avgDelay')} value={k.delai_moyen_jours ?? '—'} />
-<ReportKpi label={t('report.openStock')} value={`${k.stock_fin} (${k.evolution_stock >= 0 ? '+' : ''}${k.evolution_stock})`} />
-<ReportKpi label={t('dashboard.urgentOpen')} value={k.urgentes_ouvertes} />
-</section>
-<section className="mt-8 grid min-w-0 gap-4 sm:grid-cols-2">
-<div className="h-[280px]">
-<ResponsiveContainer width="100%" height="100%">
-<PieChart>
-<Pie data={pieData} dataKey="value" innerRadius={55} outerRadius={90}>{pieData.map((entry) => <Cell key={entry.key} fill={entry.color} />)}</Pie>
-<ChartTooltip formatter={(value, name, item) => [value, t(`status.${item.payload.key}`)]} />
-</PieChart>
-</ResponsiveContainer>
-</div>
-<div className="h-[280px]">
-<ResponsiveContainer width="100%" height="100%">
-<BarChart data={report.groupes.domaine.slice(0, 8)} layout="vertical">
-<CartesianGrid stroke="var(--border)" />
-<XAxis type="number" />
-<YAxis type="category" width={100} dataKey={lang === 'ar' ? 'label_ar' : 'label_fr'} tick={{ fontSize: 10 }} orientation={dir === 'rtl' ? 'right' : 'left'} />
-<ChartTooltip />
-<Bar dataKey="total" fill="var(--brand-600)" />
-</BarChart>
-</ResponsiveContainer>
-</div>
+<section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4" data-report-kpis>
+<ReportKpi testId="openStock" label={t('report.openStock')} value={`${k.stock_fin} (${k.evolution_stock >= 0 ? '+' : ''}${k.evolution_stock})`} />
+<ReportKpi testId="avgDelay" label={t('dashboard.avgDelay')} value={k.delai_moyen_jours ?? '—'} />
+<ReportKpi testId="enCours" label={t('status.en_cours')} value={`${k.en_cours} (${k.pct_en_cours ?? '—'} %)`} />
+<ReportKpi testId="blackSpots" label={t('report.totalBlackSpots')} value={k.recues} />
 </section>
 <ReportTable title={t('dashboard.byCategory')} rows={report.groupes.domaine} lang={lang} t={t} />
 <ReportTable title={t('dashboard.byType')} rows={report.groupes.type} lang={lang} t={t} />
 <ReportTable title={t('dashboard.byDaira')} rows={report.groupes.daira} lang={lang} t={t} />
 <ReportTable title={t('dashboard.byCommune')} rows={report.groupes.commune} lang={lang} t={t} />
 <ReportTable title={t('dashboard.byEpic')} rows={report.groupes.epic} lang={lang} t={t} />
-<ListSection title={t('report.openUrgent')} rows={report.listes.urgentes} />
 <ListSection title={t('report.openLate', { days: report.meta.delai_retard_jours })} rows={report.listes.retard} />
 {v && <section className="mt-8 break-before-auto">
 <h2 className="mb-3 text-lg font-black">{t('report.veille.title')}</h2>
@@ -134,6 +99,6 @@ export default function WeeklyReportView({ week, version = null, onWeek, onVersi
 </div>;
 }
 
-function ReportKpi({ label, value }) { return <div className="rounded-md border border-border bg-surface2 p-3 text-center"><p className="text-xl font-black">{value}</p><p className="mt-1 text-[10px] font-semibold text-muted">{label}</p></div>; }
+function ReportKpi({ label, value, testId }) { return <div data-report-kpi={testId} className="rounded-md border border-border bg-surface2 p-3 text-center"><p className="text-xl font-black">{value}</p><p className="mt-1 text-[10px] font-semibold text-muted">{label}</p></div>; }
 function ReportTable({ title, rows, lang, t }) { return <section className="mt-8 break-before-auto"><h2 className="mb-3 text-lg font-black">{title}</h2><div className="overflow-hidden rounded-sm border border-border"><table className="w-full text-xs"><thead className="bg-surface2"><tr><th className="p-2 text-start">{title}</th><th>{t('common.total')}</th><th>{t('status.non_traite')}</th><th>{t('status.en_cours')}</th><th>{t('status.traite')}</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className="border-t border-border"><td className="p-2"><bdi>{lang === 'ar' ? row.label_ar || row.label_fr : row.label_fr || row.label_ar}</bdi></td><td className="text-center">{row.total}</td><td className="text-center">{row.non_traite}</td><td className="text-center">{row.en_cours}</td><td className="text-center">{row.traite}</td></tr>)}</tbody></table></div></section>; }
 function ListSection({ title, rows }) { return <section className="mt-8"><h2 className="mb-3 text-lg font-black">{title}</h2>{rows.length ? <ul className="grid gap-2 sm:grid-cols-2">{rows.map((row) => <li key={row.id} className="flex justify-between gap-2 rounded-sm border border-border p-2 text-xs"><bdi>{row.reference}</bdi><StatusBadge value={row.statut_au} /></li>)}</ul> : <p className="text-sm text-muted">—</p>}</section>; }

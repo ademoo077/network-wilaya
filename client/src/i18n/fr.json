@@ -285,6 +285,7 @@
   "report.history": "Versions figées",
   "report.weekTreated": "Traitées dans la semaine",
   "report.openStock": "Stock ouvert",
+  "report.totalBlackSpots": "Total des points noirs",
   "report.cumulativeRate": "Taux cumulé",
   "report.openUrgent": "Urgentes ouvertes",
   "report.openLate": "Ouvertes depuis plus de {days} jours",

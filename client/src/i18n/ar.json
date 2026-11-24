@@ -285,6 +285,7 @@
   "report.history": "النسخ المثبتة",
   "report.weekTreated": "المعالجة خلال الأسبوع",
   "report.openStock": "المخزون المفتوح",
+  "report.totalBlackSpots": "إجمالي النقاط السوداء",
   "report.cumulativeRate": "النسبة التراكمية",
   "report.openUrgent": "العاجلة المفتوحة",
   "report.openLate": "مفتوحة منذ أكثر من {days} أيام",
