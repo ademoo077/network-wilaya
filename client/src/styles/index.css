@@ -85,34 +85,51 @@
   .synthese-free-grid > [data-widget-id] { width: 100% !important; min-width: 0 !important; min-height: 0 !important; grid-column: auto !important; grid-row: auto !important; }
 }
 
+/* V18 impression : règle unique, marges gérées par le logiciel, mm uniquement. */
+[data-print-document] {
+  --print-format: A4 portrait;
+  --page-w-mm: 210mm; --page-h-mm: 297mm;
+  --marge-mm: 10mm; --marge-top-mm: 10mm; --marge-right-mm: 10mm; --marge-bottom-mm: 10mm; --marge-left-mm: 10mm;
+  --utile-w-mm: calc(var(--page-w-mm) - var(--marge-left-mm) - var(--marge-right-mm));
+  --utile-h-mm: calc(var(--page-h-mm) - var(--marge-top-mm) - var(--marge-bottom-mm));
+  box-sizing: border-box;
+  width: var(--page-w-mm);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: var(--marge-top-mm) var(--marge-right-mm) var(--marge-bottom-mm) var(--marge-left-mm);
+  background: var(--surface);
+  overflow: visible;
+}
+[data-print-document] *, [data-print-document] *::before, [data-print-document] *::after { box-sizing: border-box; }
+[data-print-document] .print-page {
+  width: 100%;
+  min-height: var(--utile-h-mm);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  break-after: page;
+  page-break-after: always;
+}
+[data-print-document] .print-page:last-child { break-after: auto; page-break-after: auto; }
+[data-print-document] .print-body { width: 100%; min-width: 0; overflow: visible; }
+[data-print-document] .official-print-header { break-after: avoid; page-break-after: avoid; }
+[data-print-document] .official-print-footer { break-inside: avoid; page-break-inside: avoid; }
+[data-print-document] img, [data-print-document] svg { max-width: 100%; height: auto; }
+[data-print-document] [data-chart], [data-print-document] [data-chart-legend],
+[data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section { break-inside: avoid; page-break-inside: avoid; }
+[data-print-document] table { width: 100%; table-layout: fixed; }
+[data-print-document] thead { display: table-header-group; }
+[data-print-document] tr { break-inside: avoid; page-break-inside: avoid; }
+
 @media print {
-  @page { size: A4; margin: 12mm; }
-  html, body { background: var(--surface) !important; }
+  @page { margin: 0; size: A4 portrait; }
+  html, body { margin: 0 !important; padding: 0 !important; width: var(--page-w-mm, 210mm); height: auto; overflow: visible !important; background: #fff !important; }
   .no-print, aside, header[role='banner'] { display: none !important; }
-  .app-grid { display: block; }
-  .page-container { max-width: none; padding: 0; }
-  .report-paper { margin: 0; padding: 0; box-shadow: none; width: auto; }
-  .report-paper table { page-break-inside: auto; }
-  .report-paper thead { display: table-header-group; }
-  .report-paper tr { page-break-inside: avoid; }
-  [data-print-document] { width: auto; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
-  [data-print-document].print-portrait { page: synthesis-portrait; }
-  [data-print-document].print-landscape { page: synthesis-landscape; }
+  .app-grid { display: block !important; }
+  .page-container { max-width: none !important; padding: 0 !important; margin: 0 !important; width: var(--page-w-mm, 210mm) !important; }
+  .report-paper { margin: 0 !important; padding: 0 !important; box-shadow: none !important; width: var(--page-w-mm, 210mm) !important; max-width: none !important; border: 0 !important; border-radius: 0 !important; }
+  [data-print-document] { width: var(--page-w-mm, 210mm) !important; max-width: none !important; margin: 0 !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; overflow: visible !important; }
   [data-print-document] [data-synthese-grid] { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: 6mm !important; }
-  [data-print-document] [data-largeur='simple'] { grid-column: span 6 / span 6 !important; }
-  [data-print-document] [data-largeur='double'], [data-print-document] [data-largeur='pleine'] { grid-column: span 12 / span 12 !important; }
-  [data-print-document].print-landscape [data-largeur='simple'] { grid-column: span 4 / span 4 !important; }
-  [data-print-document].print-landscape [data-largeur='double'] { grid-column: span 8 / span 8 !important; }
-  [data-print-document].print-landscape [data-largeur='pleine'] { grid-column: span 12 / span 12 !important; }
-  [data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section { break-inside: avoid; page-break-inside: avoid; }
-  [data-print-document] .official-print-header { margin-bottom: 8mm; break-after: avoid; page-break-after: avoid; }
-  [data-print-document] .official-print-footer { margin-top: 10mm; break-inside: avoid; page-break-inside: avoid; }
-  [data-print-document] .official-print-body { min-width: 0; }
-  [data-print-document] img, [data-print-document] svg { max-width: 100%; }
-  [data-print-document] [data-chart], [data-print-document] [data-chart-legend] { break-inside: avoid; page-break-inside: avoid; }
-  [data-print-document] [data-photo-pairs] { break-inside: auto; page-break-inside: auto; }
-  [data-print-document] [data-photo-pair] { break-inside: avoid; page-break-inside: avoid; }
-  [data-print-document] [data-photo-pair] img { display: block; height: 30mm; object-fit: cover; }
   * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
 
@@ -120,6 +137,3 @@
   [data-display-width='print'] [data-print-header],
   [data-display-width='print'] [data-print-footer] { display: block !important; }
 }
-
-@page synthesis-portrait { size: A4 portrait; margin: 12mm; }
-@page synthesis-landscape { size: A4 landscape; margin: 10mm; }

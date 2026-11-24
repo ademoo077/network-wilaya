@@ -1,6 +1,14 @@
+import { useEffect } from 'react';
 import { Printer } from 'lucide-react';
-import { formatDateShort, todayAlgiers } from '@anm/shared';
+import { formatDateShort, todayAlgiers, PRINT_FORMATS, formatDims, normalizeMargins, utileZone } from '@anm/shared';
 import { Button, Dialog, Input, Select, Textarea } from '../../components/ui/index.js';
+
+const FORMATS = [
+  { value: 'a5', label: 'A5' },
+  { value: 'a4', label: 'A4' },
+  { value: 'a3', label: 'A3' },
+  { value: 'letter', label: 'Lettre' },
+];
 
 export function createPrintSettings({ modele, periode, user, t }) {
   return {
@@ -17,36 +25,32 @@ export function createPrintSettings({ modele, periode, user, t }) {
     approvedBy: '',
     footerNote: t('synthese.print.defaultFooter'),
     orientation: 'portrait',
+    format: 'a4',
+    margins: { top: 10, right: 10, bottom: 10, left: 10, gutter: 0 },
   };
 }
 
 function PrintPreview({ settings, blocs = [], t, lang }) {
+  const dims = formatDims(settings.format, settings.orientation);
+  const m = normalizeMargins(settings.margins, settings.format);
+  const u = utileZone(settings.format, settings.orientation, settings.margins);
   const landscape = settings.orientation === 'landscape';
   const titles = blocs.map((bloc) => bloc.titre).filter(Boolean).slice(0, 4);
-  return <div className={`mx-auto w-full overflow-hidden rounded-md border border-border bg-surface p-4 shadow-1 ${landscape ? 'max-w-2xl' : 'max-w-md'}`} data-print-preview data-orientation={settings.orientation}>
+  const ratio = dims.w / dims.h;
+  return <div className="mx-auto w-full overflow-hidden rounded-md border border-border bg-surface p-4 shadow-1 max-w-md" data-print-preview data-orientation={settings.orientation}>
     <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-muted">
-      {t('synthese.print.preview')} · {t(landscape ? 'synthese.print.landscape' : 'synthese.print.portrait')}
+      {t('synthese.print.preview')} · {PRINT_FORMATS[settings.format]?.label || 'A4'} · {t(landscape ? 'synthese.print.landscape' : 'synthese.print.portrait')}
     </p>
-    <div className={`rounded border border-border bg-surface2 p-3 ${landscape ? 'aspect-[297/210]' : 'aspect-[210/297]'}`}>
-      <div className="border-b-2 border-brand-700 pb-2 text-center">
-        <p className="truncate text-[10px] font-black text-ink"><bdi>{settings.organization || '—'}</bdi></p>
-        <p className="truncate text-[9px] text-muted"><bdi>{settings.department || '—'}</bdi></p>
-        <h3 className="mt-2 truncate text-sm font-black text-ink"><bdi>{settings.title || '—'}</bdi></h3>
-        <p className="truncate text-[10px] text-ink2"><bdi>{settings.subtitle || '—'}</bdi></p>
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-1 text-[8px] text-muted">
-        <span className="truncate">{t('synthese.print.reference')} : <bdi>{settings.reference || '—'}</bdi></span>
-        <span className="truncate">{t('synthese.print.period')} : <bdi>{settings.periodStart ? `${formatDateShort(settings.periodStart, lang)} → ${formatDateShort(settings.periodEnd || settings.periodStart, lang)}` : '—'}</bdi></span>
-        <span className="truncate">{t('synthese.print.reportDate')} : <bdi>{settings.reportDate ? formatDateShort(settings.reportDate, lang) : '—'}</bdi></span>
-      </div>
-      <p className="mt-3 text-[9px] font-black uppercase tracking-wider text-muted">{t('synthese.print.widgets')}</p>
-      <div className="mt-1 grid gap-1">
-        {(titles.length ? titles : ['—', '—', '—']).map((title, index) => <div key={`${title}-${index}`} className="truncate rounded border border-border bg-surface px-2 py-1 text-[9px] text-ink2"><bdi>{title}</bdi></div>)}
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-2 text-center text-[8px] text-muted">
-        <span className="truncate">{t('synthese.print.preparedBy')}<br /><bdi>{settings.preparedBy || '—'}</bdi></span>
-        <span className="truncate">{t('synthese.print.checkedBy')}<br /><bdi>{settings.checkedBy || '—'}</bdi></span>
-        <span className="truncate">{t('synthese.print.approvedBy')}<br /><bdi>{settings.approvedBy || '—'}</bdi></span>
+    <div className="rounded border border-border bg-surface2 p-2" style={{ aspectRatio: `${ratio}` }}>
+      <div className="h-full w-full border border-dashed border-border bg-surface p-2" style={{ padding: `${Math.max(2, m.top / 2)}mm ${Math.max(2, m.right / 2)}mm ${Math.max(2, m.bottom / 2)}mm ${Math.max(2, m.left / 2)}mm` }}>
+        <div className="border-b-2 border-brand-700 pb-1 text-center">
+          <p className="truncate text-[9px] font-black text-ink"><bdi>{settings.organization || '—'}</bdi></p>
+          <h3 className="mt-1 truncate text-[11px] font-black text-ink"><bdi>{settings.title || '—'}</bdi></h3>
+        </div>
+        <div className="mt-2 grid gap-1">
+          {(titles.length ? titles : ['—', '—']).map((title, index) => <div key={`${title}-${index}`} className="truncate rounded border border-border bg-surface px-1 py-0.5 text-[8px] text-ink2"><bdi>{title}</bdi></div>)}
+        </div>
+        <p className="mt-2 text-[8px] text-muted">{Math.round(u.width)}×{Math.round(u.height)} mm utiles</p>
       </div>
     </div>
     <p className="mt-2 text-[10px] leading-snug text-muted">{t('synthese.print.previewHelp')}</p>
@@ -55,6 +59,10 @@ function PrintPreview({ settings, blocs = [], t, lang }) {
 
 export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, onReset, blocs, t, lang }) {
   const set = (key) => (event) => onChange({ ...settings, [key]: event.target.value });
+  const setMargin = (key) => (event) => onChange({ ...settings, margins: { ...(settings.margins || {}), [key]: Number(event.target.value) } });
+  const m = normalizeMargins(settings.margins, settings.format);
+  const min = PRINT_FORMATS[settings.format]?.min ?? 6;
+  const warnMargin = [m.top, m.right, m.bottom, m.left].some((v) => v < min);
   return <Dialog open={open} onClose={onClose} title={t('synthese.print.title')} size="xl" footer={<>
     <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
     <Button variant="ghost" onClick={onReset}>{t('synthese.print.reset')}</Button>
@@ -80,7 +88,17 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
         </fieldset>
         <fieldset className="grid gap-3">
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.layout')}</legend>
-          <Select label={t('synthese.print.orientation')} value={settings.orientation} onChange={set('orientation')} options={[{ value: 'portrait', label: t('synthese.print.portrait') }, { value: 'landscape', label: t('synthese.print.landscape') }]} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label={t('synthese.print.format', { defaultValue: 'Format' })} value={settings.format || 'a4'} onChange={(e) => { const f = e.target.value; const def = PRINT_FORMATS[f]?.margin ?? 10; onChange({ ...settings, format: f, margins: { top: def, right: def, bottom: def, left: def, gutter: 0 } }); }} options={FORMATS} />
+            <Select label={t('synthese.print.orientation')} value={settings.orientation} onChange={set('orientation')} options={[{ value: 'portrait', label: t('synthese.print.portrait') }, { value: 'landscape', label: t('synthese.print.landscape') }]} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginTop', { defaultValue: 'Marge haut (mm)' })} value={m.top} onChange={setMargin('top')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginRight', { defaultValue: 'Marge droite (mm)' })} value={m.right} onChange={setMargin('right')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginBottom', { defaultValue: 'Marge bas (mm)' })} value={m.bottom} onChange={setMargin('bottom')} />
+            <Input type="number" min={0} step="1" label={t('synthese.print.marginLeft', { defaultValue: 'Marge gauche (mm)' })} value={m.left} onChange={setMargin('left')} />
+          </div>
+          {warnMargin && <p className="text-xs text-stcours" role="status">{t('synthese.print.marginWarn', { defaultValue: 'Marge sous le minimum : risque de coupure par l’imprimante.' })}</p>}
         </fieldset>
       </div>
       <div className="rounded-lg bg-surface2 p-4"><PrintPreview settings={settings} blocs={blocs} t={t} lang={lang} /></div>
@@ -89,9 +107,50 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
 }
 
 export function OfficialPrintDocument({ settings, t, lang, children }) {
-  return <div data-print-document data-orientation={settings.orientation} className={`report-paper mx-auto rounded-xl bg-surface p-4 shadow-2 sm:p-6 ${settings.orientation === 'landscape' ? 'print-landscape max-w-[1200px]' : 'print-portrait max-w-[900px]'}`}>
-    <header data-print-header className="official-print-header hidden border-b-2 border-brand-700 pb-5 text-center print:block"><p className="text-sm font-black"><bdi>{settings.organization}</bdi></p><p className="text-xs text-muted"><bdi>{settings.department}</bdi></p><h1 className="mt-4 text-2xl font-black"><bdi>{settings.title}</bdi></h1>{settings.subtitle && <p className="mt-1 text-sm"><bdi>{settings.subtitle}</bdi></p>}<div className="mt-4 grid grid-cols-3 gap-3 text-xs"><span>{t('synthese.print.reference')} : <bdi>{settings.reference || '—'}</bdi></span><span>{t('synthese.print.period')} : <bdi>{settings.periodStart ? `${formatDateShort(settings.periodStart, lang)} → ${formatDateShort(settings.periodEnd || settings.periodStart, lang)}` : '—'}</bdi></span><span>{t('synthese.print.reportDate')} : <bdi>{settings.reportDate ? formatDateShort(settings.reportDate, lang) : '—'}</bdi></span></div></header>
-    <div className="official-print-body">{children}</div>
-    <footer data-print-footer className="official-print-footer hidden break-inside-avoid border-t border-border pt-4 print:block"><div className="grid grid-cols-3 gap-8 text-center text-xs"><div className="h-20"><p>{t('synthese.print.preparedBy')}</p><bdi className="font-bold">{settings.preparedBy || '—'}</bdi></div><div className="h-20"><p>{t('synthese.print.checkedBy')}</p><bdi className="font-bold">{settings.checkedBy || '—'}</bdi></div><div className="h-20"><p>{t('synthese.print.approvedBy')}</p><bdi className="font-bold">{settings.approvedBy || '—'}</bdi></div></div>{settings.footerNote && <p className="mt-3 text-center text-[10px] text-muted"><bdi>{settings.footerNote}</bdi></p>}</footer>
+  const dims = formatDims(settings.format || 'a4', settings.orientation || 'portrait');
+  const m = normalizeMargins(settings.margins, settings.format || 'a4');
+  const format = `${dims.w}mm ${dims.h}mm`;
+  useEffect(() => {
+    const id = 'print-page-size';
+    let el = document.getElementById(id);
+    if (!el) { el = document.createElement('style'); el.id = id; document.head.appendChild(el); }
+    el.textContent = `@page { size: ${format}; margin: 0; }`;
+    document.documentElement.style.setProperty('--page-w-mm', `${dims.w}mm`);
+    document.documentElement.style.setProperty('--page-h-mm', `${dims.h}mm`);
+    return () => { el.textContent = ''; };
+  }, [format, dims.w, dims.h]);
+  const style = {
+    '--print-format': format,
+    '--page-w-mm': `${dims.w}mm`,
+    '--page-h-mm': `${dims.h}mm`,
+    '--marge-mm': `${m.top}mm`,
+    '--marge-top-mm': `${m.top}mm`,
+    '--marge-right-mm': `${m.right}mm`,
+    '--marge-bottom-mm': `${m.bottom}mm`,
+    '--marge-left-mm': `${m.left + (m.gutter || 0)}mm`,
+  };
+  return <div data-print-document data-orientation={settings.orientation} data-format={settings.format || 'a4'} style={style} className="report-paper mx-auto rounded-xl bg-surface shadow-2 print:rounded-none print:shadow-none">
+    <div className="print-page">
+      <header data-print-header className="official-print-header hidden border-b-2 border-brand-700 pb-4 text-center print:block">
+        <p className="text-sm font-black"><bdi>{settings.organization}</bdi></p>
+        <p className="text-xs text-muted"><bdi>{settings.department}</bdi></p>
+        <h1 className="mt-3 text-2xl font-black"><bdi>{settings.title}</bdi></h1>
+        {settings.subtitle && <p className="mt-1 text-sm"><bdi>{settings.subtitle}</bdi></p>}
+        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+          <span>{t('synthese.print.reference')} : <bdi>{settings.reference || '—'}</bdi></span>
+          <span>{t('synthese.print.period')} : <bdi>{settings.periodStart ? `${formatDateShort(settings.periodStart, lang)} → ${formatDateShort(settings.periodEnd || settings.periodStart, lang)}` : '—'}</bdi></span>
+          <span>{t('synthese.print.reportDate')} : <bdi>{settings.reportDate ? formatDateShort(settings.reportDate, lang) : '—'}</bdi></span>
+        </div>
+      </header>
+      <div className="official-print-body print-body">{children}</div>
+      <footer data-print-footer className="official-print-footer hidden break-inside-avoid border-t border-border pt-3 print:block">
+        <div className="grid grid-cols-3 gap-6 text-center text-xs">
+          <div className="h-16"><p>{t('synthese.print.preparedBy')}</p><bdi className="font-bold">{settings.preparedBy || '—'}</bdi></div>
+          <div className="h-16"><p>{t('synthese.print.checkedBy')}</p><bdi className="font-bold">{settings.checkedBy || '—'}</bdi></div>
+          <div className="h-16"><p>{t('synthese.print.approvedBy')}</p><bdi className="font-bold">{settings.approvedBy || '—'}</bdi></div>
+        </div>
+        {settings.footerNote && <p className="mt-2 text-center text-[10px] text-muted"><bdi>{settings.footerNote}</bdi></p>}
+      </footer>
+    </div>
   </div>;
 }

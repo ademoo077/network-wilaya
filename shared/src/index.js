@@ -11,6 +11,7 @@ export * from './historique.js';
 export * from './schemas.js';
 export * from './syntheseSchemas.js';
 export * from './layout.js';
+export * from './print.js';
 export * from './flux.js';
 export * from './describe.js';
 export * from './widgets.js';
