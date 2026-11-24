@@ -116,7 +116,10 @@
 [data-print-document] .official-print-footer { break-inside: avoid; page-break-inside: avoid; }
 [data-print-document] img, [data-print-document] svg { max-width: 100%; height: auto; }
 [data-print-document] [data-chart], [data-print-document] [data-chart-legend],
-[data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section { break-inside: avoid; page-break-inside: avoid; }
+[data-print-document] [data-card], [data-print-document] [data-synthese-grid] > section,
+[data-print-document] [data-photo-pair] { break-inside: avoid; page-break-inside: avoid; }
+[data-print-document] [data-photo-pairs] { break-inside: auto; page-break-inside: auto; }
+[data-print-document] [data-photo-pair] img { display: block; height: 30mm; object-fit: cover; }
 [data-print-document] table { width: 100%; table-layout: fixed; }
 [data-print-document] thead { display: table-header-group; }
 [data-print-document] tr { break-inside: avoid; page-break-inside: avoid; }
