@@ -51,5 +51,18 @@
   "v19.destinataire": "المرسل إليه",
   "v19.diffusion": "نطاق النشر",
   "v19.structure": "البنية النموذجية",
-  "v19.gabarit": "قالب"
+  "v19.gabarit": "قالب",
+  "v19.sources": "مصادر خارجية",
+  "v19.onlineSearch": "البحث عبر الإنترنت (معطل)",
+  "v19.onlineSearchHelp": "لا بحث عبر الإنترنت : لا يمكن الاستشهاد إلا بالمصادر المُدخلة يدوياً والمسموح بها من طرف المسؤول.",
+  "v19.whitelist": "نطاق مسموح (مسؤول)",
+  "v19.whitelistAdded": "تمت إضافة النطاق إلى القائمة البيضاء",
+  "v19.sourceTitle": "عنوان المصدر",
+  "v19.sourceUrl": "رابط المصدر",
+  "v19.sourceAdd": "إضافة المصدر",
+  "v19.sourceHorsListe": "النطاق غير مسموح",
+  "v19.sourceURL_INVALIDE": "رابط غير صالح",
+  "v19.sourcePROTOCOLE": "http وhttps فقط",
+  "v19.sourceCREDENTIALS": "لا بيانات دخول في الرابط",
+  "v19.sourceLONGUEUR": "الرابط طويل جداً"
 }

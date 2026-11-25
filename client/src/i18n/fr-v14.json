@@ -51,5 +51,18 @@
   "v19.destinataire": "Destinataire",
   "v19.diffusion": "Diffusion",
   "v19.structure": "Structure-type",
-  "v19.gabarit": "Gabarit"
+  "v19.gabarit": "Gabarit",
+  "v19.sources": "Sources externes",
+  "v19.onlineSearch": "Recherche en ligne (désactivée)",
+  "v19.onlineSearchHelp": "Aucune recherche en ligne : seules les sources saisies manuellement et autorisées par l’administrateur peuvent être citées.",
+  "v19.whitelist": "Domaine autorisé (admin)",
+  "v19.whitelistAdded": "Domaine ajouté à la liste blanche",
+  "v19.sourceTitle": "Titre de la source",
+  "v19.sourceUrl": "URL de la source",
+  "v19.sourceAdd": "Ajouter la source",
+  "v19.sourceHorsListe": "Domaine hors liste blanche",
+  "v19.sourceURL_INVALIDE": "URL invalide",
+  "v19.sourcePROTOCOLE": "Seuls http et https sont autorisés",
+  "v19.sourceCREDENTIALS": "Aucune authentification dans l’URL",
+  "v19.sourceLONGUEUR": "URL trop longue"
 }

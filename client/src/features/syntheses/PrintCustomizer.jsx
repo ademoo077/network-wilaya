@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Printer } from 'lucide-react';
-import { addDays, formatDateShort, todayAlgiers, PRINT_FORMATS, formatDims, normalizeMargins, utileZone } from '@anm/shared';
+import { addDays, formatDateShort, todayAlgiers, PRINT_FORMATS, formatDims, normalizeMargins, utileZone, validerUrlSource } from '@anm/shared';
 import { Button, Dialog, Input, Select, Textarea } from '../../components/ui/index.js';
 
 const FORMATS = [
@@ -41,6 +41,11 @@ export function createPrintSettings({ modele, periode, user, t }) {
     footerNote: t('synthese.print.defaultFooter'),
     diffusion: t('v19.diffusionInterne'),
     statut: 'projet',
+    rechercheEnLigne: false,
+    sources: [],
+    sourceTitre: '',
+    sourceUrl: '',
+    domaineAjout: '',
     orientation: 'portrait',
     format: 'a4',
     customW: 210,
@@ -102,7 +107,8 @@ function PrintTestPage({ settings }) {
   </div>;
 }
 
-export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, onReset, blocs, t, lang }) {
+export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, onReset, blocs, t, lang, role = 'operateur', sourcesAutorisees = [], onAddDomaine }) {
+  const validationSource = settings.sourceUrl ? validerUrlSource(settings.sourceUrl, sourcesAutorisees.map((source) => source.domaine)) : null;
   const [showTest, setShowTest] = useState(false);
   const set = (key) => (event) => onChange({ ...settings, [key]: event.target.value });
   const setMargin = (key) => (event) => onChange({ ...settings, margins: { ...(settings.margins || {}), [key]: Number(event.target.value) } });
@@ -142,6 +148,28 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.periodBlock')}</legend>
           <p className="text-xs text-muted">{t('v19.singlePeriodHelp')}</p>
           <div className="grid gap-4 sm:grid-cols-2"><Input type="date" label={t('synthese.debut')} value={settings.periodStart} onChange={set('periodStart')} /><Input type="date" label={t('synthese.fin')} value={settings.periodEnd} onChange={set('periodEnd')} /></div>
+        </fieldset>
+        <fieldset className="grid gap-3" data-print-sources-block>
+          <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('v19.sources')}</legend>
+          <label className="flex items-center gap-2 text-xs text-muted">
+            <input type="checkbox" checked={false} disabled data-source-search />
+            {t('v19.onlineSearch')}
+          </label>
+          <p className="text-[11px] text-muted">{t('v19.onlineSearchHelp')}</p>
+          {role === 'admin' && <div className="flex flex-wrap items-end gap-2">
+            <Input label={t('v19.whitelist')} value={settings.domaineAjout || ''} onChange={set('domaineAjout')} placeholder="exemple.dz" />
+            <Button size="sm" variant="secondary" onClick={() => { if (settings.domaineAjout) { onAddDomaine?.(settings.domaineAjout); onChange({ ...settings, domaineAjout: '' }); } }}>{t('common.add')}</Button>
+          </div>}
+          {Boolean(sourcesAutorisees?.length) && <ul className="flex flex-wrap gap-2 text-[11px] text-muted">{sourcesAutorisees.map((source) => <li key={source.id} className="rounded-full border border-border px-2 py-0.5" data-whitelist-domain>{source.domaine}</li>)}</ul>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label={t('v19.sourceTitle')} value={settings.sourceTitre || ''} onChange={set('sourceTitre')} />
+            <Input label={t('v19.sourceUrl')} value={settings.sourceUrl || ''} onChange={set('sourceUrl')} />
+          </div>
+          {settings.sourceUrl && validationSource && !validationSource.ok && <p className="text-[11px] text-danger" data-source-error>{t(`v19.source${validationSource.motif}`, { defaultValue: t('v19.sourceHorsListe') })}</p>}
+          <Button size="sm" variant="secondary" disabled={!validationSource?.ok || !settings.sourceTitre?.trim()} onClick={() => {
+            onChange({ ...settings, sources: [...(settings.sources || []), { titre: settings.sourceTitre.trim(), url: settings.sourceUrl.trim() }], sourceTitre: '', sourceUrl: '' });
+          }}>{t('v19.sourceAdd')}</Button>
+          {Boolean(settings.sources?.length) && <ul className="grid gap-1 text-xs" data-source-list>{settings.sources.map((source, index) => <li key={`${source.url}-${index}`} className="flex items-center justify-between gap-2"><bdi>{source.titre}</bdi><button type="button" className="text-muted" onClick={() => onChange({ ...settings, sources: settings.sources.filter((_, i) => i !== index) })}>{t('common.remove')}</button></li>)}</ul>}
         </fieldset>
         <fieldset className="grid gap-3">
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.signatures')}</legend>
@@ -255,6 +283,9 @@ export function OfficialPrintDocument({ settings, t, lang, children }) {
           <span>{settings.diffusion || t('v19.diffusionInterne')}</span>
         </p>
         {settings.footerNote && <p className="mt-1 text-center text-[10px] text-muted"><bdi>{settings.footerNote}</bdi></p>}
+        {Boolean(settings.sources?.length) && <ul className="mt-1 grid gap-0.5 text-[10px] text-muted" data-print-sources>
+          {settings.sources.map((source, index) => <li key={`${source.url}-${index}`}><bdi>{source.titre}</bdi> — <bdi dir="ltr">{source.url}</bdi></li>)}
+        </ul>}
       </footer>
     </div>
   </div>;

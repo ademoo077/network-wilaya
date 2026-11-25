@@ -15,6 +15,7 @@ import {
 } from '../services/synthesesEditions.js';
 import { getCharte, updateCharte } from '../synthese/charte.js';
 import { nextNumero } from '../synthese/numerotation.js';
+import { addSource, listSources, removeSource } from '../synthese/sources.js';
 
 const router = Router();
 
@@ -68,6 +69,26 @@ router.post('/numero', requireWrite, (req, res) => {
   } catch (error) {
     throw badRequest(error.message);
   }
+});
+
+router.get('/sources', requireAuth, (_req, res) => {
+  res.json({ items: listSources(getDb()) });
+});
+
+router.post('/sources', requireRole('admin'), (req, res) => {
+  try {
+    const item = addSource(getDb(), req.user, req.body?.domaine);
+    audit(req, 'SYNTHESE_SOURCE_AJOUT', { entite: 'synthese_source', details: { domaine: item.domaine } });
+    res.status(201).json({ item });
+  } catch (error) {
+    throw badRequest(error.message);
+  }
+});
+
+router.delete('/sources/:id', requireRole('admin'), (req, res) => {
+  const items = removeSource(getDb(), req.params.id);
+  audit(req, 'SYNTHESE_SOURCE_RETRAIT', { entite: 'synthese_source', entiteId: req.params.id });
+  res.json({ items });
 });
 
 router.get('/catalogue', requireAuth, (_req, res) => {

@@ -187,6 +187,12 @@ export const syntheseCharteSchema = z.object({ item: z.object({
   verrouille: z.boolean(), palette: z.array(z.string()), polices: z.array(z.string()),
   motif: z.string(), updatedBy: z.number().nullable().optional(), updatedAt: z.string(),
 }).passthrough() }).passthrough();
+export const syntheseSourceSchema = z.object({ item: z.object({
+  id: z.number(), domaine: z.string(), created_at: z.string(),
+}).passthrough() }).passthrough();
+export const syntheseSourceListSchema = z.object({ items: z.array(z.object({
+  id: z.number(), domaine: z.string(), created_at: z.string(),
+}).passthrough()) }).passthrough();
 
 const importPreviewRow = z.object({
   ligne: z.number().int().positive(), statut: z.enum(['ok', 'warning', 'error']),
@@ -243,6 +249,7 @@ export function responseContract(path) {
   if (route === '/syntheses/catalogue') return [syntheseCatalogueSchema, emptySyntheseCatalogue];
   if (route === '/syntheses/charte') return [syntheseCharteSchema, null];
   if (route === '/syntheses/numero') return [syntheseNumeroSchema, null];
+  if (/^\/syntheses\/sources(?:\/\d+)?$/.test(route)) return [syntheseSourceListSchema, null];
   if (route === '/syntheses/modeles') return [syntheseModelListSchema, { items: [] }];
   if (/^\/syntheses\/modeles\/\d+$/.test(route)) return [z.object({ item: syntheseModelSchema }), { item: null }];
   if (route === '/syntheses/editions') return [syntheseEditionListSchema, { items: [] }];

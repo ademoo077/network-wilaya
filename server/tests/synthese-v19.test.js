@@ -53,6 +53,20 @@ describe('V19 — numérotation officielle et charte', () => {
     const bad = await write(agent, csrf, 'patch', '/api/syntheses/charte', { palette: ['#111111', '#222222', '#333333', '#444444', '#555555', '#666666'] });
     expect(bad.status).toBe(400);
   });
+
+  it('réserve la liste blanche des sources à l’administrateur', async () => {
+    const lecteur = await login(app, 'lecteur');
+    expect((await write(lecteur.agent, lecteur.csrf, 'post', '/api/syntheses/sources', { domaine: 'exemple.dz' })).status).toBe(403);
+    const admin = await login(app, 'admin');
+    const ajout = await write(admin.agent, admin.csrf, 'post', '/api/syntheses/sources', { domaine: 'https://exemple.dz/chemin' });
+    expect(ajout.status).toBe(201);
+    expect(ajout.body.item.domaine).toBe('exemple.dz');
+    const liste = await admin.agent.get('/api/syntheses/sources');
+    expect(liste.body.items.some((item) => item.domaine === 'exemple.dz')).toBe(true);
+    const retrait = await write(admin.agent, admin.csrf, 'delete', `/api/syntheses/sources/${ajout.body.item.id}`);
+    expect(retrait.status).toBe(200);
+    expect(retrait.body.items.some((item) => item.domaine === 'exemple.dz')).toBe(false);
+  });
 });
 
 describe('V19 — gabarits système', () => {

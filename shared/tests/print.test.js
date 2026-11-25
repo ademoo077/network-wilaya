@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDims, utileZone, normalizeMargins, echelleTypo, colonnesCible, paginer, equilibrer, tauxRemplissage } from '../src/print.js';
+import { formatDims, utileZone, normalizeMargins, echelleTypo, colonnesCible, paginer, equilibrer, tauxRemplissage, validerUrlSource } from '../src/print.js';
 
 describe('print formats', () => {
   it('calcule les dimensions A5/A4/A3/Lettre portrait/paysage', () => {
@@ -71,5 +71,21 @@ describe('V19 limites impression', () => {
     const zone = utileZone('a4', 'portrait', { top: 10, right: 10, bottom: 10, left: 10, gutter: 5 });
     expect(zone.margins.left - zone.margins.right).toBeCloseTo(5);
     expect(zone.width).toBeCloseTo(185);
+  });
+});
+
+describe('V19 sources externes', () => {
+  it('accepte uniquement un domaine de la liste blanche', () => {
+    const liste = ['exemple.dz'];
+    expect(validerUrlSource('https://exemple.dz/page', liste)).toMatchObject({ ok: true, domaine: 'exemple.dz' });
+    expect(validerUrlSource('https://sous.exemple.dz', liste).ok).toBe(true);
+    expect(validerUrlSource('https://autre.dz', liste)).toMatchObject({ ok: false, motif: 'HORS_LISTE' });
+  });
+
+  it('rejette les protocoles, identifiants et URL invalides', () => {
+    expect(validerUrlSource('javascript:alert(1)', ['exemple.dz']).motif).toBe('PROTOCOLE');
+    expect(validerUrlSource('https://user:pass@exemple.dz', ['exemple.dz']).motif).toBe('CREDENTIALS');
+    expect(validerUrlSource('pas-une-url', ['exemple.dz']).motif).toBe('URL_INVALIDE');
+    expect(validerUrlSource('https://exemple.dz', []).ok).toBe(false);
   });
 });

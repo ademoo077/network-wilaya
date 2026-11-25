@@ -153,3 +153,31 @@ test('V19 / phase 3 — 500 lignes conservées avec en-têtes répétés à l’
   const entetes = await conteneur.locator('[data-print-table] thead').evaluate((element) => getComputedStyle(element).display);
   expect(entetes).toBe('table-header-group');
 });
+
+test('V19 / phase 4 — sources manuelles, liste blanche et recherche en ligne désactivée', async ({ page, baseURL }) => {
+  const session = await authenticate(page, baseURL);
+  const ajout = await page.request.post(`${baseURL}/api/syntheses/sources`, {
+    headers: { 'X-CSRF-Token': session.csrf }, data: { domaine: 'exemple.dz' },
+  });
+  expect(ajout.status(), await ajout.text()).toBe(201);
+
+  const dialog = await ouvrirAtelierImpression(page, baseURL);
+  await expect(dialog.locator('[data-source-search]')).toBeDisabled();
+  await expect(dialog.locator('[data-source-search]')).not.toBeChecked();
+  await expect(dialog.getByText(/Aucune recherche en ligne/)).toBeVisible();
+  await expect(dialog.locator('[data-whitelist-domain]')).toContainText('exemple.dz');
+
+  await dialog.getByLabel('Titre de la source').fill('Note interne');
+  await dialog.getByLabel('URL de la source').fill('https://autre.dz/document');
+  await expect(dialog.locator('[data-source-error]')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Ajouter la source' })).toBeDisabled();
+
+  await dialog.getByLabel('URL de la source').fill('https://exemple.dz/document');
+  await expect(dialog.locator('[data-source-error]')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Ajouter la source' }).click();
+  await expect(dialog.locator('[data-source-list]')).toContainText('Note interne');
+
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('[data-print-sources]')).toContainText('Note interne');
+  await expect(page.locator('[data-print-sources]')).toContainText('exemple.dz/document');
+});

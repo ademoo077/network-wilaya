@@ -131,3 +131,19 @@ export function tauxRemplissage(pages, hauteurUtile = 260) {
   });
   return vals.reduce((s, v) => s + v, 0) / vals.length;
 }
+
+/** V19 — source externe saisie manuellement : aucune ouverture réseau, validation par liste blanche. */
+export function validerUrlSource(url, domainesAutorises = []) {
+  const brut = String(url || '').trim();
+  if (!brut || brut.length > 500) return { ok: false, motif: 'LONGUEUR' };
+  let parsed;
+  try { parsed = new URL(brut); } catch { return { ok: false, motif: 'URL_INVALIDE' }; }
+  if (!['http:', 'https:'].includes(parsed.protocol)) return { ok: false, motif: 'PROTOCOLE' };
+  if (parsed.username || parsed.password) return { ok: false, motif: 'CREDENTIALS' };
+  const domaine = parsed.hostname.toLowerCase().replace(/\.$/, '');
+  const liste = (domainesAutorises || []).map((d) => String(d).toLowerCase().trim().replace(/^\*\./, ''));
+  if (!liste.some((autorise) => domaine === autorise || domaine.endsWith(`.${autorise}`))) {
+    return { ok: false, motif: 'HORS_LISTE', domaine };
+  }
+  return { ok: true, domaine };
+}

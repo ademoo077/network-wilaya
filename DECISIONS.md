@@ -172,3 +172,8 @@
 
 - **Registre canonique** : le bloc `registre` porte les colonnes Opération / Entité / Option / Résultat / Quirons / Localisation / Notes et ses lignes dans `options.lignes`. Il ne lance aucune requête et ne substitue pas les données calculées.
 - **Tables longues** : le tableau d’écran reste paginé, mais l’impression rend toutes les lignes dans un tableau séparé avec `thead` répété (`display: table-header-group`). Aucune ligne n’est perdue à 500 entrées.
+
+### V19 phase 4 — vérifications et sources
+
+- **Sources externes** : recherche en ligne désactivée par défaut et non câblée ; seules les URL saisies manuellement sont citées. Le domaine doit figurer dans la liste blanche administrée via `POST/DELETE /api/syntheses/sources`. Le domaine `exemple.dz` n’existe que dans les tests.
+- **Validation** : `validerUrlSource()` impose http/https, refuse credentials et domaines hors liste, sans aucun appel réseau interne ni résolution DNS.
