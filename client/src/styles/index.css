@@ -106,10 +106,28 @@
   min-height: var(--utile-h-mm);
   display: grid;
   grid-template-rows: auto 1fr auto;
+  /* V19 P1 : marge de sécurité interne pour que la bordure droite ne soit pas rognée. */
+  padding-inline-end: 0.3mm;
   overflow: hidden;
   break-after: page;
   page-break-after: always;
 }
+[data-print-document] [data-kpi-grid] { min-width: 0; max-width: 100%; overflow: visible; }
+[data-print-document] [data-kpi-item] { min-width: 0; max-width: 100%; overflow: visible; }
+/* V19 P2 : légende sous le graphique, retour par mot et jamais lettre par lettre. */
+[data-print-document] [data-chart-legend],
+[data-print-document] [data-anneau-legende] { min-width: 0; max-width: 100%; }
+[data-print-document] [data-chart-legend] li,
+[data-print-document] [data-anneau-entree] { min-width: max-content; max-width: 100%; white-space: normal; overflow-wrap: break-word; word-break: normal; }
+[data-print-document] [data-chart-legend] bdi,
+[data-print-document] [data-anneau-entree] bdi { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; }
+/* V19 P4 : filets sobres, en-têtes répétés, nombres à droite et totaux en gras. */
+[data-print-document] [data-widget-table] { border-collapse: collapse; }
+[data-print-document] [data-widget-table] th,
+[data-print-document] [data-widget-table] td { border-inline: 0; border-top: 0; }
+[data-print-document] [data-widget-table] td[data-numeric='1'] { text-align: end; font-variant-numeric: tabular-nums; }
+[data-print-document] [data-widget-table] tfoot td { font-weight: 700; }
+[data-print-document] [data-print-table] { display: none; }
 [data-print-document] .print-page:last-child { break-after: auto; page-break-after: auto; }
 [data-print-document] .print-body { width: 100%; min-width: 0; overflow: visible; }
 [data-print-document] .official-print-header { break-after: avoid; page-break-after: avoid; }
@@ -131,11 +149,44 @@
 [data-print-document][data-small='1'] [data-largeur='simple'],
 [data-print-document][data-small='1'] [data-largeur='double'] { grid-column: span 6 / span 6 !important; }
 [data-print-document][data-small='1'] [data-largeur='pleine'] { grid-column: span 6 / span 6 !important; }
+/* V19 : filigrane tant que le document n'est pas validé. */
+[data-print-document][data-statut='projet'] { position: relative; }
+[data-print-document][data-statut='projet']::before {
+  content: 'PROJET';
+  position: absolute;
+  inset-inline: 0;
+  top: 45%;
+  z-index: 0;
+  pointer-events: none;
+  color: var(--muted);
+  opacity: .1;
+  font-size: 28mm;
+  font-weight: 900;
+  letter-spacing: 4mm;
+  text-align: center;
+  transform: rotate(-18deg);
+}
 
 @media print {
   @page { margin: 0; size: A4 portrait; }
   html, body { margin: 0 !important; padding: 0 !important; width: var(--page-w-mm, 210mm); height: auto; overflow: visible !important; background: var(--surface) !important; }
   .no-print, aside, header[role='banner'] { display: none !important; }
+  /* V19 P3 : vue impression strictement statique. */
+  [data-print-document],
+  [data-print-document] *,
+  [data-print-document] *::before,
+  [data-print-document] *::after { pointer-events: none !important; animation: none !important; transition: none !important; box-shadow: none !important; text-shadow: none !important; }
+  [data-print-document] button,
+  [data-print-document] [role='button'],
+  [data-print-document] [role='tooltip'],
+  [data-print-document] [data-tooltip],
+  [data-print-document] .recharts-tooltip-wrapper,
+  [data-print-document] .recharts-active-dot,
+  [data-print-document] [data-widget-handle] { display: none !important; }
+  [data-print-document] [data-screen-table] { display: none !important; }
+  [data-print-document] [data-print-table] { display: table !important; }
+  [data-print-document] [data-print-table] thead { display: table-header-group; }
+  [data-print-document] [data-print-table] tr { break-inside: avoid; page-break-inside: avoid; }
   .app-grid { display: block !important; }
   .page-container { max-width: none !important; padding: 0 !important; margin: 0 !important; width: var(--page-w-mm, 210mm) !important; }
   .report-paper { margin: 0 !important; padding: 0 !important; box-shadow: none !important; width: var(--page-w-mm, 210mm) !important; max-width: none !important; border: 0 !important; border-radius: 0 !important; }

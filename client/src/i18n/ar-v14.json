@@ -34,5 +34,15 @@
   "v14.source.communeSuggestion": "بلدية مقترحة من الصفحة (يجب تأكيدها).",
   "v14.source.notes": "ملاحظات موضوعية (دون آراء حول أشخاص).",
   "v14.source.optional": "اختياري: يمكن تسجيل الملاحظة دون صفحة.",
-  "dashboard.bySource": "حسب الصفحة المصدر"
+  "dashboard.bySource": "حسب الصفحة المصدر",
+  "v19.republicFr": "الجمهورية الجزائرية الديمقراطية الشعبية",
+  "v19.republicAr": "الجمهورية الجزائرية الديمقراطية الشعبية",
+  "v19.cabinet": "ديوان الوالي",
+  "v19.ministryLabel": "عنوان الوزارة الوصية (يُملأ)",
+  "v19.algerLe": "الجزائر، في",
+  "v19.singlePeriodHelp": "فترة واحدة : تتحكم في جميع البيانات وفي بطاقة الطباعة.",
+  "v19.diffusionInterne": "داخلي",
+  "v19.pageOf": "صفحة {page} / {total}",
+  "synthese.variationVs": "مقارنة بالفترة السابقة",
+  "synthese.uniteJour": "ي"
 }

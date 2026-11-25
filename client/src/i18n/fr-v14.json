@@ -34,5 +34,15 @@
   "v14.source.communeSuggestion": "Commune suggérée par la page (à confirmer).",
   "v14.source.notes": "Notes factuelles (sans opinion sur des personnes).",
   "v14.source.optional": "Facultatif : l'anomalie peut être enregistrée sans page.",
-  "dashboard.bySource": "Par page source"
+  "dashboard.bySource": "Par page source",
+  "v19.republicFr": "République Algérienne Démocratique et Populaire",
+  "v19.republicAr": "الجمهورية الجزائرية الديمقراطية الشعبية",
+  "v19.cabinet": "Cabinet du Wali",
+  "v19.ministryLabel": "Intitulé du ministère de tutelle (à renseigner)",
+  "v19.algerLe": "Alger, le",
+  "v19.singlePeriodHelp": "Une seule période : elle pilote toutes les données et la fiche d’impression.",
+  "v19.diffusionInterne": "Interne",
+  "v19.pageOf": "Page {page} / {total}",
+  "synthese.variationVs": "vs période précédente",
+  "synthese.uniteJour": "j"
 }

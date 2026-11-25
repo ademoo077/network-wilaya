@@ -45,4 +45,31 @@ describe('paginer/equilibrer', () => {
     // dernière page non équilibrée par défaut
     expect(out[out.length - 1].blocs.length).toBeGreaterThanOrEqual(0);
   });
+
+  it('V19 : équilibre les pages pleines à ≥ 90 % sans perdre de bloc', () => {
+    const blocs = Array.from({ length: 5 }, (_, i) => ({ id: i, type: i % 2 ? 'carte' : 'barres', hauteur_mm: 34 }));
+    const pages = equilibrer(paginer(blocs, { hauteurUtile: 120, mesure: (b) => b.hauteur_mm }), { hauteurUtile: 120, dernier: true });
+    expect(pages.flatMap((p) => p.blocs).map((b) => b.id)).toEqual(blocs.map((b) => b.id));
+    expect(tauxRemplissage(pages, 120)).toBeGreaterThanOrEqual(90);
+  });
+});
+
+describe('V19 limites impression', () => {
+  it('garde des marges gauche/droite égales pour chaque format et orientation', () => {
+    for (const format of ['a5', 'a4', 'a3', 'letter']) {
+      for (const orientation of ['portrait', 'landscape']) {
+        const dims = formatDims(format, orientation);
+        const zone = utileZone(format, orientation, { top: 10, right: 10, bottom: 10, left: 10, gutter: 0 });
+        expect(zone.margins.left).toBe(zone.margins.right);
+        expect(zone.width).toBeCloseTo(dims.w - 20);
+        expect(zone.height).toBeCloseTo(dims.h - 20);
+      }
+    }
+  });
+
+  it('la reliure s’ajoute à la marge gauche sans réduire la zone utile à droite', () => {
+    const zone = utileZone('a4', 'portrait', { top: 10, right: 10, bottom: 10, left: 10, gutter: 5 });
+    expect(zone.margins.left - zone.margins.right).toBeCloseTo(5);
+    expect(zone.width).toBeCloseTo(185);
+  });
 });

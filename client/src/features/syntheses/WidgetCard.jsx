@@ -26,9 +26,9 @@ function colorFor(index) { return COLORS[index % COLORS.length]; }
 
 function ChartLegend({ items, t, className = '' }) {
   return <ul className={`mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-ink2 ${className}`} aria-label={t('synthese.action.data')} data-chart-legend>
-    {items.map((item, index) => <li key={`${item.label}-${index}`} className="flex min-w-0 items-center gap-2">
+    {items.map((item, index) => <li key={`${item.label}-${index}`} className="flex min-w-max max-w-full items-center gap-2 whitespace-normal break-words">
       <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: item.color }} aria-hidden="true" />
-      <bdi className="min-w-0 truncate">{item.label}</bdi>
+      <bdi className="min-w-0 whitespace-normal break-words">{item.label}</bdi>
       {item.value && <bdi dir="ltr" className="shrink-0 font-bold tabular-nums text-ink">{item.value}</bdi>}
     </li>)}
   </ul>;
@@ -125,7 +125,7 @@ function AnneauChart({ result, title, t, lang, actions , onPatchTitle, style, bl
       </ResponsiveContainer>
     </div>
     <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" data-anneau-legende data-chart-legend>
-      {data.map((row, index) => <div key={`${row.name}-${index}`} data-anneau-entree className="flex min-w-0 items-start gap-2 rounded-md border border-border bg-surface2 px-2 py-1.5">
+      {data.map((row, index) => <div key={`${row.name}-${index}`} data-anneau-entree className="flex min-w-max max-w-full items-start gap-2 rounded-md border border-border bg-surface2 px-2 py-1.5">
         <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: colorFor(index) }} aria-hidden="true" />
         <bdi className="min-w-0 flex-1 break-words text-xs font-semibold text-ink">{row.name}</bdi>
         <bdi dir="ltr" className="shrink-0 text-xs font-bold tabular-nums text-ink">
@@ -188,19 +188,28 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions, role , onPa
     <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
     {bloc.options?.avec_graphique && <MiniChart result={result} lang={lang} dir={dir} t={t} />}
     <div className="overflow-x-auto rounded-md border border-border lg:overflow-x-visible" role="region" aria-label={title} tabIndex={0}>
-      <table className="w-full text-sm" data-widget-table><thead className="sticky top-0 z-10 bg-surface2"><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-2 text-xs font-bold text-ink2 lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
+      <table className="w-full text-sm" data-widget-table data-screen-table><thead className="sticky top-0 z-10 bg-surface2"><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-2 text-xs font-bold text-ink2 lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
         <tbody>{pageRows.length === 0 ? <tr><td colSpan={Math.max(1, dims.length)} className="px-4 py-5 text-center text-muted">{t('synthese.aucuneLigne')}</td></tr> : pageRows.map((row, rowIndex) => <tr key={rowIndex} data-ligne className="border-b border-border last:border-0">
-          {dims.map((column, index) => {
-            if (column.source === 'dimension') {
-              return <td key={`${column.id}-${index}`} className={`px-2 py-2 text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi>{rowDimensionLabel(row, { id: column.champ, champ: column.champ }, index, lang)}</bdi></td>;
-            }
-            return <td key={`${column.id}-${index}`} className={`px-2 py-2 tabular-nums text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi dir="ltr">{formatValue(row.valeurs?.[column.champ], column.format, lang)}</bdi></td>;
-          })}
+          {dims.map((column, index) => column.source === 'dimension'
+            ? <td key={`${column.id}-${index}`} className={`px-2 py-2 text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi>{rowDimensionLabel(row, { id: column.champ, champ: column.champ }, index, lang)}</bdi></td>
+            : <td key={`${column.id}-${index}`} data-numeric="1" className={`px-2 py-2 tabular-nums text-ink lg:px-3 ${column.align === 'right' ? 'text-end' : column.align === 'center' ? 'text-center' : 'text-start'}`}><bdi dir="ltr">{formatValue(row.valeurs?.[column.champ], column.format, lang)}</bdi></td>)}
         </tr>)}
-        {result?.totaux && <tr className="border-t border-border bg-surface2 font-bold">{dims.map((column) => <td key={column.id} className={`px-2 py-2 lg:px-3 ${column.align === 'right' ? 'text-end' : 'text-start'}`}>
+        {result?.totaux && <tr className="border-t border-border bg-surface2 font-bold">{dims.map((column) => <td key={column.id} data-numeric={column.source === 'mesure' ? '1' : undefined} className={`px-2 py-2 lg:px-3 ${column.align === 'right' ? 'text-end' : 'text-start'}`}>
           {column.source === 'dimension' ? <span className="text-muted">{t('synthese.total')}</span> : <bdi dir="ltr">{formatValue(result.totaux.valeurs?.[column.champ], column.format, lang)}</bdi>}
         </td>)}</tr>}
         </tbody></table>
+      <table className="w-full text-sm" data-widget-table data-print-table aria-label={title} aria-hidden="true">
+        <thead><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-1.5 text-xs font-bold text-ink2 ${column.align === 'right' ? 'text-end' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
+        <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex} data-ligne className="border-b border-border">
+          {dims.map((column, index) => column.source === 'dimension'
+            ? <td key={`${column.id}-${index}`} className="px-2 py-1.5 text-ink"><bdi>{rowDimensionLabel(row, { id: column.champ, champ: column.champ }, index, lang)}</bdi></td>
+            : <td key={`${column.id}-${index}`} data-numeric="1" className="px-2 py-1.5 tabular-nums text-ink"><bdi dir="ltr">{formatValue(row.valeurs?.[column.champ], column.format, lang)}</bdi></td>)}
+        </tr>)}
+        {result?.totaux && <tr className="border-t border-border font-bold">{dims.map((column) => <td key={column.id} data-numeric={column.source === 'mesure' ? '1' : undefined} className="px-2 py-1.5">
+          {column.source === 'dimension' ? <span className="text-muted">{t('synthese.total')}</span> : <bdi dir="ltr">{formatValue(result.totaux.valeurs?.[column.champ], column.format, lang)}</bdi>}
+        </td>)}</tr>}
+        </tbody>
+      </table>
     </div>
     {totalPages > 1 && <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted no-print"><span><bdi dir="ltr">{t('synthese.page', { page: page + 1, total: totalPages })}</bdi></span><div className="flex gap-1">
       <Button size="sm" variant="ghost" disabled={page === 0} aria-label={t('common.previous')} onClick={() => setPage((value) => Math.max(0, value - 1))}><Previous className="h-4 w-4" aria-hidden="true" /></Button>
@@ -209,7 +218,16 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions, role , onPa
   </>;
 }
 
-function KpiWidget({ bloc, result, title, lang, actions , onPatchTitle, style,  }) {
+function signedVariation(value, measure, lang, t) {
+  const text = formatValue(value, measure?.format, lang);
+  if (text === '—') return text;
+  const numeric = Number(value);
+  const sign = numeric > 0 && !text.startsWith('+') && !text.startsWith('-') ? '+' : '';
+  const unite = measure?.format === 'decimal' && /delai|duree/i.test(measure?.id || '') ? ` ${t('synthese.uniteJour', { defaultValue: 'j' })}` : '';
+  return `${sign}${text}${unite} ${t('synthese.variationVs', { defaultValue: 'vs période précédente' })}`;
+}
+
+function KpiWidget({ bloc, result, title, lang, t, actions , onPatchTitle, style,  }) {
   const measures = mesuresOf(result);
   const count = measures.length;
   const objectifs = bloc.options?.objectifs || {};
@@ -256,7 +274,9 @@ function KpiWidget({ bloc, result, title, lang, actions , onPatchTitle, style,  
           <p className={`font-black tabular-nums text-ink ${compact ? 'text-xl' : 'text-2xl sm:text-3xl'}`} data-kpi-value><bdi dir="ltr">{formatValue(value, measure.format, lang)}</bdi></p>
           {objectif != null && <span className="text-[11px] font-semibold text-brand-600">/{formatValue(objectif, measure.format, lang)}</span>}
         </div>
-        {variation != null && <p className={`mt-1 font-semibold text-brand-700 ${compact ? 'text-[10px]' : 'text-xs'}`}><bdi dir="ltr">{formatValue(variation, measure.format, lang)}</bdi></p>}
+        {variation != null && <p className={`mt-1 font-semibold text-brand-700 ${compact ? 'text-[10px]' : 'text-xs'}`} data-kpi-variation>
+          <bdi dir="ltr">{signedVariation(variation, measure, lang, t)}</bdi>
+        </p>}
       </div>;
     })}
   </div></>;
@@ -341,7 +361,7 @@ function RenderWidget({ bloc, result, t, lang, dir, actions, role, style, onPatc
   const height = heightClass(bloc);
   const H = () => <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><H /><TexteWidget bloc={bloc} lang={lang} t={t} alignement={style.alignement} /></>;
-  if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
+  if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} t={t} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (bloc.type === 'avant_apres') return <PhotoPairsWidget bloc={bloc} result={result} t={t} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} role={role} onPatchTitle={onPatchTitle} style={style} />;
   if (['courbe', 'lignes', 'aire'].includes(bloc.type)) return <CourbeChart result={result} title={title} lang={lang} dir={dir} height={height} actions={actions} t={t} onPatchTitle={onPatchTitle} style={style} bloc={bloc} />;

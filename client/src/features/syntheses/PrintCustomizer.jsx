@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Printer } from 'lucide-react';
-import { formatDateShort, todayAlgiers, PRINT_FORMATS, formatDims, normalizeMargins, utileZone } from '@anm/shared';
+import { addDays, formatDateShort, todayAlgiers, PRINT_FORMATS, formatDims, normalizeMargins, utileZone } from '@anm/shared';
 import { Button, Dialog, Input, Select, Textarea } from '../../components/ui/index.js';
 
 const FORMATS = [
@@ -11,20 +11,36 @@ const FORMATS = [
   { value: 'custom', label: 'Personnalisé' },
 ];
 
+function referenceOfficielle(date) {
+  const annee = String(date || todayAlgiers()).slice(0, 4);
+  let sequence = 1;
+  try {
+    const cle = `anm.cw.sequence.${annee}`;
+    sequence = Math.max(1, Number(localStorage.getItem(cle)) + 1 || 1);
+    localStorage.setItem(cle, String(sequence));
+  } catch { /* stockage indisponible : séquence locale non persistée */ }
+  return `N° ${String(sequence).padStart(4, '0')}/CW/${annee}`;
+}
+
 export function createPrintSettings({ modele, periode, user, t }) {
+  const fin = periode?.fin || todayAlgiers();
+  const debut = periode?.debut || addDays(fin, -6);
+  const reportDate = fin;
   return {
     title: modele?.nom || t('report.title'),
     subtitle: t('synthese.print.defaultSubtitle'),
     organization: t('app.wilaya'),
-    department: t('synthese.print.defaultDepartment'),
-    reference: '',
-    reportDate: periode?.fin || periode?.debut || todayAlgiers(),
-    periodStart: periode?.debut || '',
-    periodEnd: periode?.fin || '',
+    department: '',
+    reference: referenceOfficielle(reportDate),
+    reportDate,
+    periodStart: debut,
+    periodEnd: fin,
     preparedBy: user?.full_name || '',
     checkedBy: '',
     approvedBy: '',
     footerNote: t('synthese.print.defaultFooter'),
+    diffusion: t('v19.diffusionInterne'),
+    statut: 'projet',
     orientation: 'portrait',
     format: 'a4',
     customW: 210,
@@ -118,12 +134,13 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
         <fieldset className="grid gap-3">
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.identity')}</legend>
           <div className="grid gap-4 sm:grid-cols-2"><Input label={t('synthese.print.reportTitle')} required value={settings.title} onChange={set('title')} /><Input label={t('synthese.print.subtitle')} value={settings.subtitle} onChange={set('subtitle')} /></div>
-          <div className="grid gap-4 sm:grid-cols-2"><Input label={t('synthese.print.organization')} value={settings.organization} onChange={set('organization')} /><Input label={t('synthese.print.department')} value={settings.department} onChange={set('department')} /></div>
+          <div className="grid gap-4 sm:grid-cols-2"><Input label={t('synthese.print.organization')} value={settings.organization} onChange={set('organization')} /><Input label={t('v19.ministryLabel')} value={settings.department} onChange={set('department')} /></div>
+          <div className="grid gap-4 sm:grid-cols-2"><Input type="date" label={t('v19.algerLe')} value={settings.reportDate} onChange={set('reportDate')} /><Input label={t('synthese.print.reference')} value={settings.reference} onChange={set('reference')} /></div>
           <Textarea label={t('synthese.print.footer')} rows={2} value={settings.footerNote} onChange={set('footerNote')} />
         </fieldset>
-        <fieldset className="grid gap-3">
+        <fieldset className="grid gap-3" data-print-period-block>
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.periodBlock')}</legend>
-          <div className="grid gap-4 sm:grid-cols-2"><Input label={t('synthese.print.reference')} value={settings.reference} onChange={set('reference')} /><Input type="date" label={t('synthese.print.reportDate')} value={settings.reportDate} onChange={set('reportDate')} /></div>
+          <p className="text-xs text-muted">{t('v19.singlePeriodHelp')}</p>
           <div className="grid gap-4 sm:grid-cols-2"><Input type="date" label={t('synthese.debut')} value={settings.periodStart} onChange={set('periodStart')} /><Input type="date" label={t('synthese.fin')} value={settings.periodEnd} onChange={set('periodEnd')} /></div>
         </fieldset>
         <fieldset className="grid gap-3">
@@ -206,17 +223,24 @@ export function OfficialPrintDocument({ settings, t, lang, children }) {
     '--print-offset-x': `${offX}mm`,
     '--print-offset-y': `${offY}mm`,
   };
-  return <div data-print-document data-orientation={settings.orientation} data-format={settings.format || 'a4'} data-small={small ? '1' : '0'} style={style} className="report-paper mx-auto rounded-xl bg-surface shadow-2 print:rounded-none print:shadow-none">
+  const orientClass = settings.orientation === 'landscape' ? 'print-landscape' : 'print-portrait';
+  return <div data-print-document data-orientation={settings.orientation} data-format={settings.format || 'a4'} data-small={small ? '1' : '0'} data-statut={settings.statut || 'projet'} style={style} className={`report-paper mx-auto rounded-xl bg-surface shadow-2 print:rounded-none print:shadow-none ${orientClass}`}>
     <div className="print-page">
       <header data-print-header className="official-print-header hidden border-b-2 border-brand-700 pb-4 text-center print:block">
+        <p className="text-[11px] font-bold uppercase tracking-wide">
+          <bdi lang="fr">{t('v19.republicFr')}</bdi>
+          <span aria-hidden="true"> · </span>
+          <bdi lang="ar" dir="rtl">{t('v19.republicAr')}</bdi>
+        </p>
         <p className="text-sm font-black"><bdi>{settings.organization}</bdi></p>
-        <p className="text-xs text-muted"><bdi>{settings.department}</bdi></p>
+        {settings.department && <p className="text-xs text-muted"><bdi>{settings.department}</bdi></p>}
+        <p className="text-xs font-bold">{t('v19.cabinet')}</p>
         <h1 className="mt-3 text-2xl font-black"><bdi>{settings.title}</bdi></h1>
         {settings.subtitle && <p className="mt-1 text-sm"><bdi>{settings.subtitle}</bdi></p>}
-        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-0 whitespace-nowrap text-xs" data-print-meta>
+          <span>{t('v19.algerLe')} <bdi>{settings.reportDate ? formatDateShort(settings.reportDate, lang) : '—'}</bdi></span>
           <span>{t('synthese.print.reference')} : <bdi>{settings.reference || '—'}</bdi></span>
           <span>{t('synthese.print.period')} : <bdi>{settings.periodStart ? `${formatDateShort(settings.periodStart, lang)} → ${formatDateShort(settings.periodEnd || settings.periodStart, lang)}` : '—'}</bdi></span>
-          <span>{t('synthese.print.reportDate')} : <bdi>{settings.reportDate ? formatDateShort(settings.reportDate, lang) : '—'}</bdi></span>
         </div>
       </header>
       <div className="official-print-body print-body">{children}</div>
@@ -226,7 +250,12 @@ export function OfficialPrintDocument({ settings, t, lang, children }) {
           <div className="h-16"><p>{t('synthese.print.checkedBy')}</p><bdi className="font-bold">{settings.checkedBy || '—'}</bdi></div>
           <div className="h-16"><p>{t('synthese.print.approvedBy')}</p><bdi className="font-bold">{settings.approvedBy || '—'}</bdi></div>
         </div>
-        {settings.footerNote && <p className="mt-2 text-center text-[10px] text-muted"><bdi>{settings.footerNote}</bdi></p>}
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-4 text-center text-[10px] text-muted" data-print-foot-meta>
+          <span>{settings.reference || '—'}</span>
+          <span>{settings.diffusion || t('v19.diffusionInterne')}</span>
+          <span>{t('v19.pageOf', { page: 1, total: 1 })}</span>
+        </p>
+        {settings.footerNote && <p className="mt-1 text-center text-[10px] text-muted"><bdi>{settings.footerNote}</bdi></p>}
       </footer>
     </div>
   </div>;
