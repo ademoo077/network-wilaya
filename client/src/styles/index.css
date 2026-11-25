@@ -128,6 +128,9 @@
 [data-print-document] [data-widget-table] td[data-numeric='1'] { text-align: end; font-variant-numeric: tabular-nums; }
 [data-print-document] [data-widget-table] tfoot td { font-weight: 700; }
 [data-print-document] [data-print-table] { display: none; }
+[data-print-document] [data-registre] [data-print-table] { display: table; }
+[data-print-document] [data-registre] thead { display: table-header-group; }
+[data-print-document] [data-registre] tr { break-inside: avoid; page-break-inside: avoid; }
 [data-print-document] [data-print-foot-meta]::after { content: attr(data-page-label); }
 [data-print-document] .print-page:last-child { break-after: auto; page-break-after: auto; }
 [data-print-document] .print-body { width: 100%; min-width: 0; overflow: visible; }

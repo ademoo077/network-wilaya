@@ -341,7 +341,7 @@ function PhotoPairsWidget({ bloc, result, t, lang, actions , onPatchTitle, style
 }
 
 function typeLabel(type, lang) {
-  const labels = { kpi: 'Indicateur', tableau: 'Tableau', barres: 'Barres', lignes: 'Lignes', courbe: 'Courbe', aire: 'Aire', anneau: 'Anneau', histogramme: 'Histogramme', cascade: 'Cascade', carte_thermique: 'Carte thermique', radar: 'Radar', nuage: 'Nuage', treemap: 'Treemap', entonnoir: 'Entonnoir', pareto: 'Pareto', texte: 'Texte', signature: 'Signature', separateur: 'Séparateur', legende: 'Légende', annexe: 'Annexe', avant_apres: 'Comparer avant / après', liste_fiches: 'Liste de fiches', classement: 'Classement', chronologie: 'Chronologie' };
+  const labels = { kpi: 'Indicateur', tableau: 'Tableau', barres: 'Barres', lignes: 'Lignes', courbe: 'Courbe', aire: 'Aire', anneau: 'Anneau', histogramme: 'Histogramme', cascade: 'Cascade', carte_thermique: 'Carte thermique', radar: 'Radar', nuage: 'Nuage', treemap: 'Treemap', entonnoir: 'Entonnoir', pareto: 'Pareto', texte: 'Texte', signature: 'Signature', separateur: 'Séparateur', legende: 'Légende', annexe: 'Annexe', avant_apres: 'Comparer avant / après', liste_fiches: 'Liste de fiches', classement: 'Classement', chronologie: 'Chronologie', registre: 'Registre' };
   return lang === 'ar' ? 'عنصر' : (labels[type] || type);
 }
 
@@ -356,11 +356,39 @@ function TitleBlock({ bloc, title, actions, onPatchTitle, style }) {
     {actions && <div className="min-w-0 max-w-full">{actions}</div>}
   </div>;
 }
+const REGISTRE_COLONNES = [
+  { id: 'operation', fr: 'Opération', ar: 'عملية' },
+  { id: 'entite', fr: 'Entité', ar: 'الجهة' },
+  { id: 'option', fr: 'Option', ar: 'خيار' },
+  { id: 'resultat', fr: 'Résultat', ar: 'النتيجة' },
+  { id: 'quirons', fr: 'Quirons', ar: 'الantegrad' },
+  { id: 'localisation', fr: 'Localisation', ar: 'الموقع' },
+  { id: 'notes', fr: 'Notes', ar: 'ملاحظات' },
+];
+
+function RegistreWidget({ bloc, title, t, lang, actions, onPatchTitle, style }) {
+  const lignes = Array.isArray(bloc.options?.lignes) ? bloc.options.lignes : [];
+  return <>
+    <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />
+    <div className="min-w-0 overflow-x-auto p-4" data-registre>
+      <table className="w-full text-sm" data-print-table aria-label={title}>
+        <thead><tr>{REGISTRE_COLONNES.map((column) => <th key={column.id} className="border-b border-border px-2 py-2 text-start text-xs font-bold text-ink2">{lang === 'ar' ? column.ar : column.fr}</th>)}</tr></thead>
+        <tbody>{lignes.length === 0
+          ? <tr><td colSpan={REGISTRE_COLONNES.length} className="px-2 py-4 text-center text-muted">{t('synthese.aucuneLigne')} — {t('synthese.texteAjouter')}</td></tr>
+          : lignes.map((ligne, index) => <tr key={index} data-registre-ligne className="border-b border-border last:border-0">
+            {REGISTRE_COLONNES.map((column) => <td key={column.id} className="px-2 py-2 text-ink"><bdi>{ligne?.[column.id] || '—'}</bdi></td>)}
+          </tr>)}</tbody>
+      </table>
+    </div>
+  </>;
+}
+
 function RenderWidget({ bloc, result, t, lang, dir, actions, role, style, onPatchTitle }) {
   const title = bloc.titre || typeLabel(bloc.type, lang);
   const height = heightClass(bloc);
   const H = () => <TitleBlock bloc={bloc} title={title} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (['texte', 'signature', 'legende', 'annexe'].includes(bloc.type)) return <><H /><TexteWidget bloc={bloc} lang={lang} t={t} alignement={style.alignement} /></>;
+  if (bloc.type === 'registre') return <RegistreWidget bloc={bloc} title={title} t={t} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (bloc.type === 'kpi') return <KpiWidget bloc={bloc} result={result} title={title} lang={lang} t={t} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (bloc.type === 'avant_apres') return <PhotoPairsWidget bloc={bloc} result={result} t={t} lang={lang} actions={actions} onPatchTitle={onPatchTitle} style={style} />;
   if (['tableau', 'liste_fiches', 'classement', 'chronologie'].includes(bloc.type)) return <TableauWidget bloc={bloc} result={result} title={title} lang={lang} dir={dir} t={t} actions={actions} role={role} onPatchTitle={onPatchTitle} style={style} />;
@@ -377,7 +405,7 @@ function WidgetError({ error, reset, t, bloc }) {
 export default function WidgetCard({ bloc, result, t, lang, dir, onVoirFiches, editorActions = null, role = 'operateur' }) {
   const [dialog, setDialog] = useState(null);
   if (bloc.type === 'separateur') return <div className="my-4 border-t-2 border-border" data-testid={`widget-${bloc.id}`} />;
-  const needsResult = !['texte', 'signature', 'legende', 'annexe'].includes(bloc.type);
+  const needsResult = !['texte', 'signature', 'legende', 'annexe', 'registre'].includes(bloc.type);
   const title = bloc.titre || typeLabel(bloc.type, lang);
   const actions = <WidgetActionBar result={result} bloc={bloc} title={title} lang={lang} t={t} onDialog={setDialog} onVoirFiches={onVoirFiches} editorActions={editorActions} />;
   const style = normaliserStyle(bloc.options);

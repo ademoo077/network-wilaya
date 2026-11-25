@@ -252,7 +252,10 @@ export const SYSTEM_MODELS = [
       schema_version: 1,
       meta: gabaritMeta(['Instructions', 'Avancement', 'Alertes', 'Décisions']),
       sections: [
-        section('instructions', [bloc('v19i-liste', 'texte', 'Instructions et responsables', null, { texte_fr: 'Instruction · échéance · responsable', texte_ar: 'التعليمات · الأجل · المسؤول' })]),
+        section('instructions', [
+          bloc('v19i-liste', 'texte', 'Instructions et responsables', null, { texte_fr: 'Instruction · échéance · responsable', texte_ar: 'التعليمات · الأجل · المسؤول' }),
+          bloc('v19i-registre', 'registre', 'Gestionnaire des ordres', null, { lignes: [] }),
+        ]),
         section('avancement', [bloc('v19i-kpi', 'kpi', 'Avancement', q(['recues', 'traitees_periode', 'taux_traitement']))]),
         section('alertes', [bloc('v19i-alertes', 'tableau', 'Échéances et alertes', q(['recues', 'cohorte_non_traitees'], [{ champ: 'epic' }]))]),
         section('decisions', [bloc('v19i-decisions', 'texte', 'Décisions du Cabinet', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),

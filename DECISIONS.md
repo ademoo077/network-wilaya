@@ -167,3 +167,8 @@
 - **Charte verrouillée par défaut** : palette institutionnelle limitée à cinq couleurs, polices Inter/Cairo, déverrouillage réservé à l’admin et tracé dans `audit_log`. Le déverrouillage n’assouplit aucune règle d’accessibilité ni de contraste.
 - **Gabarits** : six modèles système `v19-*` s’ajoutent aux huit existants, sans les remplacer. Ils restent modifiables par duplication/personnalisation et acceptent A4 et A5 ; la structure-type est stockée dans `definition.meta.structure`.
 - **Hiérarchie du rapport officiel** : lui seul porte l’en-tête institutionnel bilingue et la numérotation CW. Les exports Excel et les autres vues conservent leurs conventions existantes.
+
+### V19 phase 3 — données et blocs
+
+- **Registre canonique** : le bloc `registre` porte les colonnes Opération / Entité / Option / Résultat / Quirons / Localisation / Notes et ses lignes dans `options.lignes`. Il ne lance aucune requête et ne substitue pas les données calculées.
+- **Tables longues** : le tableau d’écran reste paginé, mais l’impression rend toutes les lignes dans un tableau séparé avec `thead` répété (`display: table-header-group`). Aucune ligne n’est perdue à 500 entrées.

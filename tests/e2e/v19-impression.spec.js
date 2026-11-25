@@ -112,3 +112,44 @@ test('V19 / phase 1 — formats A4 et A5 symétriques en paysage', async ({ page
   expect(dims.height).toBe('148mm');
   expect(parseFloat(dims.font)).toBeGreaterThanOrEqual(9);
 });
+
+test('V19 / phase 3 — 500 lignes conservées avec en-têtes répétés à l’impression', async ({ page, baseURL }) => {
+  await authenticate(page, baseURL);
+  await page.route('**/api/syntheses/evaluer', async (route) => {
+    const response = await route.fetch();
+    const payload = await response.json();
+    if (Array.isArray(payload.items) && payload.items.length) {
+      payload.items = payload.items.map((modele) => {
+        if (!Array.isArray(modele.lignes)) return modele;
+        const dimension = modele.colonnes?.dimensions?.[0] || { id: 'daira', label_fr: 'Daïra', label_ar: 'دايرة', type: 'texte' };
+        const valeurs = Object.fromEntries((modele.colonnes?.mesures || [{ id: 'recues' }]).map((mesure) => [mesure.id, 1]));
+        return {
+          ...modele,
+          lignes: Array.from({ length: 500 }, (_, index) => ({
+            dimensions: [{ ...dimension, key: `D-${index + 1}`, label_fr: `Daïra ${index + 1}`, label_ar: `دايرة ${index + 1}` }],
+            valeurs,
+          })),
+          totaux: { valeurs },
+        };
+      });
+    }
+    await route.fulfill({ response, json: payload });
+  });
+
+  await page.goto('/#/syntheses');
+  await page.getByRole('heading', { name: 'Modèles de synthèse' }).waitFor({ timeout: 15_000 });
+  await page.locator('[data-testid^="modele-"]').filter({ has: page.getByRole('heading', { name: 'Synthèse hebdomadaire standard' }) })
+    .getByRole('button', { name: /Personnaliser/ }).click();
+  await page.locator('[data-screen-table]').first().waitFor({ state: 'visible', timeout: 35_000 });
+
+  const ecran = page.locator('[data-screen-table]').first();
+  const conteneur = ecran.locator('..');
+  await expect(ecran.locator('tbody tr[data-ligne]')).toHaveCount(12);
+  await expect(conteneur.locator('[data-print-table] tbody tr[data-ligne]')).toHaveCount(500);
+
+  await page.emulateMedia({ media: 'print' });
+  await expect(conteneur.locator('[data-print-table]')).toBeVisible();
+  await expect(conteneur.locator('[data-print-table] thead th').first()).toBeVisible();
+  const entetes = await conteneur.locator('[data-print-table] thead').evaluate((element) => getComputedStyle(element).display);
+  expect(entetes).toBe('table-header-group');
+});

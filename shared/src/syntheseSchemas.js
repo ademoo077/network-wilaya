@@ -186,11 +186,11 @@ export const BLOC_TYPES = [
   'kpi', 'tableau', 'barres', 'lignes', 'anneau', 'courbe', 'aire', 'pareto',
   'histogramme', 'cascade', 'carte_thermique', 'radar', 'nuage', 'treemap',
   'entonnoir', 'texte', 'liste_fiches', 'classement', 'chronologie',
-  'separateur', 'signature', 'legende', 'annexe', 'avant_apres',
+  'separateur', 'signature', 'legende', 'annexe', 'avant_apres', 'registre',
 ];
 
 /** Blocs de mise en page : ils n’exécutent aucune requête. */
-export const BLOCS_SANS_REQUETE = ['texte', 'separateur', 'signature', 'legende', 'annexe'];
+export const BLOCS_SANS_REQUETE = ['texte', 'separateur', 'signature', 'legende', 'annexe', 'registre'];
 
 export const syntheseBlocSchema = z.object({
   id: z.string().regex(/^[a-z0-9_-]{1,64}$/, 'Identifiant de bloc invalide'),
