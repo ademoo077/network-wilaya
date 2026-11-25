@@ -177,3 +177,9 @@
 
 - **Sources externes** : recherche en ligne désactivée par défaut et non câblée ; seules les URL saisies manuellement sont citées. Le domaine doit figurer dans la liste blanche administrée via `POST/DELETE /api/syntheses/sources`. Le domaine `exemple.dz` n’existe que dans les tests.
 - **Validation** : `validerUrlSource()` impose http/https, refuse credentials et domaines hors liste, sans aucun appel réseau interne ni résolution DNS.
+
+### V19 phase 5 — identité et gabarits enregistrés
+
+- **Identité Cabinet** : objet, destinataire, diffusion, logo local et statut projet/validé sont des champs de l’atelier d’impression. Le logo reste une image locale intégrée au modèle ; aucune ressource externe n’est chargée.
+- **Enregistrement** : les réglages d’impression sont persistés dans `definition.meta.print` via l’éditeur de modèle existant. Le statut `validé` retire le filigrane `PROJET` ; A5 conserve la grille à six colonnes et une échelle typographique 0,8–1.
+- **Harnais de test** : le serveur HTTP factice du résolveur utilise désormais le `fetch` d’undici, conforme au `dispatcher` undici de production. Les tests de migrations lisent la version depuis les fichiers de migration au lieu d’une constante figée.

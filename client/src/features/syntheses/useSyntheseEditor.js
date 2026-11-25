@@ -172,6 +172,15 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     }
   }, [modele, currentDefinition, onModeleChange, push, t]);
 
+  const savePrintSettings = useCallback(async (settings) => {
+    const next = {
+      ...currentDefinition,
+      meta: { ...(currentDefinition.meta || {}), print: settings },
+    };
+    replaceDefinition(next);
+    return save(next);
+  }, [currentDefinition, replaceDefinition, save]);
+
   useEffect(() => {
     if (!dirty || autosaveBlocked || !modeleRef.current || saving || evaluating) return undefined;
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -367,6 +376,6 @@ export function useSyntheseEditor(modele, onModeleChange, { periode = null } = {
     canUndo, canRedo, undo, redo, save, setBloc, addBloc, removeBloc, moveBloc,
     setLayout, moveWidget, resizeWidget, resizeWidgetsToContent, dupliquerBloc,
     personnaliser, reinitialiser, loadEditions, createEdition, figereEdition, getEdition,
-    cancelSave, setDirty, evaluate,
+    cancelSave, setDirty, evaluate, savePrintSettings,
   };
 }

@@ -64,5 +64,11 @@
   "v19.sourceURL_INVALIDE": "رابط غير صالح",
   "v19.sourcePROTOCOLE": "http وhttps فقط",
   "v19.sourceCREDENTIALS": "لا بيانات دخول في الرابط",
-  "v19.sourceLONGUEUR": "الرابط طويل جداً"
+  "v19.sourceLONGUEUR": "الرابط طويل جداً",
+  "v19.saveModel": "حفظ كقالب",
+  "v19.modelSaved": "تم حفظ إعدادات الطباعة في القالب",
+  "v19.statut": "حالة الوثيقة",
+  "v19.statutProjet": "مشروع",
+  "v19.statutValide": "مصادق عليه",
+  "v19.logo": "شعار المؤسسة (صورة محلية، 200 كب كحد أقصى)"
 }

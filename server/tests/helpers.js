@@ -7,6 +7,10 @@ import { runMigrations, ensureTaxonomy, ensureDomainGroups } from '../src/db/mig
 import { ensureVeilleLexicon } from '../src/veille/seed.js';
 import { config } from '../src/config/index.js';
 
+export const MIGRATION_FILES = fs.readdirSync('server/src/db/migrations').filter((file) => /^\d+_.*\.sql$/.test(file)).sort();
+export const MIGRATION_VERSIONS = MIGRATION_FILES.map((file) => Number.parseInt(file, 10));
+export const DERNIERE_VERSION_MIGRATION = Math.max(...MIGRATION_VERSIONS);
+
 export const TEST_PASSWORD = 'Password123!';
 export const USERS = {
   admin: { username: 'admin_test', full_name: 'Admin Test', role: 'admin' },

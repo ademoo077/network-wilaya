@@ -4,7 +4,7 @@ import { createCompteSocial } from '../src/services/reseauxSociaux.js';
 import {
   backfillSourcesV14, identifiantsSource, lierIdentifiant, sourcesParIdentite,
 } from '../src/services/sourceIdentifiants.js';
-import { freshDatabase } from './helpers.js';
+import { DERNIERE_VERSION_MIGRATION, freshDatabase } from './helpers.js';
 
 let db;
 let refs;
@@ -16,7 +16,7 @@ beforeAll(() => {
 
 describe('V14 — migration 015 et rétro-remplissage', () => {
   it('applique la migration additive et ajoute les objets attendus', () => {
-    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(18);
+    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(DERNIERE_VERSION_MIGRATION);
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((row) => row.name);
     expect(tables).toContain('reseaux_identifiants');
     const colonnes = db.prepare("PRAGMA table_info('anomalies')").all().map((row) => row.name);

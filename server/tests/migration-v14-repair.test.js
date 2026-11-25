@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { runMigrations } from '../src/db/migrate.js';
-import { freshDatabase } from './helpers.js';
+import { DERNIERE_VERSION_MIGRATION, freshDatabase } from './helpers.js';
 
 let db;
 const colonnePresente = () => db.prepare('PRAGMA table_info(anomalies)').all().some((row) => row.name === 'sans_photo_motif');
@@ -9,7 +9,7 @@ beforeAll(() => { ({ db } = freshDatabase()); });
 
 describe('Migration 016 — réparation sans_photo_motif', () => {
   it('ajoute la colonne manquante d\'une base où 013 avait été enregistrée sans elle', () => {
-    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(18);
+    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(DERNIERE_VERSION_MIGRATION);
     db.exec('ALTER TABLE anomalies DROP COLUMN sans_photo_motif');
     db.prepare('DELETE FROM schema_migrations WHERE version=16').run();
     expect(colonnePresente()).toBe(false);
@@ -17,7 +17,7 @@ describe('Migration 016 — réparation sans_photo_motif', () => {
     runMigrations(db, { logger: { info() {} } });
 
     expect(colonnePresente()).toBe(true);
-    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(18);
+    expect(db.prepare('SELECT MAX(version) v FROM schema_migrations').get().v).toBe(DERNIERE_VERSION_MIGRATION);
     expect(db.pragma('integrity_check', { simple: true })).toBe('ok');
     expect(db.pragma('foreign_key_check')).toEqual([]);
   });

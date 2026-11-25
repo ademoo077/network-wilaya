@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Printer } from 'lucide-react';
-import { addDays, formatDateShort, todayAlgiers, PRINT_FORMATS, formatDims, normalizeMargins, utileZone, validerUrlSource } from '@anm/shared';
+import { addDays, formatDateShort, todayAlgiers, PRINT_FORMATS, CHARTE_V19, formatDims, normalizeMargins, utileZone, validerUrlSource } from '@anm/shared';
 import { Button, Dialog, Input, Select, Textarea } from '../../components/ui/index.js';
 
 const FORMATS = [
@@ -39,7 +39,10 @@ export function createPrintSettings({ modele, periode, user, t }) {
     checkedBy: '',
     approvedBy: '',
     footerNote: t('synthese.print.defaultFooter'),
+    objet: '',
+    destinataire: '',
     diffusion: t('v19.diffusionInterne'),
+    logo: '',
     statut: 'projet',
     rechercheEnLigne: false,
     sources: [],
@@ -107,8 +110,15 @@ function PrintTestPage({ settings }) {
   </div>;
 }
 
-export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, onReset, blocs, t, lang, role = 'operateur', sourcesAutorisees = [], onAddDomaine }) {
+export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, onReset, blocs, t, lang, role = 'operateur', sourcesAutorisees = [], onAddDomaine, onSaveModel }) {
   const validationSource = settings.sourceUrl ? validerUrlSource(settings.sourceUrl, sourcesAutorisees.map((source) => source.domaine)) : null;
+  const importerLogo = (event) => {
+    const fichier = event.target.files?.[0];
+    if (!fichier || fichier.size > 200_000) return;
+    const lecteur = new FileReader();
+    lecteur.onload = () => onChange({ ...settings, logo: String(lecteur.result || '') });
+    lecteur.readAsDataURL(fichier);
+  };
   const [showTest, setShowTest] = useState(false);
   const set = (key) => (event) => onChange({ ...settings, [key]: event.target.value });
   const setMargin = (key) => (event) => onChange({ ...settings, margins: { ...(settings.margins || {}), [key]: Number(event.target.value) } });
@@ -121,6 +131,7 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
     <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
     <Button variant="ghost" onClick={() => setShowTest((v) => !v)}>{t('synthese.print.testPage', { defaultValue: 'Page de test' })}</Button>
     <Button variant="ghost" onClick={onReset}>{t('synthese.print.reset')}</Button>
+    {onSaveModel && <Button variant="secondary" onClick={onSaveModel}>{t('v19.saveModel')}</Button>}
     <Button onClick={onPrint} disabled={!settings.title.trim()}><Printer className="h-4 w-4" aria-hidden="true" />{t('synthese.print.launch')}</Button>
   </>}>
     <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,.8fr)]">
@@ -141,6 +152,12 @@ export function PrintCustomizer({ open, settings, onChange, onClose, onPrint, on
           <legend className="text-xs font-black uppercase tracking-wider text-muted">{t('synthese.print.identity')}</legend>
           <div className="grid gap-4 sm:grid-cols-2"><Input label={t('synthese.print.reportTitle')} required value={settings.title} onChange={set('title')} /><Input label={t('synthese.print.subtitle')} value={settings.subtitle} onChange={set('subtitle')} /></div>
           <div className="grid gap-4 sm:grid-cols-2"><Input label={t('synthese.print.organization')} value={settings.organization} onChange={set('organization')} /><Input label={t('v19.ministryLabel')} value={settings.department} onChange={set('department')} /></div>
+          <div className="grid gap-4 sm:grid-cols-2"><Input label={t('v19.objet')} value={settings.objet || ''} onChange={set('objet')} /><Input label={t('v19.destinataire')} value={settings.destinataire || ''} onChange={set('destinataire')} /></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label={t('v19.diffusion')} value={settings.diffusion} onChange={set('diffusion')} options={CHARTE_V19.diffusion.map((value) => ({ value, label: value }))} />
+            {role === 'admin' ? <Select label={t('v19.statut')} value={settings.statut} onChange={set('statut')} options={[{ value: 'projet', label: t('v19.statutProjet') }, { value: 'valide', label: t('v19.statutValide') }]} /> : <p className="self-end text-xs text-muted">{t('v19.statutProjet')}</p>}
+          </div>
+          <label className="text-xs font-bold text-muted">{t('v19.logo')}<input type="file" accept="image/*" className="mt-1 block w-full text-xs" data-print-logo onChange={importerLogo} /></label>
           <div className="grid gap-4 sm:grid-cols-2"><Input type="date" label={t('v19.algerLe')} value={settings.reportDate} onChange={set('reportDate')} /><Input label={t('synthese.print.reference')} value={settings.reference} onChange={set('reference')} /></div>
           <Textarea label={t('synthese.print.footer')} rows={2} value={settings.footerNote} onChange={set('footerNote')} />
         </fieldset>
@@ -260,9 +277,12 @@ export function OfficialPrintDocument({ settings, t, lang, children }) {
           <span aria-hidden="true"> · </span>
           <bdi lang="ar" dir="rtl">{t('v19.republicAr')}</bdi>
         </p>
+        {settings.logo && <img src={settings.logo} alt="" className="mx-auto mb-2 h-16 w-auto object-contain" data-print-logo-image />}
         <p className="text-sm font-black"><bdi>{settings.organization}</bdi></p>
         {settings.department && <p className="text-xs text-muted"><bdi>{settings.department}</bdi></p>}
         <p className="text-xs font-bold">{t('v19.cabinet')}</p>
+        {settings.objet && <p className="mt-2 text-xs"><span className="font-bold">{t('v19.objet')} : </span><bdi>{settings.objet}</bdi></p>}
+        {settings.destinataire && <p className="text-xs"><span className="font-bold">{t('v19.destinataire')} : </span><bdi>{settings.destinataire}</bdi></p>}
         <h1 className="mt-3 text-2xl font-black"><bdi>{settings.title}</bdi></h1>
         {settings.subtitle && <p className="mt-1 text-sm"><bdi>{settings.subtitle}</bdi></p>}
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-0 whitespace-nowrap text-xs" data-print-meta>

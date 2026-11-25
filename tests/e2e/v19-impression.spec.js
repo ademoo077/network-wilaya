@@ -181,3 +181,28 @@ test('V19 / phase 4 — sources manuelles, liste blanche et recherche en ligne d
   await expect(page.locator('[data-print-sources]')).toContainText('Note interne');
   await expect(page.locator('[data-print-sources]')).toContainText('exemple.dz/document');
 });
+
+test('V19 / phase 5 — identité Cabinet, validation et grille A5 à six colonnes', async ({ page, baseURL }) => {
+  await ouvrirAtelierImpression(page, baseURL);
+  const dialog = page.getByRole('dialog', { name: /Préparer le rapport officiel/ });
+  await dialog.getByLabel('Objet').fill('Suivi hebdomadaire');
+  await dialog.getByLabel('Destinataire').fill('Cabinet du Wali');
+  await dialog.getByLabel('Statut du document').selectOption('valide');
+
+  const preview = page.locator('[data-print-document]');
+  await expect(preview).toHaveAttribute('data-statut', 'valide');
+  await dialog.getByRole('button', { name: 'Enregistrer comme modèle' }).click();
+  await expect(page.getByText(/Réglages d’impression enregistrés/)).toBeVisible();
+
+  await dialog.getByRole('combobox', { name: 'Format' }).selectOption('a5');
+  await expect(preview).toHaveAttribute('data-small', '1');
+  const colonnes = await preview.locator('[data-largeur="pleine"]').first()
+    .evaluate((element) => getComputedStyle(element).gridColumnEnd);
+  expect(colonnes).toBe('span 6');
+
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('[data-print-header]')).toContainText('Suivi hebdomadaire');
+  await expect(page.locator('[data-print-header]')).toContainText('Cabinet du Wali');
+  const filigrane = await preview.evaluate((element) => getComputedStyle(element, '::before').content);
+  expect(filigrane).toBe('none');
+});

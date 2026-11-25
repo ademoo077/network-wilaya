@@ -64,5 +64,11 @@
   "v19.sourceURL_INVALIDE": "URL invalide",
   "v19.sourcePROTOCOLE": "Seuls http et https sont autorisés",
   "v19.sourceCREDENTIALS": "Aucune authentification dans l’URL",
-  "v19.sourceLONGUEUR": "URL trop longue"
+  "v19.sourceLONGUEUR": "URL trop longue",
+  "v19.saveModel": "Enregistrer comme modèle",
+  "v19.modelSaved": "Réglages d’impression enregistrés dans le modèle",
+  "v19.statut": "Statut du document",
+  "v19.statutProjet": "Projet",
+  "v19.statutValide": "Validé",
+  "v19.logo": "Logo de l’établissement (image locale, 200 Ko max.)"
 }

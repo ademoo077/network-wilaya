@@ -297,6 +297,20 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     } catch (error) { push(error.message || t('common.error'), 'danger'); }
   }, [sourcesQuery, push, t]);
 
+  const handleSavePrintModel = useCallback(async () => {
+    try {
+      await editor.savePrintSettings(printSettings);
+      push(t('v19.modelSaved'), 'success');
+    } catch (error) { push(error.message || t('common.error'), 'danger'); }
+  }, [editor, printSettings, push, t]);
+
+  useEffect(() => {
+    const enregistres = modele?.definition?.meta?.print;
+    if (enregistres && typeof enregistres === 'object') {
+      setPrintSettings((current) => ({ ...current, ...enregistres, reference: current.reference || enregistres.reference }));
+    }
+  }, [modele?.id, modele?.version]);
+
   const photosPeriode = useMemo(() => {
     const meta = Object.values(editor.results || {}).find((result) => result?.meta?.periode)?.meta?.periode;
     return { debut: meta?.debut || periode.debut || '', fin: meta?.fin || periode.fin || '' };
@@ -397,7 +411,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
       <BlocInspectorDrawer open={openInspector} onClose={() => { setOpenInspector(false); setSelectedBloc(null); }} bloc={selectedBloc} onPatch={handleBlocPatch} typeLabel={typeLabel} t={t} lang={lang} role={user?.role} charte={charte} />
       <EditionsDrawer open={openEditions} onClose={() => setOpenEditions(false)} periode={periode} onPeriode={setPeriode} editor={editor} busy={editionBusy} canFreeze={peutFiger} onGenerate={handleGenererEdition} onOpen={handleOpenEdition} onFreeze={handleFreezeEdition} t={t} lang={lang} />
       <EditionDialog edition={snapshotEdition} blocs={snapshotBlocs} onClose={() => setSnapshotEdition(null)} t={t} lang={lang} dir={dir} />
-      <PrintCustomizer open={printOpen} settings={printSettings} onChange={setPrintSettings} onClose={() => setPrintOpen(false)} onPrint={handlePrint} role={user?.role} sourcesAutorisees={sourcesAutorisees} onAddDomaine={handleAddDomaine}
+      <PrintCustomizer open={printOpen} settings={printSettings} onChange={setPrintSettings} onClose={() => setPrintOpen(false)} onPrint={handlePrint} role={user?.role} sourcesAutorisees={sourcesAutorisees} onAddDomaine={handleAddDomaine} onSaveModel={canWrite ? handleSavePrintModel : null}
         onReset={() => setPrintSettings(createPrintSettings({ modele, periode: periodeOverride || periode, user, t }))}
         blocs={activeBlocs} t={t} lang={lang} />
     </main>

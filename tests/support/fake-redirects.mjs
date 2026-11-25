@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { fetch as undiciFetch } from 'undici';
 
 export async function startFakeRedirectServer() {
   const requests = [];
@@ -29,7 +30,7 @@ export async function startFakeRedirectServer() {
   return {
     base, requests, server,
     // Only the harness maps validated PUBLIC hosts to this local server. Production never does.
-    fetchImpl: (url, options = {}) => fetch(base, { ...options, headers: { ...options.headers, 'x-target-url': String(url) } }),
+    fetchImpl: (url, options = {}) => undiciFetch(base, { ...options, headers: { ...options.headers, 'x-target-url': String(url) } }),
     lookupImpl: async () => [{ address: '142.250.74.196', family: 4 }],
     stop: () => new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); }),
   };

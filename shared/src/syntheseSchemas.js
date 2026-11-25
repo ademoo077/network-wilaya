@@ -266,6 +266,7 @@ export const syntheseDefinitionMetaSchema = z.object({
   gabarit: z.boolean().optional(),
   formats: z.array(z.enum(['a5', 'a4', 'a3', 'letter'])).max(4).optional(),
   structure: z.array(z.string().max(80)).max(12).optional(),
+  print: z.record(z.any()).optional(),
 }).strict();
 
 export const syntheseDefinitionSchema = z.object({

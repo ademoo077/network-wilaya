@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { describe, it, expect, beforeAll } from 'vitest';
-import { freshDatabase } from './helpers.js';
+import { DERNIERE_VERSION_MIGRATION, freshDatabase } from './helpers.js';
 import { config } from '../src/config/index.js';
 import { runMigrations } from '../src/db/migrate.js';
 import { ensureVeilleLexicon } from '../src/veille/seed.js';
@@ -18,7 +18,7 @@ beforeAll(() => {
 describe('Fondations Veille — migration', () => {
   it('applique les migrations 009 à 012 et crée les tables attendues', () => {
     const version = db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v;
-    expect(version).toBe(18);
+    expect(version).toBe(DERNIERE_VERSION_MIGRATION);
     for (const table of [
       'veille_sources', 'veille_elements', 'veille_lexique', 'veille_jobs', 'veille_jetons', 'veille_alertes',
       'syntheses_editions', 'syntheses_modeles', 'syntheses_blocs_bibliotheque', 'syntheses_requetes',
@@ -49,7 +49,7 @@ describe('Fondations Veille — migration', () => {
     const copy = new Database(copyPath);
     try {
       runMigrations(copy, { logger: { info() {} } });
-      expect(copy.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(18);
+      expect(copy.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(DERNIERE_VERSION_MIGRATION);
       expect(copy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='veille_elements'").get()?.name).toBe('veille_elements');
       expect(copy.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='syntheses_editions'").get()?.name).toBe('syntheses_editions');
       expect(copy.prepare('SELECT COUNT(*) AS n FROM comptes_sociaux').get().n).toBe(0);
@@ -58,7 +58,7 @@ describe('Fondations Veille — migration', () => {
     } finally {
       copy.close();
     }
-    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(18);
+    expect(db.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v).toBe(DERNIERE_VERSION_MIGRATION);
     expect(fs.readFileSync(sourcePath)).toEqual(original);
     for (const file of [sourcePath, copyPath]) fs.rmSync(file, { force: true });
   });
