@@ -82,6 +82,14 @@ export function setByPath(obj, path, value) {
   return root;
 }
 
+/** Patch minimal pour `setBloc` : jamais le bloc entier et ses métadonnées de grille. */
+export function patchByPath(obj, path, value) {
+  const racine = String(path || '').split('.').filter(Boolean)[0];
+  if (!racine) return {};
+  const next = setByPath(obj, path, value);
+  return { [racine]: next[racine] };
+}
+
 export function normaliserCouleur(valeur) {
   if (valeur == null) return '';
   const v = String(valeur).trim();

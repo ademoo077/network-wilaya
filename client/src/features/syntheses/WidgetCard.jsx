@@ -347,11 +347,15 @@ function typeLabel(type, lang) {
 
 function TitleBlock({ bloc, title, actions, onPatchTitle, style }) {
   const color = style?.titreCouleur || undefined;
+  const sousTitre = String(bloc?.options?.sousTitre || '').trim();
+  const note = String(bloc?.options?.note || '').trim();
   return <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
     <div className="min-w-0">
       <h2 className="text-base font-bold text-ink" style={color ? { color } : undefined}>
         <EditableText value={title} onChange={onPatchTitle} propId="titre" blockId={bloc?.id} className="min-w-[4rem]" />
       </h2>
+      {sousTitre && <p className="mt-0.5 text-xs text-muted" data-widget-sous-titre><bdi>{sousTitre}</bdi></p>}
+      {note && <p className="mt-1 text-xs text-ink2" data-widget-note><bdi>{note}</bdi></p>}
     </div>
     {actions && <div className="min-w-0 max-w-full">{actions}</div>}
   </div>;

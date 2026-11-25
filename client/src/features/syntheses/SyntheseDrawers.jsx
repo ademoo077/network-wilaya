@@ -3,7 +3,7 @@ import { Download, Save, X, Plus, Trash2 } from 'lucide-react';
 import {
   BLOC_TYPES, GALERIE, formatDateShort, MEASURES, CATALOGUE,
   COLONNES_PRESETS, COLONNE_PRIORITES, appliquerPresetColonnes, colonnesDisponibles, colonnesDuBloc,
-  normaliserStyle, proprietesPourBloc, getByPath, setByPath,
+  normaliserStyle, proprietesPourBloc, getByPath, patchByPath,
 } from '@anm/shared';
 import {
   Button, Card, Dialog, Drawer, Input, Select, SegmentedControl, Skeleton, Textarea, Checkbox,
@@ -261,11 +261,11 @@ export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t
           <div className="grid gap-3 border-t border-border pt-3">
             <p className="text-xs font-bold text-ink2">Propriétés (V17)</p>
             {propsRegistre.filter((p) => p.type === 'text' && p.path !== 'titre').map((p) => (
-              <Input key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} onChange={(e) => onPatch(setByPath(bloc, p.path, e.target.value))} />
+              <Input key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} onChange={(e) => onPatch(patchByPath(bloc, p.path, e.target.value))} />
             ))}
             {propsRegistre.filter((p) => p.type === 'color').map((p) => (
               <ColorPicker key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} contrastAgainst={style.fond || undefined} charte={charte}
-                onChange={(v) => onPatch(setByPath(bloc, p.path, v))} />
+                onChange={(v) => onPatch(patchByPath(bloc, p.path, v))} />
             ))}
           </div>
         </div>

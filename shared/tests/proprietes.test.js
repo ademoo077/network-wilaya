@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { BLOC_TYPES } from '../src/syntheseSchemas.js';
 import {
-  proprietesPourBloc, getByPath, setByPath, normaliserCouleur, contrasteRatio,
+  proprietesPourBloc, getByPath, setByPath, patchByPath, normaliserCouleur, contrasteRatio,
   texteEditableProps, couleurProps, PALETTES,
 } from '../src/proprietes.js';
 
@@ -25,6 +25,16 @@ describe('registre proprietes V17', () => {
     const next = setByPath(bloc, 'options.style.fond', '#112233');
     expect(getByPath(next, 'options.style.fond')).toBe('#112233');
     expect(getByPath(next, 'options.style.bordure')).toBeUndefined();
+  });
+
+  it('patchByPath ne remonte ni le bloc entier ni sa métadonnée de grille', () => {
+    const bloc = { id: 'b1', section: 'donnees', options: { note: 'Ancienne', style: { fond: '#ffffff' } } };
+    expect(patchByPath(bloc, 'options.sousTitre', 'Nouveau')).toEqual({
+      options: { note: 'Ancienne', style: { fond: '#ffffff' }, sousTitre: 'Nouveau' },
+    });
+    expect(patchByPath(bloc, 'options.style.fond', '#000000')).toEqual({
+      options: { note: 'Ancienne', style: { fond: '#000000' } },
+    });
   });
 
   it('normalise les couleurs hex, tailwind et rejette l’invalide', () => {

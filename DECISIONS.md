@@ -183,3 +183,8 @@
 - **Identité Cabinet** : objet, destinataire, diffusion, logo local et statut projet/validé sont des champs de l’atelier d’impression. Le logo reste une image locale intégrée au modèle ; aucune ressource externe n’est chargée.
 - **Enregistrement** : les réglages d’impression sont persistés dans `definition.meta.print` via l’éditeur de modèle existant. Le statut `validé` retire le filigrane `PROJET` ; A5 conserve la grille à six colonnes et une échelle typographique 0,8–1.
 - **Harnais de test** : le serveur HTTP factice du résolveur utilise désormais le `fetch` d’undici, conforme au `dispatcher` undici de production. Les tests de migrations lisent la version depuis les fichiers de migration au lieu d’une constante figée.
+
+### Correctif V17 — sous-titre et note des blocs
+
+- **Cause** : l’inspecteur passait le bloc entier à `setBloc`, y compris la métadonnée de grille `section`, refusée par la validation serveur ; l’autosave échouait et les champs paraissaient inertes.
+- **Correctif** : `patchByPath()` ne remonte que la racine modifiée (`options` ou `titre`). `options.sousTitre` et `options.note` sont rendus sous le titre de chaque widget, à l’écran comme à l’impression.
