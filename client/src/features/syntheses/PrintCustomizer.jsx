@@ -250,10 +250,9 @@ export function OfficialPrintDocument({ settings, t, lang, children }) {
           <div className="h-16"><p>{t('synthese.print.checkedBy')}</p><bdi className="font-bold">{settings.checkedBy || '—'}</bdi></div>
           <div className="h-16"><p>{t('synthese.print.approvedBy')}</p><bdi className="font-bold">{settings.approvedBy || '—'}</bdi></div>
         </div>
-        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-4 text-center text-[10px] text-muted" data-print-foot-meta>
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-4 text-center text-[10px] text-muted" data-print-foot-meta data-page-label={t('v19.pageOf', { page: 1, total: 1 })}>
           <span>{settings.reference || '—'}</span>
           <span>{settings.diffusion || t('v19.diffusionInterne')}</span>
-          <span>{t('v19.pageOf', { page: 1, total: 1 })}</span>
         </p>
         {settings.footerNote && <p className="mt-1 text-center text-[10px] text-muted"><bdi>{settings.footerNote}</bdi></p>}
       </footer>

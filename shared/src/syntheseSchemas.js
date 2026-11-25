@@ -262,10 +262,17 @@ export const syntheseLayoutFluxSchema = z.object({
 
 export const syntheseLayoutSchema = z.union([syntheseLayoutV1Schema, syntheseLayoutFluxSchema]);
 
+export const syntheseDefinitionMetaSchema = z.object({
+  gabarit: z.boolean().optional(),
+  formats: z.array(z.enum(['a5', 'a4', 'a3', 'letter'])).max(4).optional(),
+  structure: z.array(z.string().max(80)).max(12).optional(),
+}).strict();
+
 export const syntheseDefinitionSchema = z.object({
   schema_version: z.literal(1),
   sections: z.array(syntheseSectionSchema).max(60),
   layout: syntheseLayoutSchema.optional(),
+  meta: syntheseDefinitionMetaSchema.optional(),
 }).strict();
 
 /** Corps de création/mise à jour d’un modèle. Les modèles système ne sont pas créés par l’API. */

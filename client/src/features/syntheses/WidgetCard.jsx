@@ -198,7 +198,7 @@ function TableauWidget({ bloc, result, title, lang, dir, t, actions, role , onPa
           {column.source === 'dimension' ? <span className="text-muted">{t('synthese.total')}</span> : <bdi dir="ltr">{formatValue(result.totaux.valeurs?.[column.champ], column.format, lang)}</bdi>}
         </td>)}</tr>}
         </tbody></table>
-      <table className="w-full text-sm" data-widget-table data-print-table aria-label={title} aria-hidden="true">
+      <table className="w-full text-sm" data-print-table aria-label={title} aria-hidden="true">
         <thead><tr>{dims.map((column, index) => <th key={`${column.id}-${index}`} className={`border-b border-border px-2 py-1.5 text-xs font-bold text-ink2 ${column.align === 'right' ? 'text-end' : 'text-start'}`}>{lang === 'ar' ? column.label_ar : column.label_fr}</th>)}</tr></thead>
         <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex} data-ligne className="border-b border-border">
           {dims.map((column, index) => column.source === 'dimension'

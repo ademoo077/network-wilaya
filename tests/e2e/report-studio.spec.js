@@ -341,7 +341,7 @@ test('Studio — préparation d’impression A4 lisible et réglages réinitiali
   await printDialog.getByLabel('Orientation A4').selectOption('landscape');
   await expect(preview).toHaveAttribute('data-orientation', 'landscape');
   await printDialog.getByRole('button', { name: 'Rétablir les valeurs initiales' }).click();
-  await expect(printDialog.getByLabel('Référence')).toHaveValue('');
+  await expect(printDialog.getByLabel('Référence')).toHaveValue(/^N° \d{4}\/CW\/\d{4}$/);
   await expect(printDialog.getByLabel('Orientation A4')).toHaveValue('portrait');
   await expect(preview).toHaveAttribute('data-orientation', 'portrait');
 

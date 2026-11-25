@@ -3,7 +3,7 @@ import {
   syntheseModelePayloadSchema, validerDefinition, zodFields,
 } from '@anm/shared';
 import { getDb } from '../db/index.js';
-import { requireAuth, requireWrite } from '../middleware/auth.js';
+import { requireAuth, requireRole, requireWrite } from '../middleware/auth.js';
 import { asyncHandler, badRequest } from '../utils/errors.js';
 import { audit } from '../services/audit.js';
 import {
@@ -13,6 +13,8 @@ import {
 import {
   createEdition, editionWorkbook, freezeEdition, getEdition, listEditions,
 } from '../services/synthesesEditions.js';
+import { getCharte, updateCharte } from '../synthese/charte.js';
+import { nextNumero } from '../synthese/numerotation.js';
 
 const router = Router();
 
@@ -43,6 +45,30 @@ function cleanBody(raw, allowed) {
   if (unknown.length) throw badRequest('Champ inconnu', { [unknown[0]]: 'Champ inconnu' });
   return body;
 }
+
+router.get('/charte', requireAuth, (_req, res) => {
+  res.json({ item: getCharte(getDb()) });
+});
+
+router.patch('/charte', requireRole('admin'), (req, res) => {
+  const body = cleanBody(req.body, ['verrouille', 'palette', 'polices', 'motif']);
+  try {
+    const item = updateCharte(getDb(), req.user, body);
+    audit(req, 'SYNTHESE_CHARTE_MODIFICATION', { entite: 'synthese_charte', details: { ...body, verrouille: item.verrouille } });
+    res.json({ item });
+  } catch (error) {
+    throw badRequest(error.message);
+  }
+});
+
+router.post('/numero', requireWrite, (req, res) => {
+  const body = cleanBody(req.body, ['annee', 'motif']);
+  try {
+    res.json({ item: nextNumero(getDb(), body.annee, body.motif) });
+  } catch (error) {
+    throw badRequest(error.message);
+  }
+});
 
 router.get('/catalogue', requireAuth, (_req, res) => {
   res.json(cataloguePayload());

@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileImage, FilePenLine, Printer, ShieldAlert } from 'lucide-react';
-import { download, queryString } from '../../api/client.js';
+import { api, download, queryString } from '../../api/client.js';
+import { CHARTE_V19, todayAlgiers } from '@anm/shared';
 import { useApiQuery } from '../../hooks/useApiQuery.js';
 import { useI18n } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -63,6 +64,10 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     enabled: validModeleId,
     placeholderData: undefined,
   });
+  const charteQuery = useApiQuery('/syntheses/charte');
+  const charte = charteQuery.data?.item || {
+    verrouille: true, palette: CHARTE_V19.palette, polices: CHARTE_V19.polices, motif: CHARTE_V19.motifReference,
+  };
   const [modele, setModele] = useState(null);
   const remoteModele = modeleQuery.data?.item || null;
   useEffect(() => {
@@ -255,6 +260,17 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     setSelectedBloc((current) => current ? { ...current, ...patch } : current);
   }, [editor, selectedBloc]);
 
+  const handleOpenPrint = useCallback(() => {
+    setPrintOpen(true);
+    const annee = String(printSettings.reportDate || todayAlgiers()).slice(0, 4);
+    api('/syntheses/numero', { method: 'POST', body: { annee } })
+      .then((data) => {
+        const reference = data?.item?.reference;
+        if (reference) setPrintSettings((current) => ({ ...current, reference }));
+      })
+      .catch(() => { /* la référence locale reste utilisée si le serveur est indisponible */ });
+  }, [printSettings.reportDate]);
+
   const handlePrint = useCallback(() => {
     setPrintOpen(false);
     const previousTitle = document.title;
@@ -262,6 +278,14 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
     window.addEventListener('afterprint', () => { document.title = previousTitle; }, { once: true });
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
   }, [printSettings.title]);
+
+  const handleBasculerCharte = useCallback(async () => {
+    try {
+      await api('/syntheses/charte', { method: 'PATCH', body: { verrouille: !charte.verrouille } });
+      await charteQuery.reload();
+      push(charte.verrouille ? t('v19.charteUnlock') : t('v19.charteLock'), 'success');
+    } catch (error) { push(error.message || t('common.error'), 'danger'); }
+  }, [charte.verrouille, charteQuery, push, t]);
 
   const photosPeriode = useMemo(() => {
     const meta = Object.values(editor.results || {}).find((result) => result?.meta?.periode)?.meta?.periode;
@@ -278,8 +302,8 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
   // Le studio unifié expose les actions de cette feuille dans sa barre d'outils unique.
   useEffect(() => {
     if (!registerActions) return;
-    registerActions({ personnaliser: handlePersonnaliser, figer: handleFiger, print: () => setPrintOpen(true) });
-  }, [registerActions, handlePersonnaliser, handleFiger]);
+    registerActions({ personnaliser: handlePersonnaliser, figer: handleFiger, print: handleOpenPrint });
+  }, [registerActions, handlePersonnaliser, handleFiger, handleOpenPrint]);
   useEffect(() => {
     if (!onStudioState) return;
     onStudioState({
@@ -351,7 +375,8 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
               canPersonnaliser={canPersonnaliser} peutFiger={peutFiger} editionBusy={editionBusy} onPersonnaliser={handlePersonnaliser} onFiger={handleFiger}
               displayWidth={activeWidth} onDisplayWidth={onDisplayWidth || setLocalWidth}
               onAdd={() => setOpenGalerie(true)} onSave={handleSave} onReset={handleReinitialiser} onOpenEditions={handleOpenEditions}
-              onPrint={() => setPrintOpen(true)}
+              onPrint={handleOpenPrint}
+              charte={charte} onToggleCharte={handleBasculerCharte}
               onPreview={() => (embedded && onDisplayWidth ? onDisplayWidth('print') : setLocalWidth('print'))}
               onEdit={(bloc) => { setSelectedBloc(bloc); setOpenInspector(true); }} onVoirFiches={() => { navigate('/anomalies'); push(t('synthese.voirFichesInfo'), 'success'); }} embedded={embedded} /></OfficialPrintDocument>
           </div>}
@@ -359,7 +384,7 @@ export default function SynthesePage({ modeleId: modeleIdOverride, embedded = fa
       </div>
 
       <WidgetGalleryDrawer open={openGalerie} onClose={() => setOpenGalerie(false)} query={galerieQuery} onQuery={setGalerieQuery} onAdd={handleAddBloc} t={t} lang={lang} />
-      <BlocInspectorDrawer open={openInspector} onClose={() => { setOpenInspector(false); setSelectedBloc(null); }} bloc={selectedBloc} onPatch={handleBlocPatch} typeLabel={typeLabel} t={t} lang={lang} role={user?.role} />
+      <BlocInspectorDrawer open={openInspector} onClose={() => { setOpenInspector(false); setSelectedBloc(null); }} bloc={selectedBloc} onPatch={handleBlocPatch} typeLabel={typeLabel} t={t} lang={lang} role={user?.role} charte={charte} />
       <EditionsDrawer open={openEditions} onClose={() => setOpenEditions(false)} periode={periode} onPeriode={setPeriode} editor={editor} busy={editionBusy} canFreeze={peutFiger} onGenerate={handleGenererEdition} onOpen={handleOpenEdition} onFreeze={handleFreezeEdition} t={t} lang={lang} />
       <EditionDialog edition={snapshotEdition} blocs={snapshotBlocs} onClose={() => setSnapshotEdition(null)} t={t} lang={lang} dir={dir} />
       <PrintCustomizer open={printOpen} settings={printSettings} onChange={setPrintSettings} onClose={() => setPrintOpen(false)} onPrint={handlePrint}

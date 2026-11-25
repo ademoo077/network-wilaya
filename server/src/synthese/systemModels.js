@@ -35,6 +35,10 @@ function section(id, ...colonnes) {
   return { id, colonnes };
 }
 
+function gabaritMeta(structure) {
+  return { gabarit: true, formats: ['a5', 'a4'], structure };
+}
+
 /** Catalogue exposé par l’API pour la galerie : 8 modèles stables et documentés. */
 export const SYSTEM_MODELS = [
   {
@@ -175,6 +179,102 @@ export const SYSTEM_MODELS = [
       ],
     },
   },
+  {
+    cle: 'v19-note-hebdo',
+    nom: 'Note de synthèse hebdomadaire',
+    description: 'Gabarit Cabinet du Wali : objet, résumé exécutif, situation, analyse, risques, recommandations et signature.',
+    definition: {
+      schema_version: 1,
+      meta: gabaritMeta(['Objet', 'Résumé exécutif', 'Situation', 'Analyse', 'Difficultés et risques', 'Recommandations', 'Annexes', 'Signature']),
+      sections: [
+        section('objet', [bloc('v19h-objet', 'texte', 'Objet', null, { texte_fr: 'Objet à préciser', texte_ar: 'الموضوع' })]),
+        section('resume', [bloc('v19h-resume', 'texte', 'Résumé exécutif', null, { texte_fr: 'Points clés à renseigner', texte_ar: 'النقاط الرئيسية' })]),
+        section('situation', [bloc('v19h-kpi', 'kpi', 'Chiffres clés', q(['recues', 'traitees_periode', 'cohorte_non_traitees', 'taux_traitement']))]),
+        section('analyse', [bloc('v19h-tab-daira', 'tableau', 'Analyse par daïra', q(['recues', 'cohorte_non_traitees'], [{ champ: 'daira' }]))]),
+        section('risques', [bloc('v19h-risques', 'texte', 'Difficultés et risques', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+        section('recommandations', [bloc('v19h-reco', 'texte', 'Recommandations / décisions attendues', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+        section('signature', [bloc('v19h-signature', 'signature', 'Signature')]),
+      ],
+    },
+  },
+  {
+    cle: 'v19-point-situation',
+    nom: 'Point de situation',
+    description: 'Coup d’œil rapide sur la situation : indicateurs, répartition, évolution et message du Cabinet.',
+    definition: {
+      schema_version: 1,
+      meta: gabaritMeta(['Chiffres clés', 'Répartition', 'Évolution', 'Message']),
+      sections: [
+        section('chiffres', [bloc('v19p-kpi', 'kpi', 'Indicateurs', q(['recues', 'cohorte_non_traitees', 'delai_moyen']))]),
+        section('repartition', [bloc('v19p-anneau', 'anneau', 'Répartition des statuts', q(['recues'], [{ champ: 'statut' }]))]),
+        section('evolution', [bloc('v19p-courbe', 'courbe', 'Évolution hebdomadaire', q(['recues'], [{ champ: 'signalement', granularite: 'semaine' }]))]),
+        section('message', [bloc('v19p-message', 'texte', 'Message du Cabinet', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+      ],
+    },
+  },
+  {
+    cle: 'v19-fiche-operation',
+    nom: 'Fiche technique d’opération',
+    description: 'Tuiles de chiffres, répartition et barres par daïra/commune, sur le modèle des fiches d’opération.',
+    definition: {
+      schema_version: 1,
+      meta: gabaritMeta(['Tuiles', 'Répartition', 'Barres par daïra', 'Barres par commune', 'Notes']),
+      sections: [
+        section('tuiles', [bloc('v19o-kpi', 'kpi', 'Chiffres de l’opération', q(['recues', 'traitees_periode', 'taux_traitement']))]),
+        section('repartition', [bloc('v19o-anneau', 'anneau', 'Répartition', q(['recues'], [{ champ: 'statut' }]))]),
+        section('daira', [bloc('v19o-barres-daira', 'barres', 'Par daïra', q(['recues'], [{ champ: 'daira' }]))]),
+        section('commune', [bloc('v19o-barres-commune', 'barres', 'Par commune', q(['recues'], [{ champ: 'commune' }]))]),
+        section('notes', [bloc('v19o-notes', 'texte', 'Notes de bas de tableau', null, { texte_fr: 'Source et méthode à préciser', texte_ar: 'المصدر والطريقة' })]),
+      ],
+    },
+  },
+  {
+    cle: 'v19-bilan-mensuel',
+    nom: 'Bilan mensuel',
+    description: 'Bilan mensuel du Cabinet : synthèse chiffrée, performance des EPIC et suivi des délais.',
+    definition: {
+      schema_version: 1,
+      meta: gabaritMeta(['Synthèse', 'Chiffres clés', 'Performance EPIC', 'Délais', 'Décisions']),
+      sections: [
+        section('synthese', [bloc('v19m-texte', 'texte', 'Synthèse du mois', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+        section('chiffres', [bloc('v19m-kpi', 'kpi', 'Chiffres clés', q(['recues', 'traitees_periode', 'taux_traitement']))]),
+        section('epic', [bloc('v19m-epic', 'tableau', 'Performance par EPIC', q(['recues', 'traitees_periode', 'delai_moyen'], [{ champ: 'epic' }]))]),
+        section('delais', [bloc('v19m-courbe', 'courbe', 'Évolution des délais', q(['delai_moyen'], [{ champ: 'signalement', granularite: 'semaine' }]))]),
+        section('decisions', [bloc('v19m-decisions', 'texte', 'Décisions attendues', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+      ],
+    },
+  },
+  {
+    cle: 'v19-instructions-wali',
+    nom: 'Suivi des instructions du Wali',
+    description: 'Instruction, échéance, responsable et avancement : gabarit.textuel à compléter et à mettre à jour.',
+    definition: {
+      schema_version: 1,
+      meta: gabaritMeta(['Instructions', 'Avancement', 'Alertes', 'Décisions']),
+      sections: [
+        section('instructions', [bloc('v19i-liste', 'texte', 'Instructions et responsables', null, { texte_fr: 'Instruction · échéance · responsable', texte_ar: 'التعليمات · الأجل · المسؤول' })]),
+        section('avancement', [bloc('v19i-kpi', 'kpi', 'Avancement', q(['recues', 'traitees_periode', 'taux_traitement']))]),
+        section('alertes', [bloc('v19i-alertes', 'tableau', 'Échéances et alertes', q(['recues', 'cohorte_non_traitees'], [{ champ: 'epic' }]))]),
+        section('decisions', [bloc('v19i-decisions', 'texte', 'Décisions du Cabinet', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+      ],
+    },
+  },
+  {
+    cle: 'v19-fiche-evenement',
+    nom: 'Fiche d’événement',
+    description: 'Fiche compacte pour un événement : contexte, faits, chiffres, enseignements et diffusion.',
+    definition: {
+      schema_version: 1,
+      meta: gabaritMeta(['Contexte', 'Faits', 'Chiffres', 'Enseignements', 'Diffusion']),
+      sections: [
+        section('contexte', [bloc('v19e-objet', 'texte', 'Contexte', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+        section('faits', [bloc('v19e-faits', 'chronologie', 'Faits marquants', q(['recues'], [{ champ: 'signalement', granularite: 'semaine' }]))]),
+        section('chiffres', [bloc('v19e-kpi', 'kpi', 'Chiffres', q(['recues', 'traitees_periode', 'delai_moyen']))]),
+        section('enseignements', [bloc('v19e-notes', 'texte', 'Enseignements', null, { texte_fr: 'À renseigner', texte_ar: 'يُملأ' })]),
+        section('diffusion', [bloc('v19e-signature', 'signature', 'Visa et diffusion')]),
+      ],
+    },
+  },
 ];
 
 /**
@@ -200,7 +300,7 @@ const UPSERT = `INSERT INTO syntheses_modeles
      OR syntheses_modeles.definition_json <> excluded.definition_json
      OR syntheses_modeles.description IS NOT excluded.description`;
 
-/** Sème ou met à jour les 8 modèles système. Idempotent. */
+/** Sème ou met à jour les modèles système (8 historiques + 6 gabarits V19). Idempotent. */
 export function ensureSystemModels(db) {
   const upsert = db.prepare(UPSERT);
   const transaction = db.transaction(() => {

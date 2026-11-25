@@ -11,11 +11,11 @@ beforeAll(() => {
 });
 
 describe('modèles système V8', () => {
-  it('sème huit modèles système de façon idempotente', () => {
-    expect(ensureSystemModels(db)).toBe(8);
+  it('sème quatorze modèles système (8 historiques + 6 gabarits V19) de façon idempotente', () => {
+    expect(ensureSystemModels(db)).toBe(14);
     ensureSystemModels(db);
     const rows = db.prepare("SELECT * FROM syntheses_modeles WHERE portee = 'systeme' AND archive = 0").all();
-    expect(rows).toHaveLength(8);
+    expect(rows).toHaveLength(14);
     expect(new Set(rows.map((row) => row.cle_systeme))).toEqual(new Set(SYSTEM_MODELS.map((model) => model.cle)));
     expect(rows.every((row) => row.version === 1)).toBe(true);
     for (const row of rows) {
@@ -35,10 +35,10 @@ describe('modèles système V8', () => {
     expect(still.cle_systeme).toBeNull();
   });
 
-  it('expose les huit modèles système en lecture à un lecteur', () => {
+  it('expose les quatorze modèles système en lecture à un lecteur', () => {
     const items = listModeles(db, { id: userIds.lecteur, role: 'lecteur' });
     const systemes = items.filter((item) => item.portee === 'systeme');
-    expect(systemes).toHaveLength(8);
+    expect(systemes).toHaveLength(14);
     expect(systemes.every((item) => item.modifiable === false)).toBe(true);
   });
 

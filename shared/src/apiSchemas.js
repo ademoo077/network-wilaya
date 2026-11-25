@@ -180,6 +180,13 @@ export const syntheseEditionSchema = z.object({
   a_snapshot: z.boolean(), snapshot: z.object({}).passthrough().nullable(),
 }).passthrough();
 export const syntheseEditionListSchema = z.object({ items: z.array(syntheseEditionSchema) }).passthrough();
+export const syntheseNumeroSchema = z.object({ item: z.object({
+  reference: z.string(), sequence: z.number().int().nonnegative(), annee: z.string(),
+}).passthrough() }).passthrough();
+export const syntheseCharteSchema = z.object({ item: z.object({
+  verrouille: z.boolean(), palette: z.array(z.string()), polices: z.array(z.string()),
+  motif: z.string(), updatedBy: z.number().nullable().optional(), updatedAt: z.string(),
+}).passthrough() }).passthrough();
 
 const importPreviewRow = z.object({
   ligne: z.number().int().positive(), statut: z.enum(['ok', 'warning', 'error']),
@@ -234,6 +241,8 @@ export function responseContract(path) {
   if (/^\/veille\/(?:lexique|alias|apprentissages)$/.test(route)) return [items, { items: [] }];
   if (route === '/anomalies/map') return [anomalyMapSchema, { items: [], total: 0, missing: 0 }];
   if (route === '/syntheses/catalogue') return [syntheseCatalogueSchema, emptySyntheseCatalogue];
+  if (route === '/syntheses/charte') return [syntheseCharteSchema, null];
+  if (route === '/syntheses/numero') return [syntheseNumeroSchema, null];
   if (route === '/syntheses/modeles') return [syntheseModelListSchema, { items: [] }];
   if (/^\/syntheses\/modeles\/\d+$/.test(route)) return [z.object({ item: syntheseModelSchema }), { item: null }];
   if (route === '/syntheses/editions') return [syntheseEditionListSchema, { items: [] }];

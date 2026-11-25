@@ -159,3 +159,11 @@
 - **Référence de rapport** : `SYN-{AAAA}-S{SS}-v{V}` est générée et stockée dans l’édition, jamais « — ». Elle alimente l’en-tête, le pied et le nom de fichier. Période en une ligne avec tiret demi-cadran neutre. Filigrane « BROUILLON » tant que l’édition n’est pas figée.
 - **Éditions figées** : la réimpression part exclusivement du `snapshot_json`, sans réévaluation ni nouveau calcul SQL. Le nouveau moteur de mise en page ne modifie ni le snapshot ni les chiffres.
 - **Galerie et barre d’outils** : les libellés viennent du dictionnaire FR/AR (`GALERIE_FAMILLES`, `galeriePayload`) ; aucun slug (`delais`, `vue`) ni code à trois lettres n’est affiché. Une seule barre d’outils, avec menu **Affichage** libellé ; les actions de widget sont regroupées dans le menu ⋯ quand la largeur est ≤ 4 colonnes. Aucun doublon Imprimer/Éditions.
+
+## Décisions V19 (Cabinet du Wali)
+
+- **Source externe** : aucune recherche en ligne n’a été utilisée. La charte, les intitulés et la liste des gabarits proviennent uniquement du cahier des charges V19 fourni ; aucun titre officiel, logo ou chiffre n’a été inventé.
+- **Numérotation** : séquence annuelle atomique en SQL (`synthese_numeros`), motif configurable `N° {SEQ}/CW/{AAAA}`, jamais réutilisée. La référence locale n’est qu’un repli hors ligne ; le serveur l’écrase à l’ouverture de l’impression.
+- **Charte verrouillée par défaut** : palette institutionnelle limitée à cinq couleurs, polices Inter/Cairo, déverrouillage réservé à l’admin et tracé dans `audit_log`. Le déverrouillage n’assouplit aucune règle d’accessibilité ni de contraste.
+- **Gabarits** : six modèles système `v19-*` s’ajoutent aux huit existants, sans les remplacer. Ils restent modifiables par duplication/personnalisation et acceptent A4 et A5 ; la structure-type est stockée dans `definition.meta.structure`.
+- **Hiérarchie du rapport officiel** : lui seul porte l’en-tête institutionnel bilingue et la numérotation CW. Les exports Excel et les autres vues conservent leurs conventions existantes.

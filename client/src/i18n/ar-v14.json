@@ -44,5 +44,12 @@
   "v19.diffusionInterne": "داخلي",
   "v19.pageOf": "صفحة {page} / {total}",
   "synthese.variationVs": "مقارنة بالفترة السابقة",
-  "synthese.uniteJour": "ي"
+  "synthese.uniteJour": "ي",
+  "v19.charteUnlock": "إلغاء قفل المخطط المعتمد (إجراء موثق)",
+  "v19.charteLock": "قفل المخطط المعتمد",
+  "v19.objet": "الموضوع",
+  "v19.destinataire": "المرسل إليه",
+  "v19.diffusion": "نطاق النشر",
+  "v19.structure": "البنية النموذجية",
+  "v19.gabarit": "قالب"
 }

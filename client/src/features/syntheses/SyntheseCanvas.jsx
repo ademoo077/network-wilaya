@@ -10,6 +10,7 @@ export default function SyntheseCanvas({
   t, lang, dir, onAdd, onSave, onReset, onEdit, onOpenEditions, onPrint, onPreview, onVoirFiches,
   onPersonnaliser, onFiger, canPersonnaliser, peutFiger, editionBusy = false,
   displayWidth = 'large', onDisplayWidth, embedded = false, role = 'operateur',
+  charte = null, onToggleCharte = null,
 }) {
   const [zoom, setZoom] = useState(100);
   const [affichage, setAffichage] = useState(false);
@@ -79,6 +80,9 @@ export default function SyntheseCanvas({
         <Button size="sm" variant="secondary" onClick={onOpenEditions}>
           <Clock className="h-4 w-4" aria-hidden="true" />{t('synthese.editions')}
         </Button>
+        {role === 'admin' && onToggleCharte && <Button size="sm" variant="ghost" onClick={onToggleCharte} aria-label={charte?.verrouille ? t('v19.charteUnlock') : t('v19.charteLock')}>
+          <ShieldAlert className="h-4 w-4" aria-hidden="true" /><span className="hidden xl:inline">{charte?.verrouille ? t('v19.charteUnlock') : t('v19.charteLock')}</span>
+        </Button>}
         <Button size="sm" variant="ghost" onClick={onPrint} aria-label={`${t('common.imprimer')} — ${t('synthese.print.launch')}`}>
           <Printer className="h-4 w-4" aria-hidden="true" />{t('common.imprimer')}
         </Button>

@@ -44,5 +44,12 @@
   "v19.diffusionInterne": "Interne",
   "v19.pageOf": "Page {page} / {total}",
   "synthese.variationVs": "vs période précédente",
-  "synthese.uniteJour": "j"
+  "synthese.uniteJour": "j",
+  "v19.charteUnlock": "Déverrouiller la charte (action tracée)",
+  "v19.charteLock": "Verrouiller la charte",
+  "v19.objet": "Objet",
+  "v19.destinataire": "Destinataire",
+  "v19.diffusion": "Diffusion",
+  "v19.structure": "Structure-type",
+  "v19.gabarit": "Gabarit"
 }

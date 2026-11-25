@@ -206,7 +206,7 @@ export function ColonnesDrawer({ open, onClose, bloc, onPatch, t, lang, role }) 
   </Drawer>;
 }
 
-export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t, lang, role = 'operateur' }) {
+export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t, lang, role = 'operateur', charte }) {
   const [columnsOpen, setColumnsOpen] = useState(false);
   if (!bloc) return null;
   const isKpi = bloc.type === 'kpi';
@@ -264,7 +264,7 @@ export function BlocInspectorDrawer({ open, onClose, bloc, onPatch, typeLabel, t
               <Input key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} onChange={(e) => onPatch(setByPath(bloc, p.path, e.target.value))} />
             ))}
             {propsRegistre.filter((p) => p.type === 'color').map((p) => (
-              <ColorPicker key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} contrastAgainst={style.fond || undefined}
+              <ColorPicker key={p.id} label={p.label} value={getByPath(bloc, p.path) || ''} contrastAgainst={style.fond || undefined} charte={charte}
                 onChange={(v) => onPatch(setByPath(bloc, p.path, v))} />
             ))}
           </div>

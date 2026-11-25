@@ -13,6 +13,14 @@ export const PALETTES = {
   daltonisme: ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00', '#F0E442', '#000000'],
 };
 
+/** V19 — charte du Cabinet du Wali : 5 couleurs maximum par graphique. */
+export const CHARTE_V19 = Object.freeze({
+  palette: Object.freeze(PALETTES.institutionnel.slice(0, 5)),
+  polices: Object.freeze(['Inter', 'Cairo']),
+  motifReference: 'N° {SEQ}/CW/{AAAA}',
+  diffusion: Object.freeze(['Confidentiel', 'Diffusion restreinte', 'Interne']),
+});
+
 export const TAILWIND_COULEURS = {
   'blue-600': '#2563eb', 'blue-700': '#1d4ed8', 'emerald-600': '#059669', 'red-600': '#dc2626',
   'amber-500': '#f59e0b', 'slate-700': '#334155', 'slate-900': '#0f172a', 'white': '#ffffff', 'black': '#000000',
