@@ -45,7 +45,7 @@ test('Synthèse — le style de chaque élément est modifiable et survit à l�
 
   // Corriger le style : alignement centré + accent vert institutionnel.
   await page.getByLabel('Alignement du contenu').selectOption('center');
-  await page.getByLabel('Accent').selectOption('brand');
+  await page.getByLabel('Accent', { exact: true }).selectOption('brand');
   // L’autosave enregistre ; on attend la confirmation et l’absence d’erreur.
   await expect(page.getByText(/enregistrée/i)).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('alert').filter({ hasText: /Enregistrement à reprendre/ })).toHaveCount(0);

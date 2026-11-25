@@ -185,7 +185,7 @@ test('V19 / phase 4 — sources manuelles, liste blanche et recherche en ligne d
 test('V19 / phase 5 — identité Cabinet, validation et grille A5 à six colonnes', async ({ page, baseURL }) => {
   await ouvrirAtelierImpression(page, baseURL);
   const dialog = page.getByRole('dialog', { name: /Préparer le rapport officiel/ });
-  await dialog.getByLabel('Objet').fill('Suivi hebdomadaire');
+  await dialog.getByLabel('Objet', { exact: true }).fill('Suivi hebdomadaire');
   await dialog.getByLabel('Destinataire').fill('Cabinet du Wali');
   await dialog.getByLabel('Statut du document').selectOption('valide');
 
